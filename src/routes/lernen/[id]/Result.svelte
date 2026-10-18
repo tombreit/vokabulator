@@ -15,6 +15,7 @@
 	 * @property {boolean} timeUp      the chess clock ran out
 	 * @property {number} previousBest highscore of this unit before this round (0 = none)
 	 * @property {number} days         rounds finished on days in a row, including today
+	 * @property {import('#lib/learn/advancements.js').Advancement[]} advancements  unlocked in this round
 	 */
 </script>
 
@@ -85,7 +86,7 @@
 	});
 </script>
 
-{#if isRecord || knownShare === 1 || levelNow > levelBefore}
+{#if isRecord || knownShare === 1 || levelNow > levelBefore || summary.advancements.length}
 	<Confetti />
 {/if}
 
@@ -119,6 +120,23 @@
 <div class="level">
 	<XpBar xp={summary.xpBefore + summary.points} />
 </div>
+
+{#if summary.advancements.length}
+	<section class="unlocked">
+		<h2>Fortschritt erzielt!</h2>
+		<ul>
+			{#each summary.advancements as advancement (advancement.id)}
+				<li>
+					<Sprite name={advancement.sprite} size={32} />
+					<span
+						><strong>{advancement.title}</strong>
+						<span class="muted read">{advancement.text}</span></span
+					>
+				</li>
+			{/each}
+		</ul>
+	</section>
+{/if}
 
 {#if balance.upgraded || balance.fellBack}
 	<section class="balance">
@@ -245,6 +263,33 @@
 
 	.level {
 		margin-bottom: var(--gap);
+	}
+
+	.unlocked {
+		margin-bottom: var(--gap);
+		padding: 0.6rem 0.8rem;
+		border: 2px solid #000;
+		background: #212121;
+		box-shadow: inset 0 0 0 2px #555;
+
+		h2 {
+			color: var(--yellow);
+			font-size: 1.1rem;
+		}
+
+		ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			display: grid;
+			gap: 0.4rem;
+		}
+
+		li {
+			display: flex;
+			align-items: center;
+			gap: 0.6rem;
+		}
 	}
 
 	.balance {

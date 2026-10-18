@@ -17,7 +17,8 @@
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ✅ (lokal; Kamera-Test auf dem Handy offen) |
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ✅ (live geprüft) |
 | 8 | Teilen | ✅ (live geprüft) |
-| 9 | Design & Polish | ✅ (lokal; nach Deploy live prüfen) |
+| 9 | Design & Polish („Wachstafel“) | ✅ live, ersetzt durch Batch 10 |
+| 10 | „Blockwelt“: Minecraft-Stil mit Erzen, XP/Level, Fortschritten | ✅ (lokal; nach Deploy live prüfen) |
 
 ## Kontext
 
@@ -310,6 +311,39 @@ rechts „eingeritzt“. Der Scan-Button auf der Startseite ist eine kleine Tafe
   Tippflächen sind mindestens 48 px groß.
 - **Bewusst vermieden:** Labels in Großbuchstaben, Meta-Zeilen mit „·“-Trennern, „→“ an Buttons, Verläufe als Deko.
 
+### Batch 10 – „Blockwelt“ (Minecraft-Stil)
+Wunsch: Die Zielgruppe ist die Mittelstufe, viele sind Minecraft-Fans, also Design im Stil des Spiels. Es wird nur
+der Stil nachempfunden: keine Original-Texturen, kein Logo, kein Name „Minecraft“ in der App, keine Original-Sounds.
+Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
+
+**Spielmechanik als Bildsprache:**
+
+| Lernmechanik | Blockwelt |
+|---|---|
+| Leitner-Fächer 1–5 | **Erze Stein → Kohle → Eisen → Gold → Diamant** (`BOX_ORES`). Die Fragekarte zeigt den Block, der bei richtiger Antwort Risse bekommt und aufs nächste Erz springt. |
+| Punkte | **XP**, dazu ein **Level** über alle Runden (`learn/level.js`: Level n → n+1 kostet 100 + 50·n XP) |
+| Joker | **Hotbar:** Fackel = Tipp/50:50, Fernrohr = Aufdecken |
+| Combo | **verzauberte Karte** (lila Schimmer) |
+| Tage in Folge | **„X Tage überlebt“** mit Pixel-Sonne |
+| Rekorde, Ziele | **Fortschritte** (`learn/advancements.js`, 12 Stück): Einblendung „Fortschritt erzielt!“ und Seite `/fortschritte` |
+| Lerneinheiten | **Welten** („Meine Welten“, Weltliste mit dem besten Erz als Symbol) |
+| Feedback | **Chatzeile** `<Vokabulator> Sheesh! +20 XP`, dazu Blockwelt-Sprüche und ein gelber Splash-Text auf der Startseite |
+| Rundeneinstellungen | **Optionsknöpfe** „Modus: Tippen“, die beim Tippen den Wert wechseln |
+
+**Look:**
+- Erde als Hintergrund und Graskante oben
+- Stein-Panels (`.card`) mit Fasenkante, Block-Buttons (`.button`, `.primary` = Gras, `.danger` = Rot)
+- Inventar-Slots mit Stapelzahl, Tooltips mit lila Rahmen, Pixel-Konfetti
+- Text auf Erde hell mit Pixel-Schatten, auf Stein dunkel (Tokens wechseln automatisch in `.card`)
+- Alle Farbpaare nach WCAG AA
+
+**Schrift:** **Monocraft** (OFL, `src/lib/fonts/`, auf die nötigen Zeichen reduziert, 18 KB) für Spiel und Fremdwörter,
+**Lexend** für Deutsch und längere Texte.
+
+**Ton:** kurze, selbst erzeugte WebAudio-Töne (`src/lib/sound.js`), standardmäßig aus, Schalter in den Einstellungen.
+**Sicherung** enthält jetzt auch XP, Level, Rekorde und Fortschritte; beim Wiederherstellen wird zusammengeführt (`mergeStats`).
+**App-Icon:** Diamant-Erz, erzeugt von `scripts/make-icons.mjs` aus dem Sprite.
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -373,6 +407,17 @@ rechts „eingeritzt“. Der Scan-Button auf der Startseite ist eine kleine Tafe
     für farbigen Text. So bleibt der Kontrast im dunklen Modus erhalten.
   - **Fehler behoben:** Verlässt man den Scanner, während die Kamera anläuft, wurde ein unbehandelter Fehler
     geworfen (`video.play()` abgebrochen).
+- 2026-10-18 (Batch 10):
+  - **Schrift:** Pixelify Sans verworfen, weil C/O, Z/2, B/8 und 5/S auch in normaler Stärke kaum zu unterscheiden
+    waren. Das ist bei Namen wie Caesar oder Cato untragbar. Stattdessen **Monocraft** (OFL) selbst gehostet:
+    mit `fontTools` auf Latein, Latin Extended-A, Anführungszeichen und Pfeile reduziert, als WOFF2, ohne Ligaturen.
+    Weil Monocraft dicktengleich ist, stehen deutsche Bedeutungen und längere Texte in Lexend.
+  - **Nur ein Thema** (dunkle Erde, graue Panels), weil der Look von Haus aus so ist. Hell/Dunkel entfällt.
+  - **Karteikarten** zeigen nach der Bewertung 1 s lang die Erz-Änderung, bevor die nächste Karte kommt. Die
+    Aufwertung ist der wichtigste Moment.
+  - **Joker:** Es bleibt bei einem gemeinsamen Vorrat von 3. Die Hotbar zeigt „Noch N Joker“ statt einer Stapelzahl
+    pro Gegenstand, die nach 6 Jokern aussähe.
+  - **Sicherung:** Sie enthält jetzt die Statistik, damit Level und Fortschritte auf ein neues Handy mitkommen.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -406,6 +451,11 @@ rechts „eingeritzt“. Der Scan-Button auf der Startseite ist eine kleine Tafe
 - 2026-10-18: Batch 8 – `share.js` (Links: Mediencode bzw. komprimierte Wörter nach `#d=`, Challenge-Parameter) mit Tests, `ShareButton.svelte`, „📤 Teilen“ auf der Einheitsseite, „📤 Ergebnis teilen“ als Challenge, Challenge-Banner auf `/neu` und Lernseite, Vergleich im Ergebnis. Im Chromium mit zwei Profilen geprüft.
 - 2026-10-18: Live: Teilen und Challenges gegen den echten Server geprüft.
 - 2026-10-18: Batch 9 – Design „Wachstafel“: Tokens, Marcellus + Lexend, Tafel mit Einritz-Animation, Scan-Tafel auf der Startseite, Fächer 🥚🐣🐥🐔🦅 mit Übersicht, Konfetti, Vibration, Seitenübergänge, neues App-Icon. Kontraste nach WCAG AA nachgerechnet, Screenshots hell/dunkel gesichtet, alle Browser-Abläufe erneut grün, Schriften offline aus dem Cache.
+- 2026-10-18: Live: Batch 9 („Wachstafel“) deployt und geprüft.
+- 2026-10-18: Batch 10 – „Blockwelt“: Fundament (10a), Erze, Welten, Inventar, aufbrechender Block, XP und Level,
+  Hotbar, Chat, Optionsknöpfe, Töne, Monocraft (10b/c), Fortschritte (10d). Alle Browser-Abläufe erneut geprüft
+  (Import Code/PDF/Text, Scanner, drei Lernmodi, Joker, Uhr, Teilen/Challenge, offline). Neu geprüft: Level-Up,
+  Erz bis Diamant, Fortschritte, Erz-Bilanz, Sound-Schalter.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

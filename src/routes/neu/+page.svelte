@@ -37,7 +37,7 @@
 
 {#if challenge}
 	<p class="card challenge">
-		🏆 <strong>Challenge:</strong> Schlag {challenge.points} Punkte! Speicher die Einheit und leg los.
+		🏆 <strong>Challenge:</strong> Schlag {challenge.points} XP! Speicher die Einheit und leg los.
 	</p>
 {/if}
 

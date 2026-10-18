@@ -22,11 +22,19 @@
 	import Toasts, { makeToast } from '#lib/components/Toasts.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
 	import { firstLetterTip } from '#lib/learn/check-answer.js';
+	import { newAdvancements } from '#lib/learn/advancements.js';
 	import { choicesFor } from '#lib/learn/choices.js';
 	import { phrase } from '#lib/learn/feedback.js';
 	import { pickRound, progressOf, recordAnswer, toggleHard } from '#lib/learn/leitner.js';
 	import { levelFor } from '#lib/learn/level.js';
-	import { multiplier, newScore, scoreAnswer, timeBonus, useJoker } from '#lib/learn/scoring.js';
+	import {
+		JOKERS_PER_ROUND,
+		multiplier,
+		newScore,
+		scoreAnswer,
+		timeBonus,
+		useJoker
+	} from '#lib/learn/scoring.js';
 	import { localDay, recordDay } from '#lib/learn/streak.js';
 	import { LANGS } from '#lib/model.js';
 	import { readChallenge, sharePath } from '#lib/share.js';
@@ -264,9 +272,38 @@
 		stats.highscores[unit.id] = Math.max(previousBest, score.points);
 		stats.days = recordDay(stats.days, localDay());
 		stats.xp += score.points;
+
+		// Fortschritte: what did this round unlock?
+		const known = answers.filter((a) => a.outcome !== 'wrong').length;
+		const unlocked = newAdvancements(
+			{
+				known,
+				planned: cards.length,
+				bestStreak: score.bestStreak,
+				usedJokers: score.jokers < JOKERS_PER_ROUND,
+				timeUp,
+				clockShareLeft: options.clock ? clockLeft / (options.clock * 1000) : 0,
+				beatRecord: previousBest > 0 && score.points > previousBest,
+				boxes: unit.entries.map((e) => progressOf(progress, e.id).box),
+				xpTotal: stats.xp,
+				days: stats.days.days
+			},
+			stats.advancements
+		);
+		for (const advancement of unlocked) {
+			stats.advancements[advancement.id] = localDay();
+			toasts.push(
+				makeToast({
+					sprite: advancement.sprite,
+					title: 'Fortschritt erzielt!',
+					text: advancement.title
+				})
+			);
+		}
 		saveStats(stats);
 
 		summary = {
+			advancements: unlocked,
 			planned: cards.length,
 			points: score.points,
 			xpBefore,

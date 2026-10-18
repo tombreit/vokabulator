@@ -9,6 +9,7 @@
 	import { canScanQr } from '#lib/components/QrScanner.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
+	import { ADVANCEMENTS } from '#lib/learn/advancements.js';
 	import { splash } from '#lib/learn/feedback.js';
 	import { BOX_COUNT, learnedShare, oreOf, progressOf } from '#lib/learn/leitner.js';
 	import { currentDays, localDay } from '#lib/learn/streak.js';
@@ -18,6 +19,7 @@
 	const stats = loadStats();
 	const days = currentDays(stats.days, localDay());
 	const splashText = splash();
+	const unlocked = ADVANCEMENTS.filter((a) => stats.advancements[a.id]).length;
 
 	const worlds = loadUnits().map((unit) => {
 		const progress = loadProgress(unit.id);
@@ -72,7 +74,8 @@
 						</span>
 						<span class="details">
 							<Sprite name="diamond" size={16} />
-							{world.diamonds} Diamanten
+							{world.diamonds}
+							{world.diamonds === 1 ? 'Diamant' : 'Diamanten'}
 							{#if world.highscore}
 								<Sprite name="xp" size={16} /> Rekord {world.highscore} XP
 							{/if}
@@ -89,6 +92,9 @@
 	{#if canScanQr}
 		<a class="button" href={resolve('/neu')}>Code, PDF oder Text</a>
 	{/if}
+	<a class="button" href={resolve('/fortschritte')}>
+		<Sprite name="book" size={24} /> Fortschritte {unlocked}/{ADVANCEMENTS.length}
+	</a>
 </div>
 
 <style>

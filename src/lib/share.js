@@ -8,7 +8,7 @@
  *                      the words travel inside the link, compressed. The part after "#"
  *                      is never sent to a server.
  *   challenge          …&challenge=57&mode=typing&words=10&direction=front-back&clock=60
- *                      "Schlag 57 Punkte!" – with the same settings, so it is fair
+ *                      "Schlag 57 XP!" – with the same settings, so it is fair
  */
 
 /** @typedef {import('./model.js').Unit} Unit */

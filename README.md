@@ -9,6 +9,9 @@ Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vo
 
 - **SvelteKit 3 als Single-Page-App.** Alles läuft im Browser, und `pnpm build` erzeugt rein statische Dateien in `build/`.
 - **Daten liegen im `localStorage`** des Handys (siehe `src/lib/storage.js`). Es gibt keinen Server und keine Accounts.
+- **Look „Blockwelt“** im Stil eines Blockbau-Spiels. Die Pixel-Grafiken sind selbst gezeichnet und stehen als
+  lesbare Zeichenraster in `src/lib/pixel/sprites.js`. Die Schrift Monocraft (OFL, `src/lib/fonts/`) ist selbst
+  gehostet, das App-Icon erzeugt `node scripts/make-icons.mjs`.
 - **Fachlogik** steckt in kleinen Modulen unter `src/lib/`, jeweils mit Test daneben (`*.test.js`).
   **Seiten** liegen unter `src/routes/` (`+page.svelte` = eine Seite).
 - **Einziger serverseitiger Baustein:** ein eng begrenzter Proxy zu ccbuchner.de, nötig wegen CORS.
