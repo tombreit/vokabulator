@@ -12,6 +12,9 @@ Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vo
 - **Look „Blockwelt“** im Stil eines Blockbau-Spiels. Die Pixel-Grafiken sind selbst gezeichnet und stehen als
   lesbare Zeichenraster in `src/lib/pixel/sprites.js`. Die Schrift Monocraft (OFL, `src/lib/fonts/`) ist selbst
   gehostet, das App-Icon erzeugt `node scripts/make-icons.mjs`.
+- **Link-Vorschau** beim Teilen (WhatsApp, Signal, Telegram …): Die Open-Graph-Angaben stehen in `src/app.html`,
+  das Bild `static/og-image.png` (1200 × 630) zeichnet `node scripts/make-og-image.mjs` mit Chromium aus den
+  Sprites und Schriften der App. Ändert sich die Domain, muss sie in `src/app.html` angepasst werden.
 - **Fachlogik** steckt in kleinen Modulen unter `src/lib/`, jeweils mit Test daneben (`*.test.js`).
   **Seiten** liegen unter `src/routes/` (`+page.svelte` = eine Seite).
 - **Einziger serverseitiger Baustein:** ein eng begrenzter Proxy zu ccbuchner.de, nötig wegen CORS.

@@ -33,6 +33,8 @@ const APP_FILES = new Set(
 		// the QR reader for browsers without their own (1 MB) is only needed online: scanning
 		// leads to an import, which needs the internet anyway – so it is not stored for everyone
 		.filter((file) => !file.path.endsWith('.wasm'))
+		// the link preview card is only for messengers, not for learning
+		.filter((file) => file.path.split('/').at(-1) !== 'og-image.png')
 		.map((file) => url(file.path))
 );
 

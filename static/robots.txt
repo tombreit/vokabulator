@@ -1,3 +1,15 @@
-# Private learning app – nothing to index.
+# Private learning app – nothing to index for search engines.
+# Link previews may look: when a link is shared in a messenger, its preview service
+# reads the page and the card image (og-image.png, see src/app.html).
+User-agent: facebookexternalhit
+User-agent: WhatsApp
+User-agent: TelegramBot
+User-agent: Twitterbot
+User-agent: Slackbot
+User-agent: Slackbot-LinkExpanding
+User-agent: Discordbot
+User-agent: LinkedInBot
+Allow: /
+
 User-agent: *
 Disallow: /
