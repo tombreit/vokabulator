@@ -17,11 +17,15 @@
 	import { page } from '$app/state';
 	import ChessClock from '#lib/components/ChessClock.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import Sprite from '#lib/components/Sprite.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
+	import Toasts, { makeToast } from '#lib/components/Toasts.svelte';
+	import XpBar from '#lib/components/XpBar.svelte';
 	import { firstLetterTip } from '#lib/learn/check-answer.js';
 	import { choicesFor } from '#lib/learn/choices.js';
 	import { phrase } from '#lib/learn/feedback.js';
 	import { pickRound, progressOf, recordAnswer, toggleHard } from '#lib/learn/leitner.js';
+	import { levelFor } from '#lib/learn/level.js';
 	import { multiplier, newScore, scoreAnswer, timeBonus, useJoker } from '#lib/learn/scoring.js';
 	import { localDay, recordDay } from '#lib/learn/streak.js';
 	import { LANGS } from '#lib/model.js';
@@ -34,6 +38,7 @@
 		saveSettings,
 		saveStats
 	} from '#lib/storage.js';
+	import { play } from '#lib/sound.js';
 	import { keepScreenOn } from '#lib/wake-lock.js';
 	import Choice from './Choice.svelte';
 	import Feedback from './Feedback.svelte';
@@ -111,9 +116,11 @@
 	/** ⏱️ milliseconds left on the chess clock */
 	let clockLeft = $state(0);
 	let startedAt = 0;
-	/** flash cards: a short message after rating (the other modes show Feedback.svelte) */
-	/** @type {{ phrase: string, gained: number } | undefined} */
-	let toast = $state();
+	/** all XP earned before this round – the bar shows this plus the round's XP */
+	let xpBefore = $state(0);
+	/** messages at the top right: level-ups, advancements */
+	/** @type {import('#lib/components/Toasts.svelte').Toast[]} */
+	let toasts = $state([]);
 	/** @type {import('./Result.svelte').Summary | undefined} */
 	let summary = $state();
 
@@ -129,6 +136,13 @@
 
 	// No dimming display while thinking about an answer.
 	$effect(() => (phase === 'question' ? keepScreenOn() : undefined));
+
+	// Flash cards: after rating, the card shows its ore change for a moment, then the next one comes.
+	$effect(() => {
+		if (!current || options.mode !== 'cards') return;
+		const timer = setTimeout(next, 1000);
+		return () => clearTimeout(timer);
+	});
 
 	/**
 	 * @param {Entry[]} entries  words to choose from
@@ -151,7 +165,7 @@
 		score = newScore();
 		clockLeft = clock * 1000;
 		startedAt = Date.now();
-		toast = undefined;
+		xpBefore = loadStats().xp;
 		summary = undefined;
 		phase = 'question';
 	}
@@ -174,6 +188,15 @@
 		const result = scoreAnswer(score, outcome, { tip: tipUsed });
 		score = result.score;
 
+		play(outcome === 'wrong' ? 'wrong' : 'xp');
+		const levelNow = levelFor(xpBefore + score.points).level;
+		if (levelNow > levelFor(xpBefore + scoreBefore.points).level) {
+			play('levelUp');
+			toasts.push(
+				makeToast({ sprite: 'xp', title: 'Level-Up!', text: `Du bist jetzt Level ${levelNow}.` })
+			);
+		}
+
 		const said = byRevealJoker
 			? phrase('revealed')
 			: outcome === 'wrong'
@@ -194,13 +217,7 @@
 			scoreBefore
 		};
 		answers.push(answered);
-
-		if (options.mode === 'cards') {
-			toast = { phrase: said, gained: result.gained };
-			next();
-		} else {
-			current = answered;
-		}
+		current = answered;
 	}
 
 	/** "Ich lag doch richtig": count the last answer as right after all. */
@@ -215,14 +232,14 @@
 		current = last;
 	}
 
-	/** 💡 first letter (typing) or 50:50 (multiple choice) – costs a joker and 3 points */
+	/** 🔥 torch: first letter (typing) or 50:50 (multiple choice) – costs a joker and 3 XP */
 	function useTip() {
 		if (score.jokers === 0 || tipUsed) return;
 		score = useJoker(score);
 		tipUsed = true;
 	}
 
-	/** 👀 show the solution – costs a joker, the word counts as not known */
+	/** 🔭 spyglass: show the solution – costs a joker, the word counts as not known */
 	function useReveal() {
 		if (score.jokers === 0) return;
 		score = useJoker(score);
@@ -246,11 +263,13 @@
 		const previousBest = stats.highscores[unit.id] ?? 0;
 		stats.highscores[unit.id] = Math.max(previousBest, score.points);
 		stats.days = recordDay(stats.days, localDay());
+		stats.xp += score.points;
 		saveStats(stats);
 
 		summary = {
 			planned: cards.length,
 			points: score.points,
+			xpBefore,
 			timeBonus: bonus,
 			bestStreak: score.bestStreak,
 			durationMs: Date.now() - startedAt,
@@ -268,12 +287,14 @@
 	}
 </script>
 
+<Toasts bind:toasts />
+
 {#if phase === 'setup'}
-	<h1>{lang.flag} {unit.title}</h1>
+	<h1>{unit.title}</h1>
 	{#if challenge}
 		<p class="card challenge">
-			🏆 <strong>Challenge:</strong> Schlag {challenge.points} Punkte! Die Regeln deines Freundes sind
-			schon eingestellt.
+			🏆 <strong>Challenge:</strong> Schlag {challenge.points} XP! Die Regeln deines Freundes sind schon
+			eingestellt.
 		</p>
 	{/if}
 	<Setup
@@ -293,10 +314,18 @@
 		/>
 	</div>
 
-	<div class="status">
-		<span class="points" aria-label="Punkte">🏅 {score.points}</span>
+	<!-- the HUD: level and XP of the whole game, this round's XP, combo, clock -->
+	<div class="hud">
+		<!-- an XP orb flies up into the bar after every answer that brought XP -->
+		{#key answers.length}
+			{#if current?.gained}
+				<span class="orb" aria-hidden="true"><Sprite name="xp" size={28} /></span>
+			{/if}
+		{/key}
+		<div class="xp"><XpBar xp={xpBefore + score.points} /></div>
+		<span class="round-xp"><Sprite name="xp" size={20} /> +{score.points} XP</span>
 		{#if multiplier(score.streak) > 1}
-			<span class="combo">🔥 ×{multiplier(score.streak)}</span>
+			<span class="combo">Verzaubert ×{multiplier(score.streak)}</span>
 		{/if}
 		{#if options.clock}
 			<ChessClock
@@ -308,15 +337,6 @@
 		{/if}
 	</div>
 
-	{#if toast}
-		{#key answers.length}
-			<p class="toast" role="status">
-				{toast.phrase}
-				{#if toast.gained}<strong>+{toast.gained}</strong>{/if}
-			</p>
-		{/key}
-	{/if}
-
 	<!-- a fresh set of components for every card (empty input, no old choice) -->
 	{#key index}
 		<QuestionCard
@@ -324,15 +344,19 @@
 			reverse={card.reverse}
 			langName={lang.name}
 			showAnswer={revealed || current !== undefined}
+			box={current ? current.before.box : progressOf(progress, card.entry.id).box}
+			newBox={current ? progressOf(progress, card.entry.id).box : undefined}
+			enchanted={multiplier(score.streak) > 1}
 		/>
 
 		{#if current}
+			<!-- flash cards go on by themselves (see the $effect above), the others wait for "Weiter" -->
 			<Feedback
 				outcome={current.outcome}
 				phrase={current.phrase}
 				gained={current.gained}
 				given={current.given}
-				onnext={next}
+				onnext={options.mode === 'cards' ? undefined : next}
 				onoverride={options.mode === 'typing' ? override : undefined}
 			/>
 		{:else if options.mode === 'cards'}
@@ -350,15 +374,29 @@
 		{/if}
 
 		{#if withJokers && !current}
-			<div class="jokers">
-				<span class="muted" aria-label="Joker übrig">Joker: {'💡'.repeat(score.jokers) || '–'}</span
+			<!-- the hotbar: jokers as items -->
+			<div class="hotbar">
+				<button
+					class="slot"
+					onclick={useTip}
+					disabled={score.jokers === 0 || tipUsed}
+					aria-label="Fackel: {options.mode === 'choice'
+						? '50:50'
+						: 'erster Buchstabe'}, kostet 3 XP"
 				>
-				<button class="button" onclick={useTip} disabled={score.jokers === 0 || tipUsed}>
-					💡 {options.mode === 'choice' ? '50:50' : 'Erster Buchstabe'} <small>(−3)</small>
+					<Sprite name="torch" size={40} />
+					<span>{options.mode === 'choice' ? '50:50' : 'Tipp'}</span>
 				</button>
-				<button class="button" onclick={useReveal} disabled={score.jokers === 0}
-					>👀 Aufdecken</button
+				<button
+					class="slot"
+					onclick={useReveal}
+					disabled={score.jokers === 0}
+					aria-label="Fernrohr: Lösung aufdecken"
 				>
+					<Sprite name="spyglass" size={40} />
+					<span>Aufdecken</span>
+				</button>
+				<span class="jokers-left">Noch {score.jokers} Joker</span>
 			</div>
 		{/if}
 	{/key}
@@ -369,7 +407,7 @@
 		challenge={challenge?.points}
 		share={{
 			title: unit.title,
-			text: `Ich hab ${summary.points} Punkte bei „${unit.title}“ geholt 🔥 Schaffst du mehr?`,
+			text: `Ich hab ${summary.points} XP bei „${unit.title}“ geholt ⛏️ Schaffst du mehr?`,
 			url: () =>
 				sharePath(unit, {
 					points: summary?.points ?? 0,
@@ -380,6 +418,7 @@
 				})
 		}}
 		{answers}
+		boxOf={(id) => progressOf(progress, id).box}
 		isHard={(id) => progressOf(progress, id).hard}
 		ontogglestar={toggleStar}
 		onrepeat={(entries) => start(entries, 0)}
@@ -402,59 +441,92 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.status {
+	.hud {
+		position: relative;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.6rem;
+		gap: 0.4rem 0.8rem;
 		margin-bottom: var(--gap);
 		font-weight: 700;
+
+		.xp {
+			flex: 1 1 100%;
+		}
 
 		:global(.clock) {
 			margin-left: auto;
 		}
 	}
 
-	.combo {
-		color: var(--bad);
+	.orb {
+		position: absolute;
+		left: 50%;
+		top: 0;
+		pointer-events: none;
+		animation: orb 0.7s ease-in forwards;
 	}
 
-	.toast {
-		margin: 0 0 0.6rem;
-		text-align: center;
-		font-weight: 700;
-		animation: fade 1.6s ease-out forwards;
-
-		strong {
-			color: var(--good);
+	@keyframes orb {
+		from {
+			translate: -50% 220px;
+			scale: 1.4;
 		}
-	}
-
-	@keyframes fade {
-		0%,
-		60% {
+		80% {
 			opacity: 1;
 		}
-		100% {
+		to {
+			translate: -50% 10px;
+			scale: 0.6;
 			opacity: 0;
 		}
 	}
 
-	.jokers {
-		display: flex;
-		flex-wrap: wrap;
+	.round-xp {
+		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.3rem;
+		color: var(--xp);
+	}
+
+	.combo {
+		color: #d7a6ff;
+	}
+
+	/* the hotbar: dark slots like at the bottom of the game screen */
+	.hotbar {
+		display: flex;
+		align-items: center;
+		gap: 4px;
 		margin-top: var(--gap);
+	}
 
-		span {
-			flex-basis: 100%;
-			font-size: 0.9rem;
-		}
+	.slot {
+		display: grid;
+		justify-items: center;
+		gap: 2px;
+		min-width: 5.5rem;
+		padding: 0.35rem 0.5rem;
+		border: 2px solid #000;
+		background: rgb(0 0 0 / 0.55);
+		box-shadow: inset 0 0 0 2px #8b8b8b;
+		color: #fff;
+		font: inherit;
+		font-size: 0.85rem;
+		cursor: pointer;
 
-		button {
-			flex: 1;
-			min-height: 2.75rem;
-			font-weight: 600;
+		&:hover:not(:disabled) {
+			box-shadow: inset 0 0 0 2px #fff;
 		}
+		&:disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
+	}
+
+	.jokers-left {
+		margin-left: auto;
+		color: var(--muted);
+		font-size: 0.9rem;
 	}
 </style>

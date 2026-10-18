@@ -33,7 +33,7 @@
 	let activeId = $state(initialCode ? 'code' : methods[0].id);
 </script>
 
-<h1>{packed || initialCode ? '📩 Von einem Freund' : 'Neue Lerneinheit'}</h1>
+<h1>{packed || initialCode ? '📩 Von einem Freund' : 'Neue Welt'}</h1>
 
 {#if challenge}
 	<p class="card challenge">
@@ -47,6 +47,8 @@
 	<div class="tabs" role="tablist">
 		{#each methods as method (method.id)}
 			<button
+				class="button"
+				class:primary={method.id === activeId}
 				role="tab"
 				aria-selected={method.id === activeId}
 				onclick={() => (activeId = method.id)}
@@ -70,34 +72,17 @@
 <style>
 	.challenge {
 		margin-bottom: var(--gap);
-		border-color: var(--star);
-		border-width: 2px;
 	}
 
-	/* 2 × 2 on phones, one row on wider screens */
+	/* 2 × 2 on phones, one row on wider screens; the chosen tab is green */
 	.tabs {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-		gap: 0.4rem;
+		gap: 6px;
 		margin-bottom: var(--gap);
 
 		button {
-			min-height: var(--tap);
-			padding: 0.5rem 0.8rem;
-			border: 1px solid var(--line);
-			border-radius: 999px;
-			background: var(--surface);
-			color: inherit;
-			font: inherit;
-			font-weight: 600;
 			white-space: nowrap;
-			cursor: pointer;
-
-			&[aria-selected='true'] {
-				background: var(--accent);
-				border-color: var(--accent);
-				color: var(--accent-text);
-			}
 		}
 	}
 </style>

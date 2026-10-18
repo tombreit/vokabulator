@@ -11,12 +11,28 @@
  * Text colours depend on where text sits: light with a pixel shadow on dirt, dark on
  * stone. .card switches the tokens, so components just use var(--text) / var(--muted).
  *
- * Type: Pixelify Sans for everything "game", Lexend (.read) for longer texts.
- * Both contain all macrons (ā ē ī ō ū) and umlauts. All colour pairs meet WCAG AA.
+ * Type: Monocraft (a free font after the game's lettering, OFL – src/lib/fonts/) for
+ * everything "game" and the foreign words; Lexend (.read) for German and longer texts.
+ * Monocraft keeps C/O, Z/2, B/8 and 5/S apart (Pixelify Sans did not), both fonts have
+ * all macrons (ā ē ī ō ū) and umlauts. All colour pairs meet WCAG AA.
  */
 
-@import '@fontsource-variable/pixelify-sans';
 @import '@fontsource-variable/lexend';
+
+/* Monocraft, cut down to the characters we need (Latin, Latin Extended-A, quotes, arrows) */
+@font-face {
+	font-family: 'Monocraft';
+	src: url('./lib/fonts/monocraft-regular.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Monocraft';
+	src: url('./lib/fonts/monocraft-bold.woff2') format('woff2');
+	font-weight: 700;
+	font-display: swap;
+}
 
 :root {
 	/* on dirt */
@@ -44,7 +60,7 @@
 	--surface: #6f6f6f; /* button stone */
 	--surface-2: #2b2b2b; /* empty slots, bar tracks */
 
-	--font-pixel: 'Pixelify Sans Variable', 'Lexend Variable', system-ui, sans-serif;
+	--font-pixel: 'Monocraft', 'Lexend Variable', system-ui, sans-serif;
 	--font-read: 'Lexend Variable', system-ui, sans-serif;
 
 	--radius: 0; /* blocks have no round corners */
@@ -53,7 +69,8 @@
 
 	color-scheme: dark;
 	font-family: var(--font-pixel);
-	font-size: 112.5%; /* 18px: pixel type needs a bit more size */
+	font-variant-ligatures: none; /* Monocraft would turn "->" into an arrow */
+	font-size: 106.25%; /* 17px */
 	line-height: 1.45;
 	color: var(--text);
 	background: #241a12;
@@ -84,11 +101,11 @@ h3 {
 }
 
 h1 {
-	font-size: 1.9rem;
+	font-size: 1.45rem;
 }
 
 h2 {
-	font-size: 1.3rem;
+	font-size: 1.15rem;
 }
 
 a {

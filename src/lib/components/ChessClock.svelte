@@ -4,6 +4,8 @@
   `left` (milliseconds) is bound by the page, which turns what is left into bonus points.
 -->
 <script>
+	import Sprite from './Sprite.svelte';
+
 	/**
 	 * @type {{ left: number, total: number, running: boolean, ontimeout: () => void }}
 	 */
@@ -29,7 +31,7 @@
 </script>
 
 <div class="clock" class:hurry={seconds <= 10} class:paused={!running} title="Restzeit der Runde">
-	⏱️ <span>{text}</span>
+	<Sprite name="clock" size={24} /> <span>{text}</span>
 	<div class="bar" style:width="{(left / total) * 100}%"></div>
 </div>
 
@@ -37,11 +39,19 @@
 	.clock {
 		position: relative;
 		overflow: hidden;
-		padding: 0.2rem 0.6rem;
-		border-radius: 999px;
-		background: var(--surface-2);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.15rem 0.6rem 0.15rem 0.3rem;
+		border: 2px solid #000;
+		background: rgb(0 0 0 / 0.55);
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
+
+		:global(.sprite) {
+			position: relative;
+			z-index: 1;
+		}
 
 		span {
 			position: relative;
@@ -51,7 +61,7 @@
 		.bar {
 			position: absolute;
 			inset: 0 auto 0 0;
-			background: color-mix(in srgb, var(--accent) 25%, transparent);
+			background: rgb(255 225 74 / 0.22);
 			transition: width 0.1s linear;
 		}
 

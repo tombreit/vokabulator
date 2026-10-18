@@ -4,8 +4,11 @@ import {
 	exportBackup,
 	importBackup,
 	loadProgress,
+	loadStats,
 	loadUnits,
+	mergeStats,
 	saveProgress,
+	saveStats,
 	saveUnit
 } from './storage.js';
 
@@ -82,5 +85,47 @@ describe('backup', () => {
 	it('rejects files that are not a backup', () => {
 		expect(() => importBackup({ hello: 'world' })).toThrow(/keine Vokabulator-Sicherung/);
 		expect(() => importBackup({ app: 'vokabulator', schema: 99, units: [] })).toThrow(/neueren/);
+	});
+});
+
+describe('stats in the backup', () => {
+	it('travels with the backup and is merged, nothing gets lost', () => {
+		saveUnit(unit('a'));
+		saveStats({
+			...loadStats(),
+			xp: 500,
+			highscores: { a: 80 },
+			advancements: { 'first-round': '2026-10-01' }
+		});
+		const file = JSON.parse(JSON.stringify(exportBackup()));
+
+		globalThis.localStorage = /** @type {Storage} */ (fakeLocalStorage()); // new phone
+		saveStats({
+			...loadStats(),
+			xp: 20,
+			highscores: { a: 90 },
+			advancements: { diamonds: '2026-10-18' }
+		});
+		importBackup(file);
+
+		expect(loadStats()).toMatchObject({
+			xp: 500,
+			highscores: { a: 90 },
+			advancements: { 'first-round': '2026-10-01', diamonds: '2026-10-18' }
+		});
+	});
+
+	it('mergeStats keeps the more recent days and the earlier advancement date', () => {
+		const merged = mergeStats(
+			{
+				xp: 1,
+				highscores: {},
+				advancements: { x: '2026-10-10' },
+				days: { lastDay: '2026-10-17', days: 4 }
+			},
+			{ advancements: { x: '2026-10-01' }, days: { lastDay: '2026-10-18', days: 1 } }
+		);
+		expect(merged.advancements.x).toBe('2026-10-01');
+		expect(merged.days).toEqual({ lastDay: '2026-10-18', days: 1 });
 	});
 });

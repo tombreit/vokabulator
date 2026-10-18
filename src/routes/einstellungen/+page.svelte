@@ -1,8 +1,26 @@
-<!-- Settings: back up and restore all learning units (e.g. for a new phone). -->
+<!--
+  Settings: sounds on/off, and the chest – back up and restore all worlds, progress,
+  XP and advancements (e.g. for a new phone).
+-->
 <script>
-	import { exportBackup, importBackup, loadUnits } from '#lib/storage.js';
+	import Sprite from '#lib/components/Sprite.svelte';
+	import { play } from '#lib/sound.js';
+	import {
+		exportBackup,
+		importBackup,
+		loadSettings,
+		loadUnits,
+		saveSettings
+	} from '#lib/storage.js';
 
 	let unitCount = $state(loadUnits().length);
+	let sound = $state(loadSettings().sound);
+
+	function toggleSound() {
+		sound = !sound;
+		saveSettings({ ...loadSettings(), sound });
+		play('xp'); // a sample – only audible when switched on
+	}
 	let message = $state('');
 	let persisted = $state(false);
 	navigator.storage.persisted().then((value) => (persisted = value));
@@ -24,7 +42,7 @@
 		try {
 			const count = importBackup(JSON.parse(await file.text()));
 			unitCount = loadUnits().length;
-			message = `✅ ${count} Lerneinheiten wiederhergestellt.`;
+			message = `✅ ${count} ${count === 1 ? 'Welt' : 'Welten'} wiederhergestellt.`;
 		} catch (error) {
 			message = `❌ ${error instanceof SyntaxError ? 'Die Datei ist kaputt.' : /** @type {Error} */ (error).message}`;
 		}
@@ -33,11 +51,20 @@
 
 <h1>Einstellungen</h1>
 
+<button
+	class="button option"
+	onclick={toggleSound}
+	aria-label="Sounds: {sound ? 'An' : 'Aus'} – tippen zum Wechseln"
+>
+	Sounds: <span class="value">{sound ? 'An' : 'Aus'}</span>
+</button>
+
 <section class="card">
-	<h2>💾 Sicherung</h2>
-	<p>
-		Deine {unitCount} Lerneinheiten und dein Lernstand liegen nur auf diesem Gerät. Mit einer Sicherungsdatei
-		kannst du sie auf ein neues Handy mitnehmen.
+	<h2><Sprite name="chest" size={32} /> Truhe: deine Sicherung</h2>
+	<p class="read">
+		Deine {unitCount}
+		{unitCount === 1 ? 'Welt' : 'Welten'}, dein Lernstand, deine XP und Fortschritte liegen nur auf
+		diesem Gerät. Mit einer Sicherungsdatei nimmst du alles auf ein neues Handy mit.
 	</p>
 	<div class="buttons">
 		<button class="button" onclick={download} disabled={unitCount === 0}>
@@ -49,7 +76,7 @@
 		</label>
 	</div>
 	{#if message}<p role="status">{message}</p>{/if}
-	<p class="muted small">
+	<p class="muted small read">
 		{persisted
 			? '🔒 Der Browser löscht deine Daten nicht von selbst.'
 			: 'ℹ️ Tipp: Installiere Vokabulator („Zum Startbildschirm hinzufügen“), dann bleiben deine Daten sicher gespeichert.'}
@@ -57,6 +84,21 @@
 </section>
 
 <style>
+	.option {
+		width: 100%;
+		margin-bottom: var(--gap);
+	}
+
+	.value {
+		color: var(--yellow);
+	}
+
+	h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
 	.buttons {
 		display: flex;
 		flex-wrap: wrap;

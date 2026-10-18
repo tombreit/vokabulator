@@ -1,11 +1,15 @@
-<!-- After a round: points and how it went, the mistakes (mark them ⭐), and what to do next. -->
+<!--
+  After a round: XP and level, which words were upgraded (the ore balance), the mistakes
+  (mark them ⭐), and what to do next.
+-->
 <script module>
 	/**
 	 * Numbers of a finished round, worked out by the page.
 	 * @typedef {object} Summary
 	 * @property {number} planned      cards in the round (when time runs out, not all were answered)
-	 * @property {number} points       including the time bonus
-	 * @property {number} timeBonus    ⏱️ points for time left (0 without clock)
+	 * @property {number} points       XP of this round, including the time bonus
+	 * @property {number} xpBefore     all XP earned before this round (for the level)
+	 * @property {number} timeBonus    ⏱️ XP for time left (0 without clock)
 	 * @property {number} bestStreak
 	 * @property {number} durationMs
 	 * @property {boolean} timeUp      the chess clock ran out
@@ -19,8 +23,12 @@
 	import Confetti from '#lib/components/Confetti.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
+	import Sprite from '#lib/components/Sprite.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
+	import XpBar from '#lib/components/XpBar.svelte';
 	import { phrase, verdict } from '#lib/learn/feedback.js';
+	import { BOX_ORES, oreOf } from '#lib/learn/leitner.js';
+	import { levelFor } from '#lib/learn/level.js';
 
 	/** @typedef {import('#lib/model.js').Entry} Entry */
 
@@ -30,15 +38,27 @@
 	 *   summary: Summary,
 	 *   challenge?: number,
 	 *   share: { title: string, text: string, url: () => Promise<string> },
-	 *   answers: { entry: Entry, outcome: import('#lib/learn/check-answer.js').Outcome }[],
+	 *   answers: { entry: Entry, outcome: import('#lib/learn/check-answer.js').Outcome, before: { box: number } }[],
+	 *   boxOf: (entryId: string) => number,
 	 *   isHard: (entryId: string) => boolean,
 	 *   ontogglestar: (entryId: string) => void,
 	 *   onrepeat: (entries: Entry[]) => void,
 	 *   onnewround: () => void
 	 * }}
+	 * boxOf: the word's box now, after the round
 	 */
-	let { unitId, summary, challenge, share, answers, isHard, ontogglestar, onrepeat, onnewround } =
-		$props();
+	let {
+		unitId,
+		summary,
+		challenge,
+		share,
+		answers,
+		boxOf,
+		isHard,
+		ontogglestar,
+		onrepeat,
+		onnewround
+	} = $props();
 
 	const known = $derived(answers.filter((a) => a.outcome !== 'wrong').length);
 	const mistakes = $derived(answers.filter((a) => a.outcome === 'wrong').map((a) => a.entry));
@@ -48,9 +68,24 @@
 	const isRecord = $derived(summary.points > summary.previousBest && summary.points > 0);
 	const seconds = $derived(Math.round(summary.durationMs / 1000));
 	const minutes = $derived(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
+
+	const levelBefore = $derived(levelFor(summary.xpBefore).level);
+	const levelNow = $derived(levelFor(summary.xpBefore + summary.points).level);
+
+	/** the ore balance: how many words reached which ore, and how many fell back to stone */
+	const balance = $derived.by(() => {
+		const upgradedTo = BOX_ORES.map(() => 0);
+		let fellBack = 0;
+		for (const answer of answers) {
+			const now = boxOf(answer.entry.id);
+			if (now > answer.before.box) upgradedTo[now - 1]++;
+			else if (now < answer.before.box) fellBack++;
+		}
+		return { upgradedTo, upgraded: upgradedTo.reduce((a, b) => a + b, 0), fellBack };
+	});
 </script>
 
-{#if isRecord || knownShare === 1}
+{#if isRecord || knownShare === 1 || levelNow > levelBefore}
 	<Confetti />
 {/if}
 
@@ -58,51 +93,84 @@
 	{#if summary.timeUp}<p class="time-up">{timeUpText}</p>{/if}
 	<p class="emoji">{headline.emoji}</p>
 	<h1>{headline.text}</h1>
-	<p class="points">{summary.points} Punkte</p>
+	<p class="xp"><Sprite name="xp" size={32} /> +{summary.points} XP</p>
+	{#if levelNow > levelBefore}
+		<p class="level-up">Level-Up! Du bist jetzt Level {levelNow}.</p>
+	{/if}
 	{#if isRecord}
 		<p class="record">
-			🏆 {summary.previousBest
-				? `Neuer Rekord! (vorher ${summary.previousBest})`
-				: 'Dein erster Rekord!'}
+			{summary.previousBest
+				? `Neuer Rekord in dieser Welt! (vorher ${summary.previousBest} XP)`
+				: 'Dein erster Rekord in dieser Welt!'}
 		</p>
 	{/if}
 	{#if challenge}
 		<p class="challenge">
 			{summary.points > challenge
-				? `🎉 Challenge geschafft – ${challenge} Punkte geschlagen!`
-				: `😤 Noch ${challenge - summary.points + 1} Punkte bis zum Sieg. Nochmal?`}
+				? `🎉 Challenge geschafft – ${challenge} XP geschlagen!`
+				: `😤 Noch ${challenge - summary.points + 1} XP bis zum Sieg. Nochmal?`}
 		</p>
 	{/if}
 	<p>{known} von {summary.planned} gewusst</p>
 	<ProgressBar value={knownShare} label="Anteil gewusst" />
-
-	<dl class="facts">
-		<div>
-			<dt>⏱️ Zeit</dt>
-			<dd>{minutes}</dd>
-		</div>
-		<div>
-			<dt>🔥 Beste Serie</dt>
-			<dd>{summary.bestStreak}</dd>
-		</div>
-		{#if summary.timeBonus}<div>
-				<dt>⚡ Zeitbonus</dt>
-				<dd>+{summary.timeBonus}</dd>
-			</div>{/if}
-		<div>
-			<dt>📅 Tage in Folge</dt>
-			<dd>{summary.days}</dd>
-		</div>
-	</dl>
 </div>
+
+<!-- level and ore balance on dark ground, like the game's screens -->
+<div class="level">
+	<XpBar xp={summary.xpBefore + summary.points} />
+</div>
+
+{#if balance.upgraded || balance.fellBack}
+	<section class="balance">
+		<h2>Abgebaut</h2>
+		<ul>
+			{#each BOX_ORES as ore, i (ore.sprite)}
+				{#if balance.upgradedTo[i]}
+					<li>
+						<Sprite name={ore.sprite} size={32} />
+						{balance.upgradedTo[i]}× zu {ore.name}
+					</li>
+				{/if}
+			{/each}
+			{#if balance.fellBack}
+				<li class="back">
+					<Sprite name="stone" size={32} />
+					{balance.fellBack}× zurück zu Stein
+				</li>
+			{/if}
+		</ul>
+	</section>
+{/if}
+
+<dl class="facts">
+	<div>
+		<dt><Sprite name="clock" size={20} /> Zeit</dt>
+		<dd>{minutes}</dd>
+	</div>
+	<div>
+		<dt>🔥 Beste Serie</dt>
+		<dd>{summary.bestStreak}</dd>
+	</div>
+	{#if summary.timeBonus}
+		<div>
+			<dt>⚡ Zeitbonus</dt>
+			<dd>+{summary.timeBonus} XP</dd>
+		</div>
+	{/if}
+	<div>
+		<dt><Sprite name="sun" size={20} /> Überlebt</dt>
+		<dd>{summary.days} {summary.days === 1 ? 'Tag' : 'Tage'}</dd>
+	</div>
+</dl>
 
 {#if mistakes.length > 0}
 	<section class="card mistakes">
-		<h2>Die üben wir nochmal 💪</h2>
+		<h2>Die üben wir nochmal</h2>
 		<ul>
 			{#each mistakes as entry (entry.id)}
 				<li>
-					<span><strong>{entry.front}</strong> → {entry.back}</span>
+					<Sprite name={oreOf(boxOf(entry.id)).sprite} size={28} />
+					<span class="read"><strong>{entry.front}</strong> – {entry.back}</span>
 					<StarButton hard={isHard(entry.id)} ontoggle={() => ontogglestar(entry.id)} />
 				</li>
 			{/each}
@@ -113,44 +181,97 @@
 <div class="actions">
 	{#if mistakes.length > 0}
 		<button class="button primary big" onclick={() => onrepeat(mistakes)}>
-			🔁 Nur Fehler nochmal ({mistakes.length})
+			Nur Fehler nochmal ({mistakes.length})
 		</button>
 	{/if}
 	<button class="button big" onclick={onnewround}>Neue Runde</button>
 	{#if summary.points > 0}
-		<ShareButton label="📤 Ergebnis teilen" {...share} />
+		<ShareButton label="Ergebnis teilen" {...share} />
 	{/if}
-	<a class="button" href={resolve('/einheit/[id]', { id: unitId })}>Zur Lerneinheit</a>
+	<a class="button" href={resolve('/einheit/[id]', { id: unitId })}>Zur Welt</a>
 </div>
 
 <style>
 	.result {
-		text-align: center;
+		display: grid;
+		justify-items: center;
+		gap: 0.4rem;
 		margin-bottom: var(--gap);
+		text-align: center;
 
-		.emoji {
-			font-size: 4rem;
+		p {
 			margin: 0;
 		}
 
-		.points {
-			font-size: 2.2rem;
-			font-weight: 800;
-			margin: 0.25rem 0;
-			color: var(--accent-ink);
+		:global(.bar) {
+			width: 100%;
+		}
+	}
+
+	.emoji {
+		font-size: 3.5rem;
+		line-height: 1;
+	}
+
+	.xp {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 2rem;
+		font-weight: 700;
+		color: var(--accent-ink);
+	}
+
+	.level-up {
+		padding: 0.2rem 0.6rem;
+		background: #000;
+		color: var(--yellow);
+		font-weight: 700;
+	}
+
+	.record {
+		font-weight: 700;
+		color: var(--star-ink);
+	}
+
+	.challenge {
+		font-weight: 700;
+	}
+
+	.time-up {
+		font-weight: 700;
+		color: var(--bad);
+	}
+
+	.level {
+		margin-bottom: var(--gap);
+	}
+
+	.balance {
+		margin-bottom: var(--gap);
+		padding: 0.6rem 0.8rem;
+		background: rgb(0 0 0 / 0.55);
+
+		h2 {
+			font-size: 1.1rem;
 		}
 
-		.record {
-			font-weight: 700;
-			color: var(--star-ink);
+		ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			display: grid;
+			gap: 0.3rem;
 		}
 
-		.challenge {
-			font-weight: 700;
+		li {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			color: var(--good);
 		}
 
-		.time-up {
-			font-weight: 700;
+		.back {
 			color: var(--bad);
 		}
 	}
@@ -158,17 +279,19 @@
 	.facts {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-		gap: 0.5rem;
-		margin: var(--gap) 0 0;
+		gap: 4px;
+		margin: 0 0 var(--gap);
 
 		div {
-			background: var(--surface-2);
-			border-radius: calc(var(--radius) / 1.5);
 			padding: 0.5rem;
+			background: rgb(0 0 0 / 0.55);
 		}
 
 		dt {
-			font-size: 0.8rem;
+			display: flex;
+			align-items: center;
+			gap: 0.3rem;
+			font-size: 0.85rem;
 			color: var(--muted);
 		}
 
@@ -189,11 +312,11 @@
 		}
 
 		li {
-			display: flex;
-			justify-content: space-between;
+			display: grid;
+			grid-template-columns: auto 1fr auto;
 			align-items: center;
 			gap: 0.5rem;
-			border-top: 1px solid var(--line);
+			border-top: 2px solid var(--line);
 		}
 	}
 

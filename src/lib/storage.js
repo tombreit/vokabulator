@@ -9,7 +9,8 @@
  *   vokabulator.settings             Settings
  *   vokabulator.stats                Stats (highscores, days in a row)
  *
- * exportBackup() / importBackup() move units + progress between devices as a JSON file.
+ * exportBackup() / importBackup() move units, progress and stats (XP, level, records,
+ * advancements) between devices as a JSON file.
  *
  * Pages call these functions explicitly whenever something changes – there is
  * no hidden auto-saving. Open DevTools → Application → Local Storage to look at the data.
@@ -112,10 +113,17 @@ export function saveProgress(unitId, progress) {
  * @property {number} roundSize  number of words per round, 0 = all
  * @property {'cards' | 'typing' | 'choice'} mode  flash cards, type the answer, or multiple choice
  * @property {number} clock  chess clock for a round in seconds, 0 = off
+ * @property {boolean} sound  little sounds for XP, level-up and wrong answers (see sound.js)
  */
 
 /** @type {Settings} */
-const DEFAULT_SETTINGS = { direction: 'front-back', roundSize: 10, mode: 'cards', clock: 0 };
+const DEFAULT_SETTINGS = {
+	direction: 'front-back',
+	roundSize: 10,
+	mode: 'cards',
+	clock: 0,
+	sound: false
+};
 
 /** @returns {Settings} */
 export function loadSettings() {
@@ -131,13 +139,21 @@ export function saveSettings(settings) {
 
 /**
  * @typedef {object} Stats
- * @property {Record<string, number>} highscores  best points of a round, by unit id
+ * @property {Record<string, number>} highscores  best XP of a round, by unit id
  * @property {DayStreak} days                     rounds finished on days in a row
+ * @property {number} xp                          all XP ever earned (→ level, see learn/level.js)
+ * @property {Record<string, string>} advancements  unlocked advancements: id → ISO date (learn/advancements.js)
  */
 
 /** @returns {Stats} */
 export function loadStats() {
-	return { highscores: {}, days: { lastDay: '', days: 0 }, ...read('stats', {}) };
+	return {
+		highscores: {},
+		days: { lastDay: '', days: 0 },
+		xp: 0,
+		advancements: {},
+		...read('stats', {})
+	};
 }
 
 /** @param {Stats} stats */
@@ -148,13 +164,15 @@ export function saveStats(stats) {
 // --- Backup ------------------------------------------------------------------
 
 /**
- * A backup file: all units with their progress (settings are per device and not included).
+ * A backup file: all units with their progress, and the stats (settings are per device
+ * and not included).
  * @typedef {object} Backup
  * @property {'vokabulator'} app
  * @property {number} schema
  * @property {string} exportedAt  ISO timestamp
  * @property {Unit[]} units
  * @property {Record<string, UnitProgress>} progress  by unit id
+ * @property {Stats} [stats]  missing in backups made before the block-world design
  */
 
 /** @returns {Backup} */
@@ -165,13 +183,15 @@ export function exportBackup() {
 		schema: SCHEMA_VERSION,
 		exportedAt: new Date().toISOString(),
 		units,
-		progress: Object.fromEntries(units.map((u) => [u.id, loadProgress(u.id)]))
+		progress: Object.fromEntries(units.map((u) => [u.id, loadProgress(u.id)])),
+		stats: loadStats()
 	};
 }
 
 /**
  * Restore a backup on this device. Units from the backup are added, or replace
  * the unit with the same id (including its progress). Other units stay untouched.
+ * Stats are merged, so nothing earned on either device gets lost (see mergeStats).
  *
  * @param {unknown} data  the parsed JSON file
  * @returns {number} number of restored units
@@ -188,7 +208,28 @@ export function importBackup(data) {
 		saveUnit(unit);
 		saveProgress(unit.id, backup.progress?.[unit.id] ?? {});
 	}
+	if (backup.stats) saveStats(mergeStats(loadStats(), backup.stats));
 	return backup.units.length;
+}
+
+/**
+ * Combine the stats of two devices: the higher XP and records, all advancements
+ * (with the earlier date), and the more recent run of days.
+ * @param {Stats} a
+ * @param {Partial<Stats>} b
+ * @returns {Stats}
+ */
+export function mergeStats(a, b) {
+	const highscores = { ...a.highscores };
+	for (const [id, points] of Object.entries(b.highscores ?? {})) {
+		highscores[id] = Math.max(highscores[id] ?? 0, points);
+	}
+	const advancements = { ...a.advancements };
+	for (const [id, date] of Object.entries(b.advancements ?? {})) {
+		advancements[id] = advancements[id] && advancements[id] < date ? advancements[id] : date;
+	}
+	const days = b.days && b.days.lastDay > a.days.lastDay ? b.days : a.days;
+	return { highscores, advancements, days, xp: Math.max(a.xp, b.xp ?? 0) };
 }
 
 // --- Schema ------------------------------------------------------------------

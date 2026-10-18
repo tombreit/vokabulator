@@ -2,7 +2,8 @@
 /**
  * Learning progress following the Leitner system (the classic card box).
  *
- * Every word sits in one of 5 boxes. Known → one box up, not known → back to box 1.
+ * Every word sits in one of 5 boxes (shown as ores, see BOX_ORES).
+ * Known → one box up, not known → back to box 1.
  * Words in low boxes and words marked as "hard" (⭐) are asked more often.
  *
  * Unlike Anki there are no due dates: a vocabulary test is usually a few days
@@ -28,8 +29,25 @@
 export const BOX_COUNT = 5;
 /** From this box on a word counts as learned. */
 export const LEARNED_BOX = 4;
-/** How the boxes are shown: from egg to eagle – the aquila, standard of the Roman legion. */
-export const BOX_EMOJI = ['🥚', '🐣', '🐥', '🐔', '🦅'];
+/**
+ * How the boxes look: ores, from stone to diamond. Every known word is upgraded
+ * one step – the goal is a unit full of diamonds. Sprites in #lib/pixel/sprites.js.
+ */
+export const BOX_ORES = [
+	{ sprite: 'stone', name: 'Stein' },
+	{ sprite: 'coal', name: 'Kohle' },
+	{ sprite: 'iron', name: 'Eisen' },
+	{ sprite: 'gold', name: 'Gold' },
+	{ sprite: 'diamond', name: 'Diamant' }
+];
+
+/**
+ * The ore of a box.
+ * @param {number} box  1..5
+ */
+export function oreOf(box) {
+	return BOX_ORES[Math.min(Math.max(box, 1), BOX_COUNT) - 1];
+}
 
 /** @returns {EntryProgress} */
 export function newProgress() {

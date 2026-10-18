@@ -1,4 +1,7 @@
-<!-- Before a round: how to learn (mode, direction), which words and how many. -->
+<!--
+  Before a round – an options screen like in the game: every button shows
+  "Name: value" and switches to the next value when tapped.
+-->
 <script module>
 	/**
 	 * The choices for a round. The page owns them (they survive "Neue Runde").
@@ -7,6 +10,7 @@
 </script>
 
 <script>
+	import Sprite from '#lib/components/Sprite.svelte';
 	import { LANGS } from '#lib/model.js';
 
 	/**
@@ -22,137 +26,116 @@
 
 	const langName = $derived(LANGS[unit.lang].name);
 	const count = $derived(options.roundSize ? Math.min(options.roundSize, available) : available);
+
+	/**
+	 * Every option: its values in order, each with how it reads.
+	 * @type {Record<'mode' | 'direction' | 'roundSize' | 'clock', [string | number, string][]>}
+	 */
+	const choices = $derived({
+		mode: [
+			['cards', 'Karteikarte'],
+			['typing', 'Tippen'],
+			['choice', 'Auswahl']
+		],
+		direction: [
+			['front-back', `${langName} → Deutsch`],
+			['back-front', `Deutsch → ${langName}`],
+			['mixed', 'Gemischt']
+		],
+		roundSize: [
+			[10, '10'],
+			[20, '20'],
+			[0, 'Alle']
+		],
+		clock: [
+			[0, 'Aus'],
+			[60, '1 Minute'],
+			[180, '3 Minuten'],
+			[300, '5 Minuten']
+		]
+	});
+
+	/**
+	 * Switch an option to its next value.
+	 * @param {keyof typeof choices} key
+	 */
+	function cycle(key) {
+		const list = choices[key];
+		const at = list.findIndex(([value]) => value === options[key]);
+		/** @type {Record<string, unknown>} */ (options)[key] = list[(at + 1) % list.length][0];
+	}
+
+	/** @param {keyof typeof choices} key */
+	function label(key) {
+		return choices[key].find(([value]) => value === options[key])?.[1] ?? '';
+	}
+
+	/** @param {number} i */
+	function toggleSection(i) {
+		options.sections = options.sections.includes(i)
+			? options.sections.filter((s) => s !== i)
+			: [...options.sections, i].toSorted((a, b) => a - b);
+	}
 </script>
 
-<div class="card setup">
-	<fieldset class="pills">
-		<legend>Wie willst du üben?</legend>
-		<label><input type="radio" bind:group={options.mode} value="cards" />🃏 Karteikarte</label>
-		<label><input type="radio" bind:group={options.mode} value="typing" />⌨️ Tippen</label>
-		<label><input type="radio" bind:group={options.mode} value="choice" />🔘 Auswahl</label>
-	</fieldset>
+{#snippet option(
+	/** @type {string} */ name,
+	/** @type {string} */ value,
+	/** @type {() => void} */ onclick
+)}
+	<button class="button option" {onclick} aria-label="{name}: {value} – tippen zum Wechseln">
+		{name}: <span class="value">{value}</span>
+	</button>
+{/snippet}
 
-	<fieldset class="pills">
-		<legend>Richtung</legend>
-		<label>
-			<input type="radio" bind:group={options.direction} value="front-back" />{langName} → Deutsch
-		</label>
-		<label>
-			<input type="radio" bind:group={options.direction} value="back-front" />Deutsch → {langName}
-		</label>
-		<label><input type="radio" bind:group={options.direction} value="mixed" />Gemischt 🔀</label>
-	</fieldset>
-
-	<fieldset class="pills">
-		<legend>Wie viele Wörter?</legend>
-		{#each [10, 20, 0] as size (size)}
-			<label
-				><input type="radio" bind:group={options.roundSize} value={size} />{size || 'Alle'}</label
-			>
-		{/each}
-	</fieldset>
-
-	<fieldset class="pills">
-		<legend>⏱️ Schachuhr – Zeit für die ganze Runde</legend>
-		{#each [0, 60, 180, 300] as seconds (seconds)}
-			<label>
-				<input type="radio" bind:group={options.clock} value={seconds} />{seconds
-					? `${seconds / 60} Min`
-					: 'Aus'}
-			</label>
-		{/each}
-	</fieldset>
-
-	{#if unit.sections.length > 1}
-		<fieldset>
-			<legend>Abschnitte</legend>
-			{#each unit.sections as section, i (i)}
-				<label class="check">
-					<input type="checkbox" bind:group={options.sections} value={i} />
-					{section.title} <span class="muted">({section.entryIds.length})</span>
-				</label>
-			{/each}
-		</fieldset>
-	{/if}
-
-	<label class="check">
-		<input type="checkbox" bind:checked={options.onlyHard} /> Nur ⭐ schwere Wörter
-	</label>
+<div class="options">
+	{@render option('Modus', label('mode'), () => cycle('mode'))}
+	{@render option('Richtung', label('direction'), () => cycle('direction'))}
+	{@render option('Vokabeln', label('roundSize'), () => cycle('roundSize'))}
+	{@render option('Schachuhr', label('clock'), () => cycle('clock'))}
+	{@render option('Nur schwere ⭐', options.onlyHard ? 'An' : 'Aus', () => {
+		options.onlyHard = !options.onlyHard;
+	})}
 </div>
 
-<button class="button primary big" disabled={count === 0} onclick={onstart}>
-	Los geht's 🚀 <span class="count">({count} Wörter)</span>
+{#if unit.sections.length > 1}
+	<h2>Abschnitte</h2>
+	<div class="options">
+		{#each unit.sections as section, i (i)}
+			{@render option(
+				`${section.title} (${section.entryIds.length})`,
+				options.sections.includes(i) ? 'An' : 'Aus',
+				() => toggleSection(i)
+			)}
+		{/each}
+	</div>
+{/if}
+
+<button class="button primary start" disabled={count === 0} onclick={onstart}>
+	<Sprite name="pickaxe" size={32} /> Los geht's ({count})
 </button>
 
 <style>
-	.setup {
+	/* one column on phones, two on wider screens – like the game's options menu */
+	.options {
 		display: grid;
-		gap: var(--gap);
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		gap: 6px;
 		margin-bottom: var(--gap);
 	}
 
-	fieldset {
-		border: none;
-		padding: 0;
-		margin: 0;
-		display: grid;
-		gap: 0.4rem;
+	.value {
+		color: var(--yellow);
 	}
 
-	legend {
-		font-weight: 700;
-		margin-bottom: 0.4rem;
+	h2 {
+		font-size: 1.1rem;
+		margin-top: 0.5rem;
 	}
 
-	/* Radio buttons shown as tappable pills */
-	.pills {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-
-		label {
-			display: block;
-			padding: 0.6rem 0.9rem;
-			border: 1px solid var(--line);
-			border-radius: 999px;
-			font-weight: 600;
-			cursor: pointer;
-
-			&:has(input:checked) {
-				background: var(--accent);
-				border-color: var(--accent);
-				color: var(--accent-text);
-			}
-		}
-
-		input {
-			position: absolute;
-			opacity: 0;
-			pointer-events: none;
-		}
-	}
-
-	.check {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-weight: 400;
-		min-height: 2.5rem;
-
-		input {
-			width: 1.3rem;
-			height: 1.3rem;
-		}
-	}
-
-	.big {
+	.start {
 		width: 100%;
-		min-height: 3.75rem;
-		font-size: 1.15rem;
-	}
-
-	.count {
-		font-weight: 400;
-		opacity: 0.85;
+		min-height: 4rem;
+		font-size: 1.25rem;
 	}
 </style>

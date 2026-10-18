@@ -1,4 +1,8 @@
-<!-- After an answer in "Tippen"/"Auswahl": right or not, and on to the next card. -->
+<!--
+  After an answer: what Vokabulator says, as a chat message like in the game –
+  "<Vokabulator> Sheesh! 🔥 +20 XP" – plus "Weiter" (and "Ich lag doch richtig" when typing).
+  Flash cards pass no `onnext`: they go on by themselves.
+-->
 <script>
 	/**
 	 * @type {{
@@ -6,7 +10,7 @@
 	 *   phrase: string,
 	 *   gained: number,
 	 *   given: string,
-	 *   onnext: () => void,
+	 *   onnext?: () => void,
 	 *   onoverride?: () => void
 	 * }}
 	 * phrase: from feedback.js; given: what was typed or picked;
@@ -16,67 +20,75 @@
 
 	// Right answers go on by themselves after a moment – wrong ones wait, so the solution can sink in.
 	$effect(() => {
-		if (outcome !== 'right') return;
+		if (outcome !== 'right' || !onnext) return;
 		const timer = setTimeout(onnext, 1200);
 		return () => clearTimeout(timer);
 	});
 </script>
 
-<div class="card feedback {outcome}" role="status">
-	<p class="message">
+<div class="feedback" role="status">
+	<p class="chat {outcome}">
+		<span class="sender">&lt;Vokabulator&gt;</span>
 		{phrase}
-		{#if gained > 0}<span class="points">+{gained}</span>{/if}
+		{#if gained > 0}<span class="xp">+{gained} XP</span>{/if}
 	</p>
 	{#if outcome !== 'right' && given}
-		<p class="muted">Deine Antwort: „{given}“ – die Lösung steht oben auf der Karte.</p>
+		<p class="chat given">Du: „{given}“ – die Lösung steht oben.</p>
 	{/if}
-	<div class="buttons">
-		{#if outcome === 'wrong' && onoverride && given}
-			<button class="button" onclick={onoverride}>🙋 Ich lag doch richtig</button>
-		{/if}
-		<!-- svelte-ignore a11y_autofocus: Enter / tap goes on to the next card -->
-		<button class="button primary next" onclick={onnext} autofocus>Weiter</button>
-	</div>
+
+	{#if onnext}
+		<div class="buttons">
+			{#if outcome === 'wrong' && onoverride && given}
+				<button class="button" onclick={onoverride}>Ich lag doch richtig</button>
+			{/if}
+			<!-- svelte-ignore a11y_autofocus: Enter / tap goes on to the next card -->
+			<button class="button primary next" onclick={onnext} autofocus>Weiter</button>
+		</div>
+	{/if}
 </div>
 
 <style>
 	.feedback {
 		display: grid;
-		gap: 0.5rem;
-		border-width: 2px;
+		gap: 4px;
+	}
+
+	/* chat lines: translucent black, coloured like the game's chat */
+	.chat {
+		margin: 0;
+		padding: 0.35rem 0.6rem;
+		background: rgb(0 0 0 / 0.6);
+		color: #fff;
 
 		&.right {
-			border-color: var(--good);
+			color: var(--good);
 		}
 		&.typo {
-			border-color: var(--star);
+			color: var(--yellow);
 		}
 		&.wrong {
-			border-color: var(--bad);
+			color: var(--bad);
 		}
-
-		p {
-			margin: 0;
+		&.given {
+			color: var(--muted);
+			font-size: 0.9rem;
 		}
 	}
 
-	.message {
-		display: flex;
-		justify-content: space-between;
-		gap: 0.5rem;
-		font-size: 1.25rem;
+	.sender {
+		color: #fff;
+	}
+
+	.xp {
+		color: var(--xp);
 		font-weight: 700;
-	}
-
-	.points {
-		color: var(--good);
 	}
 
 	.buttons {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.6rem;
-		margin-top: 0.4rem;
+		margin-top: 0.5rem;
 	}
 
 	.next {

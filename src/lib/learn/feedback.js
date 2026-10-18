@@ -13,7 +13,9 @@ export const PHRASES = {
 		'Slay! ✨',
 		'Sauber! 👌',
 		'Treffer! 🎯',
-		'Big Brain! 🧠'
+		'Big Brain! 🧠',
+		'Gefarmt! ⛏️',
+		'Gut abgebaut! 💎'
 	],
 	/** {n} becomes the multiplier */
 	combo: ['Combo ×{n}! 🔥🔥', 'On fire – ×{n}! 🚀', 'Unaufhaltbar – ×{n}! ⚡'],
@@ -22,10 +24,39 @@ export const PHRASES = {
 		'Ein Buchstabe – zählt halb. 🤏',
 		'Knapp! Achte auf die Schreibweise. ✍️'
 	],
-	wrong: ['Bruh 💀', 'Das war wohl nix 💩', 'Autsch 🙈', 'Oof 🫠', 'Nicht ganz – nächstes Mal! 💪'],
+	wrong: [
+		'Bruh 💀',
+		'Das war wohl nix 💩',
+		'Autsch 🙈',
+		'Oof 🫠',
+		'Ssssss… 💥',
+		'In Lava gefallen 🔥',
+		'Nicht ganz – nächstes Mal! 💪'
+	],
 	revealed: ['Gespickt 👀 – merk sie dir!', 'Kein Ding, jetzt weißt du es. 💡'],
 	timeUp: ['Zeit um! ⏰', 'Die Uhr war schneller. ⏰']
 };
+
+/** The yellow splash text on the start page – one at random each time. */
+export const SPLASHES = [
+	'Veni, vidi, vici!',
+	'Carpe diem!',
+	'Alea iacta est!',
+	'Jetzt mit Ablativ!',
+	'Auch mit Makronen!',
+	'Cäsar-geprüft!',
+	'Errare humanum est!',
+	'Mit 100 % mehr Diamanten!',
+	'Rom wurde auch nicht an einem Tag gebaut!',
+	'Non scholae, sed vitae!',
+	'Ssssss… cave!',
+	'Per aspera ad astra!'
+];
+
+/** @param {() => number} [random] */
+export function splash(random = Math.random) {
+	return SPLASHES[Math.floor(random() * SPLASHES.length)];
+}
 
 /**
  * @param {keyof typeof PHRASES} kind

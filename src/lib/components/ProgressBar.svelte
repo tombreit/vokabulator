@@ -1,4 +1,4 @@
-<!-- A horizontal bar, `value` from 0 to 1. -->
+<!-- A horizontal bar, `value` from 0 to 1 – a black-framed slot that fills with grass green. -->
 <script>
 	/** @type {{ value: number, label?: string }} */
 	let { value, label = '' } = $props();
@@ -19,16 +19,14 @@
 
 <style>
 	.bar {
-		height: 0.6rem;
-		border-radius: 999px;
+		height: 12px;
+		border: 2px solid #000;
 		background: var(--surface-2);
-		overflow: hidden;
 	}
 
 	.fill {
 		height: 100%;
-		border-radius: inherit;
-		background: var(--accent);
-		transition: width 0.3s ease;
+		background: linear-gradient(#6fbf4a 0 35%, var(--accent) 35%);
+		transition: width 0.3s ease-out;
 	}
 </style>

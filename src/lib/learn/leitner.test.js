@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	learnedShare,
 	newProgress,
+	oreOf,
 	pickRound,
 	recordAnswer,
 	shuffle,
@@ -83,5 +84,19 @@ describe('learnedShare', () => {
 describe('shuffle', () => {
 	it('keeps all items', () => {
 		expect(shuffle([1, 2, 3, 4, 5]).sort()).toEqual([1, 2, 3, 4, 5]);
+	});
+});
+
+describe('oreOf', () => {
+	it('goes from stone to diamond and stays in range', () => {
+		expect([0, 1, 2, 3, 4, 5, 9].map((box) => oreOf(box).name)).toEqual([
+			'Stein',
+			'Stein',
+			'Kohle',
+			'Eisen',
+			'Gold',
+			'Diamant',
+			'Diamant'
+		]);
 	});
 });

@@ -1,26 +1,54 @@
 <!--
-  The question as a wax tablet (tabula cerata): dark wax in a wooden frame.
-  Once answered or revealed, the solution is "scratched in" below the question.
-  The foreign word is set in the inscription face, German in the reading face –
-  so the type alone tells which language you are looking at.
+  The question on a stone panel, with the word's ore block on top.
+  Once answered, the solution appears – and the block shows what happened:
+    known     → it cracks (three stages) and turns into the next ore: "Kohle → Eisen!"
+    not known → it shakes and falls back to stone
+  During a combo the panel is "enchanted" (a purple shimmer).
 -->
 <script>
+	import Sprite from '#lib/components/Sprite.svelte';
+	import { oreOf } from '#lib/learn/leitner.js';
+
 	/**
 	 * @type {{
 	 *   entry: import('#lib/model.js').Entry,
 	 *   reverse: boolean,
 	 *   langName: string,
-	 *   showAnswer: boolean
+	 *   showAnswer: boolean,
+	 *   box: number,
+	 *   newBox?: number,
+	 *   enchanted?: boolean
 	 * }}
-	 * reverse: ask the German side, answer the foreign one
+	 * reverse: ask the German side; box: the word's box when asked; newBox: after the answer
 	 */
-	let { entry, reverse, langName, showAnswer } = $props();
+	let { entry, reverse, langName, showAnswer, box, newBox, enchanted = false } = $props();
+
+	/** 0 = whole, 1–3 = cracks, 4 = done (showing the new ore) */
+	let stage = $state(0);
+
+	$effect(() => {
+		if (newBox === undefined) return;
+		// cracks only when the word moves up; otherwise straight to the end state
+		const steps = newBox > box ? [1, 2, 3, 4] : [4];
+		const timers = steps.map((step, i) => setTimeout(() => (stage = step), i * 120));
+		return () => timers.forEach(clearTimeout);
+	});
+
+	const done = $derived(stage === 4 && newBox !== undefined);
+	const shown = $derived(oreOf(done && newBox !== undefined ? newBox : box));
+	const caption = $derived.by(() => {
+		if (!done || newBox === undefined || newBox === box) return shown.name;
+		return `${oreOf(box).name} → ${oreOf(newBox).name}!`;
+	});
+	const direction = $derived(
+		newBox === undefined ? '' : newBox > box ? 'up' : newBox < box ? 'down' : ''
+	);
 </script>
 
 {#snippet foreign()}
 	<p class="side">{langName}</p>
-	<p class="word foreign" lang={langName === 'Latein' ? 'la' : undefined}>{entry.front}</p>
-	{#if entry.frontInfo}<p class="info">{entry.frontInfo}</p>{/if}
+	<p class="word" lang={langName === 'Latein' ? 'la' : undefined}>{entry.front}</p>
+	{#if entry.frontInfo}<p><span class="tooltip">{entry.frontInfo}</span></p>{/if}
 {/snippet}
 
 {#snippet german()}
@@ -28,94 +56,178 @@
 	<p class="word german">{entry.back}</p>
 {/snippet}
 
-<div class="tablet">
-	<div class="wax">
-		{@render (reverse ? german : foreign)()}
-
-		{#if showAnswer}
-			<div class="answer">
-				<hr />
-				{@render (reverse ? foreign : german)()}
-			</div>
+<div class="card question" class:enchanted>
+	<div class="block" class:pop={done && direction === 'up'} class:hurt={direction === 'down'}>
+		<Sprite name={shown.sprite} size={64} label={shown.name} />
+		{#if stage >= 1 && stage <= 3}
+			<span class="crack"><Sprite name="crack{stage}" size={64} /></span>
 		{/if}
 	</div>
+	<p class="ore {done ? direction : ''}">{caption}</p>
+
+	{@render (reverse ? german : foreign)()}
+
+	{#if showAnswer}
+		<div class="answer">
+			<hr />
+			{@render (reverse ? foreign : german)()}
+		</div>
+	{/if}
 </div>
 
 <style>
-	/* the wooden frame */
-	.tablet {
-		padding: 10px;
-		margin-bottom: var(--gap);
-		border-radius: 12px;
-		background:
-			repeating-linear-gradient(96deg, rgb(255 255 255 / 0.05) 0 2px, transparent 2px 11px),
-			var(--wood);
-		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.25),
-			0 8px 16px -10px rgb(60 30 0 / 0.7);
-	}
-
-	/* the wax, sitting a little deeper than the frame */
-	.wax {
-		min-height: 12rem;
+	.question {
+		position: relative;
+		overflow: hidden;
 		display: grid;
+		justify-items: center;
 		align-content: center;
-		padding: 1.75rem 1rem;
-		border-radius: 6px;
-		background: var(--wax);
-		box-shadow: inset 0 3px 10px rgb(0 0 0 / 0.55);
-		color: var(--scratch);
+		min-height: 15rem;
+		margin-bottom: var(--gap);
+		padding: 1.25rem 1rem 1.5rem;
 		text-align: center;
 		overflow-wrap: anywhere;
+
+		p {
+			margin: 0;
+		}
+	}
+
+	.block {
+		position: relative;
+		width: 64px;
+		height: 64px;
+		outline: 2px solid #000;
+		outline-offset: 0;
+
+		.crack {
+			position: absolute;
+			inset: 0;
+		}
+	}
+
+	.ore {
+		margin: 0.35rem 0 0.75rem !important;
+		font-size: 0.9rem;
+		color: var(--muted);
+
+		&.up {
+			color: var(--good);
+			font-weight: 700;
+		}
+		&.down {
+			color: var(--bad);
+			font-weight: 700;
+		}
 	}
 
 	.side {
-		margin: 0 0 0.3rem;
 		font-size: 0.85rem;
-		color: var(--scratch-muted);
+		color: var(--muted);
 	}
 
 	.word {
-		margin: 0;
+		font-size: clamp(1.25rem, 6vw, 1.7rem);
+		font-weight: 700;
 		line-height: 1.2;
 	}
 
-	.foreign {
-		font-family: var(--font-inscription);
-		font-size: clamp(1.7rem, 7.5vw, 2.4rem);
-		letter-spacing: 0.01em;
-	}
-
+	/* German in the reading face: the type tells which language you are looking at */
 	.german {
+		font-family: var(--font-read);
+		font-size: clamp(1.2rem, 5.5vw, 1.5rem);
 		font-weight: 600;
-		font-size: clamp(1.2rem, 5.5vw, 1.55rem);
 	}
 
-	.info {
-		margin: 0.3rem 0 0;
-		font-style: italic;
-		color: var(--scratch-muted);
+	.tooltip {
+		display: inline-block;
+		margin-top: 0.35rem;
+		padding: 0.1em 0.45em;
+		border: 2px solid #2a0a5e;
+		background: #100010;
+		color: #fff;
+		font-size: 0.9rem;
 	}
 
 	hr {
 		width: 70%;
-		margin: 1.25rem auto;
+		margin: 1rem auto;
 		border: none;
-		border-top: 2px dotted var(--scratch-muted);
-		opacity: 0.6;
+		border-top: 2px dashed var(--line);
 	}
 
-	/* the solution appears from left to right, as if written with the stylus */
-	.answer {
-		animation: scratch-in 0.55s cubic-bezier(0.3, 0.7, 0.4, 1);
+	/* --- the block reacts ------------------------------------------------------------ */
+	.pop {
+		animation: pop 0.25s ease-out;
 	}
 
-	@keyframes scratch-in {
+	@keyframes pop {
 		from {
-			clip-path: inset(0 100% 0 0);
+			scale: 1.3;
+		}
+	}
+
+	/* not known: shake, flash red (like taking damage in the game) */
+	.hurt {
+		animation: shake 0.35s;
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: rgb(255 0 0 / 0.45);
+			animation: flash 0.35s forwards;
+		}
+	}
+
+	@keyframes shake {
+		20% {
+			translate: -5px 0;
+		}
+		40% {
+			translate: 5px 0;
+		}
+		60% {
+			translate: -3px 0;
+		}
+		80% {
+			translate: 3px 0;
+		}
+	}
+
+	@keyframes flash {
+		to {
+			opacity: 0;
+		}
+	}
+
+	/* --- combo: the panel is enchanted ---------------------------------------------- */
+	.enchanted {
+		&::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			background: linear-gradient(
+				115deg,
+				transparent 30%,
+				rgb(160 80 255 / 0.35) 45%,
+				rgb(200 140 255 / 0.5) 50%,
+				rgb(160 80 255 / 0.35) 55%,
+				transparent 70%
+			);
+			background-size: 300% 100%;
+			animation: glint 2.4s linear infinite;
+			mix-blend-mode: multiply;
+		}
+	}
+
+	@keyframes glint {
+		from {
+			background-position: 100% 0;
 		}
 		to {
-			clip-path: inset(0 0 0 0);
+			background-position: -200% 0;
 		}
 	}
 </style>
