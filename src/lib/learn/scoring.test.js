@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { multiplier, newScore, scoreAnswer, timeBonus, useJoker } from './scoring.js';
+import { multiplier, newScore, scoreAnswer, speedBonus, useJoker } from './scoring.js';
 
 /** @param {import('./check-answer.js').Outcome[]} outcomes */
 function play(outcomes) {
@@ -59,8 +59,12 @@ describe('jokers, multiplier and time bonus', () => {
 		expect([0, 1, 2, 3, 5, 6, 10].map(multiplier)).toEqual([1, 1, 1, 2, 2, 3, 3]);
 	});
 
-	it('gives a point per 2 seconds left', () => {
-		expect(timeBonus(45_900)).toBe(22);
-		expect(timeBonus(0)).toBe(0);
+	it('gives up to 5 points for a fast answer', () => {
+		expect([1, 0.5, 0.29, 0, 1.2, -1].map(speedBonus)).toEqual([5, 3, 1, 0, 5, 0]);
+	});
+
+	it('adds the speed bonus to a right answer, not to a wrong one', () => {
+		expect(scoreAnswer(newScore(), 'right', { bonus: 4 }).gained).toBe(14);
+		expect(scoreAnswer(newScore(), 'wrong', { bonus: 4 }).gained).toBe(0);
 	});
 });

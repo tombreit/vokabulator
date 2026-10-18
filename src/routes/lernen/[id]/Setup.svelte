@@ -13,6 +13,7 @@
 <script>
 	import Sprite from '#lib/components/Sprite.svelte';
 	import { LANGS } from '#lib/model.js';
+	import { CLOCK_SECONDS } from '#lib/storage.js';
 
 	/**
 	 * @type {{
@@ -50,9 +51,7 @@
 		],
 		clock: [
 			[0, 'Aus'],
-			[60, '1 Minute'],
-			[180, '3 Minuten'],
-			[300, '5 Minuten']
+			...CLOCK_SECONDS.map((s) => /** @type {[number, string]} */ ([s, `${s} Sek.`]))
 		]
 	});
 
@@ -97,7 +96,7 @@
 	{@render option('Modus', label('mode'), () => cycle('mode'))}
 	{@render option('Richtung', label('direction'), () => cycle('direction'))}
 	{@render option('Vokabeln', label('roundSize'), () => cycle('roundSize'))}
-	{@render option('Schachuhr', label('clock'), () => cycle('clock'))}
+	{@render option('Zeit pro Vokabel', label('clock'), () => cycle('clock'))}
 	{@render option('Nur schwere', options.onlyHard ? 'An' : 'Aus', () => {
 		options.onlyHard = !options.onlyHard;
 	})}

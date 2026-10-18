@@ -7,8 +7,8 @@ const base = {
 	planned: 5,
 	bestStreak: 2,
 	usedJokers: true,
-	timeUp: false,
-	clockShareLeft: 0,
+	timed: false,
+	timeouts: 0,
 	beatRecord: false,
 	boxes: [1, 1, 2],
 	xpTotal: 50,
@@ -25,7 +25,7 @@ describe('newAdvancements', () => {
 		expect(ids({}, { 'first-round': '2026-10-18' })).toEqual([]);
 	});
 
-	it('knows diamonds, iron and a whole diamond world', () => {
+	it('knows stage 5, stage 3 and a whole unit on stage 5', () => {
 		expect(ids({ boxes: [1, 5] })).toContain('first-diamond');
 		expect(ids({ boxes: Array(10).fill(3) })).toContain('iron-age');
 		expect(ids({ boxes: Array(9).fill(3) })).not.toContain('iron-age');
@@ -42,8 +42,9 @@ describe('newAdvancements', () => {
 	it('combo, record, speedrun, days and level', () => {
 		expect(ids({ bestStreak: 6 })).toContain('combo');
 		expect(ids({ beatRecord: true })).toContain('record');
-		expect(ids({ clockShareLeft: 0.5 })).toContain('speedrun');
-		expect(ids({ clockShareLeft: 0.6, timeUp: true })).not.toContain('speedrun');
+		expect(ids({ timed: true, planned: 10 })).toContain('speedrun');
+		expect(ids({ timed: true, planned: 10, timeouts: 1 })).not.toContain('speedrun');
+		expect(ids({ timed: false, planned: 10 })).not.toContain('speedrun');
 		expect(ids({ days: 7 })).toEqual(expect.arrayContaining(['days-3', 'days-7']));
 		expect(ids({ xpTotal: 3250 })).toContain('level-10');
 	});

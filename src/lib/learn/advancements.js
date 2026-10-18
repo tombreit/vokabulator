@@ -17,8 +17,8 @@ import { levelFor } from './level.js';
  * @property {number} planned         words in the round
  * @property {number} bestStreak      most right answers in a row
  * @property {boolean} usedJokers     a joker used (tip, 50:50 or reveal)
- * @property {boolean} timeUp         the chess clock ran out
- * @property {number} clockShareLeft  share of the chess clock left at the end, 0..1 (0 without clock)
+ * @property {boolean} timed          played with a time per word
+ * @property {number} timeouts        words whose time ran out
  * @property {boolean} beatRecord     beat an earlier record in this unit (not the first one)
  * @property {number[]} boxes         the boxes (1..5) of all words of the unit, after the round
  * @property {number} xpTotal         all XP ever earned, including this round
@@ -88,9 +88,9 @@ export const ADVANCEMENTS = [
 	{
 		id: 'speedrun',
 		sprite: 'clock',
-		title: 'Speedrunner',
-		text: 'Mit Schachuhr fertig – und noch die Hälfte der Zeit übrig.',
-		check: (f) => !f.timeUp && f.clockShareLeft >= 0.5
+		title: 'Blitzschnell',
+		text: 'Eine Runde mit Zeitlimit und mindestens 10 Vokabeln – und nie war die Zeit um.',
+		check: (f) => f.timed && f.planned >= 10 && f.timeouts === 0
 	},
 	{
 		id: 'days-3',

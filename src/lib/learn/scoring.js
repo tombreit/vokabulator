@@ -7,7 +7,7 @@
  *   wrong / revealed        0, and the combo is gone
  *   combo                 ×2 from 3 right answers in a row, ×3 from 6 in a row
  *   💡 joker (tip)         −3 on that answer (first letter, or 50:50 in multiple choice)
- *   ⏱️ chess clock         time left at the end: +1 per 2 seconds
+ *   ⏱️ time per word       speed bonus for a right answer: up to +5, by the share of time left
  *
  * Every round starts with 3 jokers (tip or reveal).
  */
@@ -18,6 +18,7 @@ export const POINTS_RIGHT = 10;
 export const POINTS_TYPO = 5;
 export const TIP_COST = 3;
 export const JOKERS_PER_ROUND = 3;
+export const MAX_SPEED_BONUS = 5;
 
 /**
  * @typedef {object} Score
@@ -43,17 +44,18 @@ export function multiplier(streak) {
 /**
  * @param {Score} score  before this answer
  * @param {Outcome} outcome
- * @param {{ tip?: boolean }} [used]  was the tip joker used for this answer?
+ * @param {{ tip?: boolean, bonus?: number }} [extra]
+ *   tip: the tip joker was used for this answer; bonus: speed bonus (see speedBonus)
  * @returns {{ score: Score, gained: number, comboUp: boolean }}
  *   comboUp: this answer reached a higher multiplier (time to celebrate)
  */
-export function scoreAnswer(score, outcome, { tip = false } = {}) {
+export function scoreAnswer(score, outcome, { tip = false, bonus = 0 } = {}) {
 	if (outcome === 'wrong') {
 		return { score: { ...score, streak: 0 }, gained: 0, comboUp: false };
 	}
 	const streak = score.streak + 1;
 	const base = outcome === 'right' ? POINTS_RIGHT : POINTS_TYPO;
-	const gained = Math.max(0, base * multiplier(streak) - (tip ? TIP_COST : 0));
+	const gained = Math.max(0, base * multiplier(streak) - (tip ? TIP_COST : 0)) + bonus;
 	return {
 		score: {
 			...score,
@@ -75,9 +77,9 @@ export function useJoker(score) {
 }
 
 /**
- * Bonus for the time left on the chess clock.
- * @param {number} msLeft
+ * Bonus for answering fast when there is a time per word.
+ * @param {number} shareLeft  of the time for this word, 0..1
  */
-export function timeBonus(msLeft) {
-	return Math.floor(msLeft / 2000);
+export function speedBonus(shareLeft) {
+	return Math.round(MAX_SPEED_BONUS * Math.min(Math.max(shareLeft, 0), 1));
 }

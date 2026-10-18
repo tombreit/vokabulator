@@ -7,9 +7,11 @@
  *   any other unit     /neu#d=<words>
  *                      the words travel inside the link, compressed. The part after "#"
  *                      is never sent to a server.
- *   challenge          …&challenge=57&mode=typing&words=10&direction=front-back&clock=60
+ *   challenge          …&challenge=57&mode=typing&words=10&direction=front-back&clock=10
  *                      "Schlag 57 XP!" – with the same settings, so it is fair
  */
+
+import { CLOCK_SECONDS } from './storage.js';
 
 /** @typedef {import('./model.js').Unit} Unit */
 /** @typedef {import('./model.js').UnitDraft} UnitDraft */
@@ -21,7 +23,7 @@
  * @property {Settings['mode']} mode
  * @property {number} roundSize
  * @property {Settings['direction']} direction
- * @property {number} clock  seconds, 0 = off
+ * @property {number} clock  seconds per word, 0 = off
  */
 
 /**
@@ -76,7 +78,7 @@ export function readChallenge(query) {
 		direction: /** @type {Challenge['direction']} */ (
 			pick('direction', ['front-back', 'back-front', 'mixed'], 'front-back')
 		),
-		clock: Number(pick('clock', ['0', '60', '180', '300'], '0'))
+		clock: Number(pick('clock', ['0', ...CLOCK_SECONDS.map(String)], '0'))
 	};
 }
 

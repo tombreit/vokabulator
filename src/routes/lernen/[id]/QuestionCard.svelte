@@ -6,6 +6,7 @@
     known     → it pops up as the next item: "↑ Stufe 3"
     not known → it shakes and falls back: "↓ Stufe 1"
   During a series of right answers the panel shimmers purple ("enchanted").
+  `children`: the time bar along the bottom edge (WordTimer), if there is a time per word.
 -->
 <script>
 	import Sprite from '#lib/components/Sprite.svelte';
@@ -19,12 +20,13 @@
 	 *   showAnswer: boolean,
 	 *   box: number,
 	 *   newBox?: number,
-	 *   enchanted?: boolean
+	 *   enchanted?: boolean,
+	 *   children?: import('svelte').Snippet
 	 * }}
 	 * reverse: ask the German side; lang: of the foreign word ("la", "en", …);
 	 * box: the word's box when asked; newBox: after the answer
 	 */
-	let { entry, reverse, lang, showAnswer, box, newBox, enchanted = false } = $props();
+	let { entry, reverse, lang, showAnswer, box, newBox, enchanted = false, children } = $props();
 
 	const shown = $derived(stageOf(newBox ?? box));
 	const direction = $derived(
@@ -57,6 +59,8 @@
 		<hr />
 		{@render (reverse ? foreign : german)()}
 	{/if}
+
+	{@render children?.()}
 </div>
 
 <style>

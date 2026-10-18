@@ -112,7 +112,7 @@ export function saveProgress(unitId, progress) {
  * @property {'front-back' | 'back-front' | 'mixed'} direction  front-back = Latein → Deutsch
  * @property {number} roundSize  number of words per round, 0 = all
  * @property {'cards' | 'typing' | 'choice'} mode  flash cards, type the answer, or multiple choice
- * @property {number} clock  chess clock for a round in seconds, 0 = off
+ * @property {number} clock  seconds per word, 0 = off (one of CLOCK_SECONDS)
  * @property {boolean} sound  little sounds for XP, level-up and wrong answers (see sound.js)
  */
 
@@ -125,9 +125,15 @@ const DEFAULT_SETTINGS = {
 	sound: false
 };
 
+/** The choices for the time per word, besides 0 = off. */
+export const CLOCK_SECONDS = [5, 10, 20];
+
 /** @returns {Settings} */
 export function loadSettings() {
-	return { ...DEFAULT_SETTINGS, ...read('settings', {}) };
+	const settings = { ...DEFAULT_SETTINGS, ...read('settings', {}) };
+	// before batch 13 the clock was a time for the whole round (60, 180 or 300 seconds)
+	if (!CLOCK_SECONDS.includes(settings.clock)) settings.clock = 0;
+	return settings;
 }
 
 /** @param {Settings} settings */

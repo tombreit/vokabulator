@@ -6,13 +6,13 @@
 	/**
 	 * Numbers of a finished round, worked out by the page.
 	 * @typedef {object} Summary
-	 * @property {number} planned      cards in the round (when time runs out, not all were answered)
-	 * @property {number} points       XP of this round, including the time bonus
+	 * @property {number} planned      cards in the round
+	 * @property {number} points       XP of this round, including the speed bonus
 	 * @property {number} xpBefore     all XP earned before this round (for the level)
-	 * @property {number} timeBonus    ⏱️ XP for time left (0 without clock)
+	 * @property {number} speedBonus   ⏱️ XP for fast answers (0 without time per word)
+	 * @property {number} timeouts     ⏱️ words whose time ran out
 	 * @property {number} bestStreak
 	 * @property {number} durationMs
-	 * @property {boolean} timeUp      the chess clock ran out
 	 * @property {number} previousBest highscore of this unit before this round (0 = none)
 	 * @property {number} days         rounds finished on days in a row, including today
 	 * @property {import('#lib/learn/advancements.js').Advancement[]} advancements  unlocked in this round
@@ -27,7 +27,7 @@
 	import Sprite from '#lib/components/Sprite.svelte';
 	import HardButton from '#lib/components/HardButton.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
-	import { phrase, verdict } from '#lib/learn/feedback.js';
+	import { verdict } from '#lib/learn/feedback.js';
 	import { STAGES, stageOf } from '#lib/learn/leitner.js';
 	import { levelFor } from '#lib/learn/level.js';
 
@@ -65,7 +65,6 @@
 	const mistakes = $derived(answers.filter((a) => a.outcome === 'wrong').map((a) => a.entry));
 	const knownShare = $derived(summary.planned ? known / summary.planned : 0);
 	const headline = $derived(verdict(knownShare));
-	const timeUpText = phrase('timeUp');
 	const isRecord = $derived(summary.points > summary.previousBest && summary.points > 0);
 	const seconds = $derived(Math.round(summary.durationMs / 1000));
 	const minutes = $derived(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
@@ -91,7 +90,6 @@
 {/if}
 
 <div class="card result">
-	{#if summary.timeUp}<p class="time-up">{timeUpText}</p>{/if}
 	<p class="emoji">{headline.emoji}</p>
 	<h1>{headline.text}</h1>
 	<p class="xp"><Sprite name="xp" size={32} /> +{summary.points} XP</p>
@@ -169,10 +167,16 @@
 		<dt>🔥 Beste Serie</dt>
 		<dd>{summary.bestStreak}</dd>
 	</div>
-	{#if summary.timeBonus}
+	{#if summary.speedBonus}
 		<div>
-			<dt>⚡ Zeitbonus</dt>
-			<dd>+{summary.timeBonus} XP</dd>
+			<dt>⚡ Tempo-Bonus</dt>
+			<dd>+{summary.speedBonus} XP</dd>
+		</div>
+	{/if}
+	{#if summary.timeouts}
+		<div>
+			<dt>⏰ Zeit um</dt>
+			<dd>{summary.timeouts}×</dd>
 		</div>
 	{/if}
 	<div>
@@ -254,11 +258,6 @@
 
 	.challenge {
 		font-weight: 700;
-	}
-
-	.time-up {
-		font-weight: 700;
-		color: var(--bad);
 	}
 
 	.level {

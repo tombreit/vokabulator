@@ -21,7 +21,7 @@ const challenge = {
 	mode: /** @type {const} */ ('typing'),
 	roundSize: 10,
 	direction: /** @type {const} */ ('front-back'),
-	clock: 60
+	clock: 10
 };
 
 describe('sharePath', () => {
@@ -71,12 +71,15 @@ describe('packUnit / unpackUnit', () => {
 describe('readChallenge', () => {
 	it('ignores links without challenge and unknown values', () => {
 		expect(readChallenge(new URLSearchParams('code=1-2'))).toBeUndefined();
-		expect(readChallenge(new URLSearchParams('challenge=30&mode=hack&words=999'))).toEqual({
-			points: 30,
-			mode: 'cards',
-			roundSize: 10,
-			direction: 'front-back',
-			clock: 0
-		});
+		// clock=60: a time for the whole round, from links made before batch 13
+		expect(readChallenge(new URLSearchParams('challenge=30&mode=hack&words=999&clock=60'))).toEqual(
+			{
+				points: 30,
+				mode: 'cards',
+				roundSize: 10,
+				direction: 'front-back',
+				clock: 0
+			}
+		);
 	});
 });

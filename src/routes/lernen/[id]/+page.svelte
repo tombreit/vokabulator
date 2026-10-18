@@ -1,7 +1,7 @@
 <!--
   Learning a unit – the round's state machine. The parts live next to this file:
 
-    setup     Setup.svelte          mode, direction, clock, which words, how many
+    setup     Setup.svelte          mode, direction, time per word, which words, how many
     question  QuestionCard.svelte   + one of Flashcards / Typing / Choice .svelte
               Feedback.svelte       after an answer in "Tippen" / "Auswahl"
     result    Result.svelte         points, record, mistakes, share the result as a challenge
@@ -16,10 +16,10 @@
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import ChessClock from '#lib/components/ChessClock.svelte';
 	import { nav } from '#lib/components/NavBar.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
+	import WordTimer from '#lib/components/WordTimer.svelte';
 	import HardButton from '#lib/components/HardButton.svelte';
 	import { firstLetterTip } from '#lib/learn/check-answer.js';
 	import { newAdvancements } from '#lib/learn/advancements.js';
@@ -32,7 +32,7 @@
 		multiplier,
 		newScore,
 		scoreAnswer,
-		timeBonus,
+		speedBonus,
 		useJoker
 	} from '#lib/learn/scoring.js';
 	import { localDay, recordDay } from '#lib/learn/streak.js';
@@ -70,7 +70,10 @@
 	 * @property {string} given    what was typed or picked
 	 * @property {boolean} tip     the 💡 joker was used
 	 * @property {string} phrase   what we said about it
-	 * @property {number} gained   points
+	 * @property {number} gained   points, including the speed bonus
+	 * @property {number} bonus    ⏱️ speed bonus in it
+	 * @property {number} speedShare  of the time for this word left when answering (0 without time)
+	 * @property {boolean} timeUp  the time for this word ran out
 	 * @property {import('#lib/learn/leitner.js').EntryProgress} before
 	 * @property {import('#lib/learn/scoring.js').Score} scoreBefore
 	 */
@@ -120,7 +123,7 @@
 	/** 💡 joker used on the current card */
 	let tipUsed = $state(false);
 	let score = $state(newScore());
-	/** ⏱️ milliseconds left on the chess clock */
+	/** ⏱️ milliseconds left for the current word (with a time per word) */
 	let clockLeft = $state(0);
 	let startedAt = 0;
 	/** all XP earned before this round – the bar shows this plus the round's XP */
@@ -130,7 +133,8 @@
 
 	const card = $derived(cards[index]);
 	const withJokers = $derived(options.mode !== 'cards');
-	const clockRunning = $derived(options.clock > 0 && phase === 'question' && !current);
+	/** the time runs while the question is open – for flash cards until the solution is shown */
+	const clockRunning = $derived(options.clock > 0 && phase === 'question' && !current && !revealed);
 	/** 50:50 joker: only the right answer and one wrong one are left */
 	const visibleChoices = $derived(
 		tipUsed && card
@@ -147,10 +151,11 @@
 		return () => (nav.hidden = false);
 	});
 
-	// Flash cards: after rating, the card shows its ore change for a moment, then the next one comes.
+	// Flash cards: after rating, the card shows its new stage for a moment, then the next one comes.
+	// When the time ran out, the learner sees the solution only now – so it stays a bit longer.
 	$effect(() => {
 		if (!current || options.mode !== 'cards') return;
-		const timer = setTimeout(next, 1000);
+		const timer = setTimeout(next, current.timeUp ? 2500 : 1000);
 		return () => clearTimeout(timer);
 	});
 
@@ -182,10 +187,11 @@
 
 	/**
 	 * @param {Outcome} outcome
-	 * @param {string} [given]          what was typed or picked
-	 * @param {boolean} [byRevealJoker]  the learner used 👀 "Aufdecken"
+	 * @param {string} [given]  what was typed or picked
+	 * @param {'reveal' | 'timeUp'} [cause]  why it counts as not known without an answer:
+	 *   the "Aufdecken" joker, or the time for the word ran out
 	 */
-	function answer(outcome, given = '', byRevealJoker = false) {
+	function answer(outcome, given = '', cause) {
 		const { entry } = card;
 		const before = progressOf(progress, entry.id);
 		progress[entry.id] = recordAnswer(before, outcome !== 'wrong');
@@ -194,8 +200,12 @@
 		// a short buzz for right, a double one for wrong (Android; Firefox and iPhone have no vibrate)
 		navigator.vibrate?.(outcome === 'wrong' ? [60, 50, 60] : 25);
 
+		// ⏱️ the faster, the more bonus (only with a time per word)
+		const speedShare = options.clock && !cause ? clockLeft / (options.clock * 1000) : 0;
+		const bonus = outcome === 'wrong' ? 0 : speedBonus(speedShare);
+
 		const scoreBefore = score;
-		const result = scoreAnswer(score, outcome, { tip: tipUsed });
+		const result = scoreAnswer(score, outcome, { tip: tipUsed, bonus });
 		score = result.score;
 
 		play(outcome === 'wrong' ? 'wrong' : 'xp');
@@ -205,8 +215,8 @@
 			showToast({ sprite: 'xp', title: 'Level-Up!', text: `Du bist jetzt Level ${levelNow}.` });
 		}
 
-		const said = byRevealJoker
-			? phrase('revealed')
+		const said = cause
+			? phrase(cause === 'reveal' ? 'revealed' : 'timeUp')
 			: outcome === 'wrong'
 				? phrase('wrong')
 				: result.comboUp
@@ -221,6 +231,9 @@
 			tip: tipUsed,
 			phrase: said,
 			gained: result.gained,
+			bonus,
+			speedShare,
+			timeUp: cause === 'timeUp',
 			before,
 			scoreBefore
 		};
@@ -234,9 +247,15 @@
 		if (!last) return;
 		progress[last.entry.id] = recordAnswer(last.before, true);
 		saveProgress(unit.id, progress);
-		const result = scoreAnswer(last.scoreBefore, 'right', { tip: last.tip });
+		const bonus = speedBonus(last.speedShare);
+		const result = scoreAnswer(last.scoreBefore, 'right', { tip: last.tip, bonus });
 		score = result.score;
-		Object.assign(last, { outcome: 'right', gained: result.gained, phrase: phrase('right') });
+		Object.assign(last, {
+			outcome: 'right',
+			gained: result.gained,
+			bonus,
+			phrase: phrase('right')
+		});
 		current = last;
 	}
 
@@ -251,21 +270,26 @@
 	function useReveal() {
 		if (score.jokers === 0) return;
 		score = useJoker(score);
-		answer('wrong', '', true);
+		answer('wrong', '', 'reveal');
+	}
+
+	/** ⏱️ the time for this word ran out: it counts as not known, the solution shows */
+	function timeUp() {
+		revealed = true;
+		answer('wrong', '', 'timeUp');
 	}
 
 	function next() {
 		current = undefined;
 		revealed = false;
 		tipUsed = false;
+		clockLeft = options.clock * 1000;
 		if (index + 1 < cards.length) index++;
-		else finish(false);
+		else finish();
 	}
 
-	/** @param {boolean} timeUp  the chess clock ran out */
-	function finish(timeUp) {
-		const bonus = timeUp || !options.clock ? 0 : timeBonus(clockLeft);
-		score = { ...score, points: score.points + bonus };
+	function finish() {
+		const timeouts = answers.filter((a) => a.timeUp).length;
 
 		const stats = loadStats();
 		const previousBest = stats.highscores[unit.id] ?? 0;
@@ -281,8 +305,8 @@
 				planned: cards.length,
 				bestStreak: score.bestStreak,
 				usedJokers: score.jokers < JOKERS_PER_ROUND,
-				timeUp,
-				clockShareLeft: options.clock ? clockLeft / (options.clock * 1000) : 0,
+				timed: options.clock > 0,
+				timeouts,
 				beatRecord: previousBest > 0 && score.points > previousBest,
 				boxes: unit.entries.map((e) => progressOf(progress, e.id).box),
 				xpTotal: stats.xp,
@@ -305,10 +329,10 @@
 			planned: cards.length,
 			points: score.points,
 			xpBefore,
-			timeBonus: bonus,
+			speedBonus: answers.reduce((sum, a) => sum + a.bonus, 0),
+			timeouts,
 			bestStreak: score.bestStreak,
 			durationMs: Date.now() - startedAt,
-			timeUp,
 			previousBest,
 			days: stats.days.days
 		};
@@ -338,7 +362,7 @@
 		onstart={() => start(pool, options.roundSize)}
 	/>
 {:else if phase === 'question' && card}
-	<!-- two slim lines above the card: leave, how far, mark as hard – then XP, combo, clock -->
+	<!-- two slim lines above the card: leave, how far, mark as hard – then XP and series -->
 	<div class="round-bar">
 		<button class="leave" onclick={() => (phase = 'setup')} aria-label="Runde abbrechen">✕</button>
 		<ProgressBar value={index / cards.length} label="Fortschritt der Runde" />
@@ -355,14 +379,6 @@
 				>×{multiplier(score.streak)}</span
 			>
 		{/if}
-		{#if options.clock}
-			<ChessClock
-				bind:left={clockLeft}
-				total={options.clock * 1000}
-				running={clockRunning}
-				ontimeout={() => finish(true)}
-			/>
-		{/if}
 	</div>
 
 	<!-- a fresh set of components for every card (empty input, no old choice) -->
@@ -375,7 +391,16 @@
 			box={current ? current.before.box : progressOf(progress, card.entry.id).box}
 			newBox={current ? progressOf(progress, card.entry.id).box : undefined}
 			enchanted={multiplier(score.streak) > 1}
-		/>
+		>
+			{#if options.clock}
+				<WordTimer
+					bind:left={clockLeft}
+					total={options.clock * 1000}
+					running={clockRunning}
+					ontimeout={timeUp}
+				/>
+			{/if}
+		</QuestionCard>
 
 		{#if current}
 			<!-- flash cards go on by themselves (see the $effect above), the others wait for "Weiter" -->
@@ -495,10 +520,6 @@
 		margin-bottom: 0.6rem;
 		font-size: 0.9rem;
 		font-weight: 700;
-
-		:global(.clock) {
-			margin-left: auto;
-		}
 	}
 
 	.round-xp {
