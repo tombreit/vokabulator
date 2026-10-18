@@ -19,7 +19,7 @@
 | 8 | Teilen | ✅ (live geprüft) |
 | 9 | Design & Polish („Wachstafel“) | ✅ live, ersetzt durch Batch 10 |
 | 10 | „Blockwelt“: Minecraft-Stil mit Erzen, XP/Level, Fortschritten | ✅ live geprüft |
-| 11 | QR-Scanner auf allen Geräten (ZXing-Fallback) | ✅ (lokal; nach Deploy live prüfen) |
+| 11 | QR-Scanner auf allen Geräten (ZXing-Fallback) | ✅ live geprüft |
 
 ## Kontext
 
@@ -470,6 +470,9 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
 - 2026-10-18: Batch 11 – Scanner überall: ZXing-Fallback (`barcode-detector`, `zxing-wasm` 3.1.3), Fehlertext bei
   fehlender Kamera, `AddType application/wasm`. Echter Scan geprüft: Chromium ohne eigenen Leser, Fake-Kamera mit dem
   QR-Code aus dem Buch → Einheit in 1,3 s geladen, keine fremden Server.
+- 2026-10-18: Live: Batch 11 deployt und geprüft. `.wasm` kommt als `application/wasm`, mit gzip (~460 KB) und
+  langem Cache. Echter Scan ohne eingebauten Leser liest den QR-Code aus dem Buch in 1,3 s. Eingebauter Leser, Spiel,
+  Teilen/Challenge, Offline und Backup sind grün.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
