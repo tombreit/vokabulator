@@ -1,7 +1,8 @@
 <!--
   Create a new learning unit.
-  Each import method is a component in this folder. All of them end in
-  DraftPreview.svelte, which shows what was recognised and saves the unit.
+  Each import method is a component in this folder. Scan, code and a friend's link save the
+  unit right away and go on to the round (MediencodeLoader, SharedImport); typed text first
+  shows what was recognised (DraftPreview).
 
   /neu                      → "Scannen" tab (or "Code" where the browser cannot read QR codes)
   /neu?code=40702-229       → "Code" tab, starts loading right away
@@ -10,11 +11,12 @@
   …&challenge=57&…          → a friend's challenge, shown here and carried on to the learning page
 -->
 <script>
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { canScanQr } from '#lib/components/QrScanner.svelte';
+	import { loadPdfjs } from '#lib/import/pdf-items.js';
 	import { readChallenge } from '#lib/share.js';
 	import CodeImport from './CodeImport.svelte';
-	import PdfImport from './PdfImport.svelte';
 	import ScanImport from './ScanImport.svelte';
 	import SharedImport from './SharedImport.svelte';
 	import TextImport from './TextImport.svelte';
@@ -27,17 +29,21 @@
 	const methods = [
 		...(canScanQr ? [{ id: 'scan', label: '📷 Scannen' }] : []),
 		{ id: 'code', label: '🔢 Code' },
-		{ id: 'pdf', label: '📄 PDF' },
 		{ id: 'text', label: '✍️ Text' }
 	];
 	let activeId = $state(initialCode ? 'code' : methods[0].id);
+
+	// pdf.js (~1 MB) loads while the camera looks for the code, so reading the PDF starts at once.
+	onMount(() => {
+		if (!packed) loadPdfjs().catch(() => {});
+	});
 </script>
 
-<h1>{packed || initialCode ? '📩 Von einem Freund' : 'Neue Welt'}</h1>
+<h1>{reload ? 'Neu laden' : packed || initialCode ? '📩 Von einem Freund' : 'Neue Welt'}</h1>
 
 {#if challenge}
 	<p class="card challenge">
-		🏆 <strong>Challenge:</strong> Schlag {challenge.points} XP! Speicher die Einheit und leg los.
+		🏆 <strong>Challenge:</strong> Schlag {challenge.points} XP!
 	</p>
 {/if}
 
@@ -62,8 +68,6 @@
 		<ScanImport />
 	{:else if activeId === 'code'}
 		<CodeImport {initialCode} {reload} />
-	{:else if activeId === 'pdf'}
-		<PdfImport />
 	{:else}
 		<TextImport />
 	{/if}
@@ -74,14 +78,17 @@
 		margin-bottom: var(--gap);
 	}
 
-	/* 2 × 2 on phones, one row on wider screens; the chosen tab is green */
+	/* one row; the chosen tab is green */
 	.tabs {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+		grid-auto-flow: column;
+		grid-auto-columns: minmax(0, 1fr);
 		gap: 6px;
 		margin-bottom: var(--gap);
 
 		button {
+			gap: 0.35em;
+			padding-inline: 0.25rem;
 			white-space: nowrap;
 		}
 	}

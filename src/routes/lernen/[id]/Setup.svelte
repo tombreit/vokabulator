@@ -1,6 +1,7 @@
 <!--
-  Before a round – an options screen like in the game: every button shows
-  "Name: value" and switches to the next value when tapped.
+  Before a round: the start button first (one tap after an import), below it an
+  options screen like in the game – every button shows "Name: value" and switches
+  to the next value when tapped.
 -->
 <script module>
 	/**
@@ -88,6 +89,10 @@
 	</button>
 {/snippet}
 
+<button class="button primary start" disabled={count === 0} onclick={onstart}>
+	<Sprite name="pickaxe" size={32} /> Los geht's ({count})
+</button>
+
 <div class="options">
 	{@render option('Modus', label('mode'), () => cycle('mode'))}
 	{@render option('Richtung', label('direction'), () => cycle('direction'))}
@@ -111,10 +116,6 @@
 	</div>
 {/if}
 
-<button class="button primary start" disabled={count === 0} onclick={onstart}>
-	<Sprite name="pickaxe" size={32} /> Los geht's ({count})
-</button>
-
 <style>
 	/* one column on phones, two on wider screens – like the game's options menu */
 	.options {
@@ -136,6 +137,7 @@
 	.start {
 		width: 100%;
 		min-height: 4rem;
+		margin-bottom: var(--gap);
 		font-size: 1.25rem;
 	}
 </style>

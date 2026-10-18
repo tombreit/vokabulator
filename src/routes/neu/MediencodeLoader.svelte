@@ -1,46 +1,74 @@
 <!--
-  Loads the vocabulary of one C.C.Buchner Mediencode and shows the preview.
-  If this code was imported before, it simply opens that unit (learning progress included).
-  Used by the "Scannen" and "Code" tabs.
+  Imports the vocabulary of one C.C.Buchner Mediencode – no preview, no extra tap:
+  load, save, say so ("Vokabeln importiert!") and go straight to the round setup.
+  A code that was imported before simply continues that world (progress included).
+  Used by the "Scannen" and "Code" tabs and for links like /neu?code=40702-229.
 -->
 <script>
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { importMediencode } from '#lib/import/ccbuchner.js';
-	import { readChallenge, withChallenge } from '#lib/share.js';
-	import { getUnit } from '#lib/storage.js';
-	import DraftPreview from './DraftPreview.svelte';
+	import { buildUnit } from '#lib/model.js';
+	import { withChallenge } from '#lib/share.js';
+	import { getUnit, saveUnit } from '#lib/storage.js';
+	import { showToast } from '#lib/toasts.svelte.js';
 
 	/**
 	 * @type {{ code: string, reload?: boolean }}
-	 * code: e.g. "40702-229"; reload: load again even if the unit exists ("Neu laden")
+	 * code: e.g. "40702-229"; reload: load again even if the world exists ("Neu laden")
 	 */
 	let { code, reload = false } = $props();
 
-	const existing = $derived(reload ? undefined : getUnit(`ccb-${code}`));
+	let error = $state('');
+
+	/** the round setup of a world – a friend's challenge from the link goes along */
+	const learn = (/** @type {string} */ id) =>
+		withChallenge(
+			resolve('/lernen/[id]', { id }),
+			untrack(() => page.url)
+		);
 
 	$effect(() => {
-		if (!existing) return;
-		// known unit: open it – or, for a friend's challenge, go straight to learning
-		goto(
-			readChallenge(page.url.searchParams)
-				? withChallenge(resolve('/lernen/[id]', { id: existing.id }), page.url)
-				: resolve('/einheit/[id]', { id: existing.id })
-		);
+		const existing = reload ? undefined : getUnit(`ccb-${code}`);
+		if (existing) {
+			showToast({
+				sprite: 'chest',
+				title: 'Kenn ich schon!',
+				text: `Weiter in „${existing.title}“.`
+			});
+			goto(learn(existing.id));
+			return;
+		}
+
+		let cancelled = false;
+		error = '';
+		importMediencode(code)
+			.then((draft) => {
+				if (cancelled) return;
+				const unit = buildUnit(draft);
+				saveUnit(unit);
+				showToast({
+					sprite: 'chest',
+					title: reload ? 'Neu geladen!' : 'Vokabeln importiert!',
+					text: `${unit.entries.length} Vokabeln: „${unit.title}“`
+				});
+				goto(reload ? resolve('/einheit/[id]', { id: unit.id }) : learn(unit.id));
+			})
+			.catch((/** @type {Error} */ e) => {
+				if (!cancelled) error = e.message;
+			});
+		return () => {
+			cancelled = true;
+		};
 	});
 </script>
 
-{#if existing}
-	<p class="card status" role="status">📖 Kenn ich schon – ich öffne „{existing.title}“ …</p>
+{#if error}
+	<p class="card error" role="alert">{error}</p>
 {:else}
-	{#await importMediencode(code)}
-		<p class="card status" role="status">⏳ Lade die Vokabeln zu {code} …</p>
-	{:then draft}
-		<DraftPreview {draft} />
-	{:catch error}
-		<p class="card error" role="alert">{error.message}</p>
-	{/await}
+	<p class="card status" role="status">⏳ Lade die Vokabeln zu {code} …</p>
 {/if}
 
 <style>
@@ -51,6 +79,5 @@
 
 	.error {
 		margin-top: var(--gap);
-		border-color: var(--bad);
 	}
 </style>

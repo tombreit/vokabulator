@@ -19,7 +19,6 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
-	import Toasts, { makeToast } from '#lib/components/Toasts.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
 	import { firstLetterTip } from '#lib/learn/check-answer.js';
 	import { newAdvancements } from '#lib/learn/advancements.js';
@@ -47,6 +46,7 @@
 		saveStats
 	} from '#lib/storage.js';
 	import { play } from '#lib/sound.js';
+	import { showToast } from '#lib/toasts.svelte.js';
 	import { keepScreenOn } from '#lib/wake-lock.js';
 	import Choice from './Choice.svelte';
 	import Feedback from './Feedback.svelte';
@@ -126,9 +126,6 @@
 	let startedAt = 0;
 	/** all XP earned before this round – the bar shows this plus the round's XP */
 	let xpBefore = $state(0);
-	/** messages at the top right: level-ups, advancements */
-	/** @type {import('#lib/components/Toasts.svelte').Toast[]} */
-	let toasts = $state([]);
 	/** @type {import('./Result.svelte').Summary | undefined} */
 	let summary = $state();
 
@@ -200,9 +197,7 @@
 		const levelNow = levelFor(xpBefore + score.points).level;
 		if (levelNow > levelFor(xpBefore + scoreBefore.points).level) {
 			play('levelUp');
-			toasts.push(
-				makeToast({ sprite: 'xp', title: 'Level-Up!', text: `Du bist jetzt Level ${levelNow}.` })
-			);
+			showToast({ sprite: 'xp', title: 'Level-Up!', text: `Du bist jetzt Level ${levelNow}.` });
 		}
 
 		const said = byRevealJoker
@@ -292,13 +287,11 @@
 		);
 		for (const advancement of unlocked) {
 			stats.advancements[advancement.id] = localDay();
-			toasts.push(
-				makeToast({
-					sprite: advancement.sprite,
-					title: 'Fortschritt erzielt!',
-					text: advancement.title
-				})
-			);
+			showToast({
+				sprite: advancement.sprite,
+				title: 'Fortschritt erzielt!',
+				text: advancement.title
+			});
 		}
 		saveStats(stats);
 
@@ -323,8 +316,6 @@
 		saveProgress(unit.id, progress);
 	}
 </script>
-
-<Toasts bind:toasts />
 
 {#if phase === 'setup'}
 	<h1>{unit.title}</h1>

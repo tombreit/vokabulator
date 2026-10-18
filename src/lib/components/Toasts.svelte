@@ -1,43 +1,33 @@
 <!--
   Messages that slide in at the top right, like "Fortschritt erzielt!" in the game:
-  a dark box with an item, a yellow title and a line of text. Each one leaves after a few
-  seconds; the page just pushes new ones into `toasts`.
+  a dark box with an item, a yellow title and a line of text. Shown one after another,
+  each for 3.5 seconds. New ones come from showToast() in #lib/toasts.svelte.js.
+  Rendered once, in +layout.svelte.
 -->
-<script module>
-	/** @typedef {{ id: number, sprite: string, title: string, text: string }} Toast */
-	let nextId = 1;
-
-	/**
-	 * @param {Omit<Toast, 'id'>} toast
-	 * @returns {Toast}
-	 */
-	export function makeToast(toast) {
-		return { id: nextId++, ...toast };
-	}
-</script>
-
 <script>
+	import { toasts } from '#lib/toasts.svelte.js';
 	import Sprite from './Sprite.svelte';
 
-	/** @type {{ toasts: Toast[] }} */
-	let { toasts = $bindable() } = $props();
+	const first = $derived(toasts[0]);
 
-	// show them one after another: only the first is visible, it leaves after 3.5 s
 	$effect(() => {
-		const first = toasts[0];
 		if (!first) return;
-		const timer = setTimeout(() => (toasts = toasts.filter((t) => t.id !== first.id)), 3500);
+		const id = first.id;
+		const timer = setTimeout(() => {
+			const index = toasts.findIndex((t) => t.id === id);
+			if (index !== -1) toasts.splice(index, 1);
+		}, 3500);
 		return () => clearTimeout(timer);
 	});
 </script>
 
-{#if toasts[0]}
-	{#key toasts[0].id}
+{#if first}
+	{#key first.id}
 		<div class="toast" role="status">
-			<Sprite name={toasts[0].sprite} size={32} />
+			<Sprite name={first.sprite} size={32} />
 			<div>
-				<p class="title">{toasts[0].title}</p>
-				<p class="text">{toasts[0].text}</p>
+				<p class="title">{first.title}</p>
+				<p class="text">{first.text}</p>
 			</div>
 		</div>
 	{/key}

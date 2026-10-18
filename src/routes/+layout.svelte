@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Sprite from '#lib/components/Sprite.svelte';
+	import Toasts from '#lib/components/Toasts.svelte';
 	import { spriteDataUri } from '#lib/pixel/sprites.js';
 	import { migrate } from '#lib/storage.js';
 
@@ -51,6 +52,8 @@
 <main>
 	{@render children()}
 </main>
+
+<Toasts />
 
 <style>
 	/* the edge of the world: a strip of grass along the top */

@@ -3,7 +3,7 @@
  * Read the text of a PDF together with position, size and font style – the raw
  * material for pdf-lexikon.js. This is the only module that talks to pdf.js.
  *
- * pdf.js is big (~1 MB), so the browser loads it only when a PDF is imported
+ * pdf.js is big (~1 MB), so the browser loads it only on the import page
  * (loadPdfjs). Tests pass in the Node build of pdf.js instead.
  */
 
