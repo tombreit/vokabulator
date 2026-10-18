@@ -7,7 +7,7 @@ Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vo
 
 ## Wie die App aufgebaut ist
 
-- **SvelteKit 3 als Single-Page-App.** Alles läuft im Browser, und `pnpm build` erzeugt rein statische Dateien in `build/`.
+- **SvelteKit 3 als Single-Page-App.** Alles läuft im Browser, und `npm run build` erzeugt rein statische Dateien in `build/`.
 - **Daten liegen im `localStorage`** des Handys (siehe `src/lib/storage.js`). Es gibt keinen Server und keine Accounts.
 - **Look „Blockwelt“** im Stil eines Blockbau-Spiels. Die Pixel-Grafiken sind selbst gezeichnet und stehen als
   lesbare Zeichenraster in `src/lib/pixel/sprites.js`. Die Schrift Monocraft (OFL, `src/lib/fonts/`) ist selbst
@@ -23,15 +23,15 @@ Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vo
 
 ## Entwickeln
 
-Voraussetzungen: Node ≥ 22.17 und pnpm.
+Voraussetzungen: Node ≥ 22.17 (npm ist dabei).
 
 ```sh
-pnpm install
-pnpm dev          # http://localhost:5173
-pnpm check        # Typprüfung (JSDoc) mit svelte-check
-pnpm test         # Unit-Tests (Vitest)
-pnpm build        # statischer Build nach build/
-pnpm preview      # Build lokal ansehen (inkl. Service Worker)
+npm install
+npm run dev          # http://localhost:5173
+npm run check        # Typprüfung (JSDoc) mit svelte-check
+npm test             # Unit-Tests (Vitest)
+npm run build        # statischer Build nach build/
+npm run preview      # Build lokal ansehen (inkl. Service Worker)
 ```
 
 ### Auf dem Handy testen

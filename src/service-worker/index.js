@@ -3,7 +3,7 @@
  * Service worker: makes Vokabulator work offline (e.g. in flight mode).
  *
  * SvelteKit bundles and registers this file automatically – in production builds
- * only (`pnpm build` / `pnpm preview`), not in `pnpm dev`.
+ * only (`npm run build` / `npm run preview`), not in `npm run dev`.
  *
  * - install:  put all files of this build (JS, CSS, static/) plus the app shell
  *             into a cache named after the build version.

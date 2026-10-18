@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
-// The C.C.Buchner proxy for `pnpm dev` and `pnpm preview` – same path as on the server,
+// The C.C.Buchner proxy for `npm run dev` and `npm run preview` – same path as on the server,
 // where static/.htaccess does this (and only lets two URL patterns through).
 const proxy = {
 	'/proxy/ccbuchner': {

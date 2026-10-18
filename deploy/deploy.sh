@@ -12,9 +12,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-pnpm check
-pnpm test
-pnpm build
+npm run check
+npm test
+npm run build
 
 # --delete removes files of old builds on the server; build/ is the complete app,
 # including .htaccess with the app's Apache rules (from static/.htaccess).

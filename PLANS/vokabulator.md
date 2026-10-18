@@ -24,6 +24,7 @@
 | 13 | Klarer benannt: Header, Wording, Stufen statt Erze, Amboss, Zeit pro Vokabel, 280 px | ✅ lokal geprüft – Deploy durch dich |
 | 14 | Rückmeldung nach einer Antwort lesbar (Chatzeile bleibt 6 s) | ✅ lokal geprüft – Deploy durch dich |
 | 15 | Link-Vorschau beim Teilen (Open Graph) | ✅ lokal geprüft – Deploy durch dich |
+| 16 | npm statt pnpm | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -69,7 +70,7 @@ Das ist kein offener Proxy, und PDFs werden nicht auf unserem Server gespeichert
   (Teilen-Links), Screen Wake Lock (Display bleibt beim Lernen an), Vibration, View Transitions, `<dialog>`/Popover,
   `navigator.storage.persist()`, `DOMParser`, `crypto.randomUUID()`, CSS Nesting, `:has()`, `@starting-style`, Container Queries.
 - **Speicher:** `localStorage` (synchron, einfach nachvollziehbar, in DevTools lesbar). Die Datenmenge ist klein.
-- **Paketmanager:** pnpm (ist installiert), Node 24 (Kit 3 braucht ≥ 22.17).
+- **Paketmanager:** npm (kommt mit Node; bis Batch 15 war es pnpm), Node 24 (Kit 3 braucht ≥ 22.17).
 
 ## Datenfluss
 
@@ -91,7 +92,7 @@ README.md                       Entwickeln, Testen, Deployen in 5 Minuten
 vite.config.js                  Kit-3-Config, adapter-static, Dev-Proxy /proxy/ccbuchner
 deploy/apache-vhost.conf        minimaler VirtualHost (Domain, TLS via mod_md, DocumentRoot, AllowOverride, SSLProxyEngine)
 static/.htaccess                alle App-Regeln: eng begrenzter Proxy, SPA-Fallback, Cache-Header, MIME-Typen
-deploy/deploy.sh                pnpm build && rsync --delete build/ $VOKABULATOR_TARGET
+deploy/deploy.sh                npm run check/test/build && rsync --delete build/ $VOKABULATOR_TARGET
 static/                         manifest.webmanifest, Icons
 src/app.css                     Design-Tokens, Basis-Styles
 src/service-worker/index.js     Offline-Cache (App-Shell)
@@ -140,7 +141,7 @@ Entry = { id: 'capere-capio-cepi-captum',   // Slug des Lemmas: stabil bei Re-Im
 
 ## Batches
 
-Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und einem Status-Update in diesem Dokument.
+Jeder Batch endet mit `npm run check && npm test && npm run build`, einem Commit und einem Status-Update in diesem Dokument.
 
 ### Batch 0 – Fundament
 - `git init`, `.gitignore`. Plan nach `PLANS/vokabulator.md`.
@@ -156,7 +157,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
   - Module: md, ssl, rewrite, proxy, proxy_http, headers
 - `deploy/deploy.sh` mit `rsync -avz --delete`, Ziel über Umgebungsvariable. Den Deploy führst du selbst aus.
 - README: Setup, Dev-Server, Handy-Test via `chrome://inspect` mit Port-Forwarding (localhost gilt als sicherer Kontext).
-- **Fertig wenn:** `pnpm dev` zeigt eine Startseite, `pnpm build` erzeugt `build/`, `rsync -n` (Dry-Run) läuft durch.
+- **Fertig wenn:** `npm run dev` zeigt eine Startseite, `npm run build` erzeugt `build/`, `rsync -n` (Dry-Run) läuft durch.
 
 ### Batch 1 – Lerneinheiten, Text-Import, Speicher
 - `storage.js` (CRUD für Einheiten und Fortschritt, Schema-Version).
@@ -552,6 +553,9 @@ Wunsch: eine schöne Karte, wenn ein Vokabulator-Link geteilt wird.
 - 2026-10-19 (Batch 15): **Eine Karte für alle Links.** Eine eigene Karte pro Link („Schlag 57 XP!“, Titel der
   Lektion) bräuchte Code auf dem Server, der die Seite pro Anfrage zusammenbaut. Das passt nicht zur statischen
   Seite. Bei Bedarf ginge das mit Apache-SSI für die Challenge-Parameter, nicht aber für Lektionstitel aus `#d=`.
+- 2026-10-19 (Batch 16): **npm statt pnpm** – dein Wunsch, ein Werkzeug weniger: npm kommt mit Node. pnpm hatte ich
+  beim Aufsetzen nur gewählt, weil es installiert war; nichts in der App hängt davon ab. Lockfile ist jetzt
+  `package-lock.json`, `pnpm-workspace.yaml` entfällt (npm führt Install-Skripte wie das von esbuild ohnehin aus).
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -617,12 +621,15 @@ Wunsch: eine schöne Karte, wenn ein Vokabulator-Link geteilt wird.
 - 2026-10-19: Batch 15 – Link-Vorschau: Bild, Open-Graph-Angaben, `robots.txt` für Vorschau-Dienste. Geprüft:
   Teilen-Links (`/neu?code=…`, Challenge, `/lernen/…`) liefern ohne JavaScript alle 11 Angaben, das Bild kommt als
   `image/png` (46 KB), der Offline-Speicher lässt es aus.
+- 2026-10-19: Batch 16 – npm statt pnpm: `package-lock.json` statt `pnpm-lock.yaml`, Befehle in `deploy.sh`, README
+  und Kommentaren umgestellt. npm löst genau dieselben Versionen auf wie zuvor pnpm. Geprüft: sauberer `npm ci`,
+  check, Tests, Lint, Build, `deploy.sh` gegen einen lokalen Ordner, Link-Vorschau-Skript und alle Browser-Abläufe.
 
 ## Verifikation
-- Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
-  Scoring, PDF-Fixture), `pnpm build`.
-- Manuell lokal: `pnpm dev`, Text einfügen → lernen → neu laden → Fortschritt ist noch da.
-  `pnpm preview` → DevTools → Application: Service Worker aktiv, im Offline-Modus weiter nutzbar.
+- Automatisch: `npm run check` (svelte-check / JSDoc-Typen), `npm test` (Vitest: Parser, Leitner, später Antwortprüfung,
+  Scoring, PDF-Fixture), `npm run build`.
+- Manuell lokal: `npm run dev`, Text einfügen → lernen → neu laden → Fortschritt ist noch da.
+  `npm run preview` → DevTools → Application: Service Worker aktiv, im Offline-Modus weiter nutzbar.
 - Handy: per `chrome://inspect` Port-Forwarding auf `localhost:5173` oder nach dem Deploy auf der Subdomain:
   installieren, Flugmodus, eine Runde lernen.
 - Server: nach jedem Deploy die Prüfungen aus „Deployment (durch dich)“, Schritt 3.
