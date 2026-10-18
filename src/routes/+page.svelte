@@ -2,6 +2,7 @@
 <script>
 	import { resolve } from '$app/paths';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import { canScanQr } from '#lib/components/QrScanner.svelte';
 	import { learnedShare } from '#lib/learn/leitner.js';
 	import { LANGS } from '#lib/model.js';
 	import { loadProgress, loadUnits } from '#lib/storage.js';
@@ -12,12 +13,18 @@
 	}));
 </script>
 
+{#if canScanQr}
+	<!-- the main way in: scan the QR code in the book (opens the "Scannen" tab) -->
+	<a class="button primary scan" href={resolve('/neu')}>📷 QR-Code scannen</a>
+{/if}
+
 <h1>Meine Lerneinheiten</h1>
 
 {#if units.length === 0}
 	<p class="card">
-		Noch nichts da. Leg deine erste Lerneinheit an – z.&nbsp;B. indem du Vokabeln aus dem Buch
-		eintippst. 📚
+		Noch nichts da. {canScanQr
+			? 'Scanne den QR-Code neben den Vokabeln in deinem Buch'
+			: 'Gib den Mediencode aus deinem Buch ein'} – und los geht's. 📚
 	</p>
 {:else}
 	<ul class="units">
@@ -38,7 +45,9 @@
 	</ul>
 {/if}
 
-<a class="button primary new" href={resolve('/neu')}>＋ Neue Lerneinheit</a>
+<a class="button new" class:primary={!canScanQr} href={resolve('/neu')}>
+	＋ {canScanQr ? 'Code, PDF oder Text' : 'Neue Lerneinheit'}
+</a>
 
 <style>
 	.units {
@@ -64,6 +73,13 @@
 		flex: 1;
 		display: grid;
 		gap: 0.2rem;
+	}
+
+	.scan {
+		width: 100%;
+		min-height: 4.5rem;
+		margin-bottom: 1.5rem;
+		font-size: 1.3rem;
 	}
 
 	.new {

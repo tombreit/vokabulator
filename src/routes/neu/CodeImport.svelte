@@ -4,10 +4,7 @@
 -->
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { parseMediencode } from '#lib/import/ccbuchner.js';
-	import { getUnit } from '#lib/storage.js';
 	import MediencodeLoader from './MediencodeLoader.svelte';
 
 	/**
@@ -31,14 +28,7 @@
 	function open() {
 		const parsed = parseMediencode(input);
 		invalid = !parsed;
-		if (!parsed) return;
-
-		// Scanned before? Then just open it – the learning progress is there.
-		if (!reload && getUnit(`ccb-${parsed}`)) {
-			goto(resolve('/einheit/[id]', { id: `ccb-${parsed}` }));
-			return;
-		}
-		code = parsed;
+		if (parsed) code = parsed;
 	}
 </script>
 
@@ -68,7 +58,7 @@
 </form>
 
 {#if code}
-	<MediencodeLoader {code} />
+	<MediencodeLoader {code} {reload} />
 {/if}
 
 <style>

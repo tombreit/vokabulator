@@ -13,8 +13,8 @@
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ✅ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ✅ |
 | 5 | Mediencode-Import über Proxy | ✅ (lokal; Server nach Deploy prüfen) |
-| – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ⬜ |
-| 6 | QR-Scanner (nativer `BarcodeDetector`) | ⬜ |
+| – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ✅ deployt; Proxy liefert noch 500 (siehe Deployment) |
+| 6 | QR-Scanner (nativer `BarcodeDetector`) | ✅ (lokal; Kamera-Test auf dem Handy offen) |
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ⬜ |
 | 8 | Teilen | ⬜ |
 | 9 | Design & Polish | ⬜ |
@@ -239,7 +239,9 @@ curl -sI https://vokabulator.thms.de/proxy/ccbuchner/agb/c-856            | head
 - 500 auf allen Seiten: Ein Modul fehlt (meist `rewrite` oder `headers`), oder `.htaccess` ist nicht erlaubt.
   Die Meldung im Log nennt die Zeile.
 - 404 auf `/einheit/test`: `AllowOverride` fehlt, die `.htaccess` wird also nicht gelesen.
-- 500/502 nur bei `/proxy/…`: `SSLProxyEngine on` oder `proxy_http` fehlt.
+- 500/502 nur bei `/proxy/…`: `SSLProxyEngine on` oder `proxy_http` fehlt. Im Error-Log steht dann:
+  - `AH01961: SSL Proxy requests for this server not enabled` → `SSLProxyEngine on` in den `*:443`-VHost
+  - `AH01144: No protocol handler was valid` → `a2enmod proxy_http && systemctl restart apache2`
 
 Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch 6 weiter.
 
@@ -309,6 +311,9 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
   `Alias /icons/ /usr/share/apache2/icons/`. Dadurch fehlten die Icons, und die Installation des Service Workers
   brach ab (`cache.addAll` ist alles oder nichts). Weitere globale Debian-Pfade (`/manual`, `/javascript`, `/cgi-bin/`,
   `/server-status`) nicht als Routen verwenden.
+- 2026-10-18 (Batch 6): Die Logik „Code schon importiert → Einheit öffnen“ sitzt in `MediencodeLoader.svelte`, Scanner
+  und Code-Tab teilen sie sich. `canScanQr` (in `QrScanner.svelte`) entscheidet, ob es den Scan-Tab und den großen
+  Scan-Button gibt. Ohne `BarcodeDetector` ist „Code“ der Standard. Typen für `BarcodeDetector` stehen in `src/ambient.d.ts`.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -334,6 +339,7 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18: Batch 5 – `ccbuchner.js` (Mediencode erkennen, Seite + PDF über `/proxy/ccbuchner/…`), Dev-/Preview-Proxy, Tab „🔢 Code“ (Standard), `/neu?code=…`, bekannte Codes öffnen direkt die Einheit, „🔄 Neu laden“ auf der Einheitsseite. Im Chromium über den Dev-Proxy mit echtem ccbuchner.de geprüft: Import, Wiederöffnen, Neu laden, ungültige Eingabe, unbekannter Code, geteilter Link, offline.
 - 2026-10-18: `.htaccess`-Check auf deinen Wunsch wieder entfernt. Der Server ist eingerichtet, geprüft wird nach dem Deploy (Abschnitt „Deployment“). Deployment-Anleitung vor Batch 6 ergänzt.
 - 2026-10-18: Live-Prüfung von https://vokabulator.thms.de/: App, `.htaccess`, Header ok. Icons kollidierten mit Debians `/icons/`-Alias, deshalb umbenannt in `/app-icons/`. Der Proxy liefert 500 (Server-Konfiguration, siehe Deployment).
+- 2026-10-18: Batch 6 – `QrScanner.svelte` (Rückkamera + nativer `BarcodeDetector`, Vibration, Kamera aus beim Verlassen), Tab „📷 Scannen“ als Standard, großer Scan-Button auf der Startseite, Hinweis bei fremden QR-Codes, Tabs als 2×2-Raster. Im Chromium mit Fake-Kamera und nachgebautem `BarcodeDetector` geprüft: Scan → Vorschau → Lernen, fremder QR-Code, bekannter Code, ohne Detector, Kamera verweigert.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
