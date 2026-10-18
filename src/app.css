@@ -1,0 +1,122 @@
+/*
+ * Global styles: design tokens (colors, spacing) and a few base rules.
+ * Component-specific styles live in the <style> block of each .svelte file.
+ * The real visual design comes in batch 9 – this is a clean, readable base.
+ */
+
+:root {
+	--bg: #f5f3ff;
+	--surface: #ffffff;
+	--surface-2: #ece8ff;
+	--text: #1d1b2f;
+	--muted: #6b6880;
+	--line: #dcd7f0;
+	--accent: #6a4cff;
+	--accent-text: #ffffff;
+	--good: #16a34a;
+	--bad: #e5484d;
+	--star: #f5a524;
+
+	--radius: 14px;
+	--gap: 1rem;
+	--tap: 3rem; /* minimum height of anything you tap */
+
+	color-scheme: light dark;
+	font-family: system-ui, sans-serif;
+	line-height: 1.45;
+	color: var(--text);
+	background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #141220;
+		--surface: #1f1c30;
+		--surface-2: #2a2640;
+		--text: #f1eefc;
+		--muted: #a29dbb;
+		--line: #3a3552;
+		--accent: #8b73ff;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+	line-height: 1.2;
+	margin-block: 0 0.5em;
+}
+
+a {
+	color: var(--accent);
+}
+
+/* Buttons: <button class="button"> or <a class="button"> */
+.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4em;
+	min-height: var(--tap);
+	padding: 0.5rem 1.1rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+
+	&.primary {
+		background: var(--accent);
+		border-color: var(--accent);
+		color: var(--accent-text);
+	}
+	&.danger {
+		color: var(--bad);
+	}
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.card {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: var(--gap);
+}
+
+.muted {
+	color: var(--muted);
+}
+
+input,
+select,
+textarea {
+	font: inherit;
+	font-weight: 400; /* fields sit inside bold <label>s */
+	color: inherit;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: calc(var(--radius) / 2);
+	padding: 0.6rem 0.75rem;
+	width: 100%;
+}
+
+label {
+	display: grid;
+	gap: 0.3rem;
+	font-weight: 600;
+}

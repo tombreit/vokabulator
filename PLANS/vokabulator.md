@@ -8,7 +8,7 @@
 | Batch | Thema | Status |
 |---|---|---|
 | 0 | Fundament (Repo, SvelteKit, Apache, Deploy) | ✅ |
-| 1 | Lerneinheiten, Text-Import, Speicher | ⬜ |
+| 1 | Lerneinheiten, Text-Import, Speicher | ✅ |
 | 2 | Karteikarten-Abfrage, Leitner, Ergebnis | ⬜ |
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ⬜ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ⬜ |
@@ -87,6 +87,7 @@ deploy/deploy.sh                pnpm build && rsync --delete build/ $VOKABULATOR
 static/                         manifest.webmanifest, Icons
 src/app.css                     Design-Tokens, Basis-Styles
 src/service-worker/index.js     Offline-Cache (App-Shell)
+src/lib/model.js                Datenmodell (JSDoc-Typen), buildUnit(): Importer-Ergebnis → Unit
 src/lib/storage.js              localStorage: laden/speichern, Schema-Version, Backup-Export/-Import
 src/lib/import/text-parser.js   eingefügter Text → Einträge          (+ text-parser.test.js daneben)
 src/lib/import/pdf-lexikon.js   pdf.js-Items → Einheit (reine Funktion) (+ Test mit Fixture)
@@ -101,6 +102,7 @@ src/lib/components/             ProgressBar, Card, ChessClock, QrScanner, …
 src/routes/+layout.js           ssr = false
 src/routes/+page.svelte         „Meine Einheiten“
 src/routes/neu/+page.svelte     Import: Scannen | Code | PDF-Datei | Text   (?code=… für Teilen-Links)
+src/routes/neu/*Import.svelte   je Import-Weg eine Komponente; alle enden in DraftPreview.svelte (Vorschau + Speichern)
 src/routes/einheit/[id]/+page.svelte   Wortliste, Abschnitte, ⭐ schwer, Lernmodus wählen
 src/routes/lernen/[id]/+page.svelte    Abfrage + Ergebnisseite (ein Zustandsautomat in einer Datei)
 src/routes/einstellungen/+page.svelte  Backup, Feedback-Stil, Sound
@@ -143,7 +145,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 ### Batch 1 – Lerneinheiten, Text-Import, Speicher
 - `storage.js` (CRUD für Einheiten und Fortschritt, Schema-Version).
 - `text-parser.js`: eine Vokabel pro Zeile, Trenner Tab / `;` / ` - ` / ` = `. Zeilen mit `# Titel` starten einen Abschnitt. Sprache wählbar.
-- Seiten: Startseite (Liste, Löschen), `/neu` (Tab „Text einfügen“ mit Live-Vorschau), `/einheit/[id]` (Wortliste nach Abschnitten).
+- Seiten: Startseite (Liste), `/neu` (Tab „Text einfügen“ mit Live-Vorschau), `/einheit/[id]` (Wortliste nach Abschnitten, Löschen mit Rückfrage).
 - **Fertig wenn:** Text einfügen → Einheit sichtbar → bleibt nach dem Neuladen erhalten. Tests für den Parser sind grün.
 
 ### Batch 2 – Karteikarten-Abfrage, Leitner, Ergebnis (Basis)
@@ -246,6 +248,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 ## Changelog
 - 2026-10-18: Plan erstellt.
 - 2026-10-18: Batch 0 – Gerüst (`sv create`, SvelteKit 3.1, Vitest 5), SPA-Config, Apache-Config, Deploy-Skript, README.
+- 2026-10-18: Batch 1 – Datenmodell (`model.js`), `storage.js`, Text-Import mit Live-Vorschau, Einheiten-Liste und -Seite. Löschen sitzt auf der Einheitsseite (mit Rückfrage) statt auf der Startseite, damit nichts versehentlich verschwindet.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
