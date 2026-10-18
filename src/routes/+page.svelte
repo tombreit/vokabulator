@@ -1,10 +1,15 @@
 <!-- Start page: the list of all learning units on this device. -->
 <script>
 	import { resolve } from '$app/paths';
+	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import { learnedShare } from '#lib/learn/leitner.js';
 	import { LANGS } from '#lib/model.js';
-	import { loadUnits } from '#lib/storage.js';
+	import { loadProgress, loadUnits } from '#lib/storage.js';
 
-	const units = loadUnits();
+	const units = loadUnits().map((unit) => ({
+		...unit,
+		learned: learnedShare(unit.entries, loadProgress(unit.id))
+	}));
 </script>
 
 <h1>Meine Lerneinheiten</h1>
@@ -20,10 +25,13 @@
 			<li>
 				<a class="card" href={resolve('/einheit/[id]', { id: unit.id })}>
 					<span class="flag">{LANGS[unit.lang].flag}</span>
-					<span>
-						<strong>{unit.title}</strong><br />
-						<span class="muted">{unit.entries.length} Wörter</span>
-					</span>
+					<div class="info">
+						<strong>{unit.title}</strong>
+						<span class="muted">
+							{unit.entries.length} Wörter · {Math.round(unit.learned * 100)} % gelernt
+						</span>
+						<ProgressBar value={unit.learned} label="Anteil gelernter Wörter" />
+					</div>
 				</a>
 			</li>
 		{/each}
@@ -50,6 +58,12 @@
 
 	.flag {
 		font-size: 1.8rem;
+	}
+
+	.info {
+		flex: 1;
+		display: grid;
+		gap: 0.2rem;
 	}
 
 	.new {

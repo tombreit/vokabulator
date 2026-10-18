@@ -9,7 +9,7 @@
 |---|---|---|
 | 0 | Fundament (Repo, SvelteKit, Apache, Deploy) | ✅ |
 | 1 | Lerneinheiten, Text-Import, Speicher | ✅ |
-| 2 | Karteikarten-Abfrage, Leitner, Ergebnis | ⬜ |
+| 2 | Karteikarten-Abfrage, Leitner, Ergebnis | ✅ |
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ⬜ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ⬜ |
 | 5 | Mediencode-Import über Proxy | ⬜ |
@@ -249,6 +249,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18: Plan erstellt.
 - 2026-10-18: Batch 0 – Gerüst (`sv create`, SvelteKit 3.1, Vitest 5), SPA-Config, Apache-Config, Deploy-Skript, README.
 - 2026-10-18: Batch 1 – Datenmodell (`model.js`), `storage.js`, Text-Import mit Live-Vorschau, Einheiten-Liste und -Seite. Löschen sitzt auf der Einheitsseite (mit Rückfrage) statt auf der Startseite, damit nichts versehentlich verschwindet.
+- 2026-10-18: Batch 2 – `leitner.js` (Fächer, Rundenauswahl, Lernstand) mit Tests, `/lernen/[id]` (Setup → Karten → Ergebnis, „Nur Fehler nochmal“), ⭐ auf Lern- und Einheitsseite, Fortschrittsbalken auf Start- und Einheitsseite. Die Fächer zeigt die Wortliste vorerst als ●●○○○.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
