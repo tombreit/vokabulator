@@ -14,8 +14,7 @@ export const PHRASES = {
 		'Sauber! 👌',
 		'Treffer! 🎯',
 		'Big Brain! 🧠',
-		'Gefarmt! ⛏️',
-		'Gut abgebaut! 💎'
+		'Stark! 💪'
 	],
 	/** {n} becomes the multiplier */
 	combo: ['Combo ×{n}! 🔥🔥', 'On fire – ×{n}! 🚀', 'Unaufhaltbar – ×{n}! ⚡'],
@@ -24,15 +23,7 @@ export const PHRASES = {
 		'Ein Buchstabe – zählt halb. 🤏',
 		'Knapp! Achte auf die Schreibweise. ✍️'
 	],
-	wrong: [
-		'Bruh 💀',
-		'Das war wohl nix 💩',
-		'Autsch 🙈',
-		'Oof 🫠',
-		'Ssssss… 💥',
-		'In Lava gefallen 🔥',
-		'Nicht ganz – nächstes Mal! 💪'
-	],
+	wrong: ['Bruh 💀', 'Das war wohl nix 💩', 'Autsch 🙈', 'Oof 🫠', 'Nicht ganz – nächstes Mal! 💪'],
 	revealed: ['Gespickt 👀 – merk sie dir!', 'Kein Ding, jetzt weißt du es. 💡'],
 	timeUp: ['Zeit um! ⏰', 'Die Uhr war schneller. ⏰']
 };
@@ -46,10 +37,9 @@ export const SPLASHES = [
 	'Auch mit Makronen!',
 	'Cäsar-geprüft!',
 	'Errare humanum est!',
-	'Mit 100 % mehr Diamanten!',
 	'Rom wurde auch nicht an einem Tag gebaut!',
 	'Non scholae, sed vitae!',
-	'Ssssss… cave!',
+	'Repetitio est mater studiorum!',
 	'Per aspera ad astra!'
 ];
 

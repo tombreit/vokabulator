@@ -39,7 +39,7 @@
 	});
 </script>
 
-<h1>{reload ? 'Neu laden' : packed || initialCode ? '📩 Von einem Freund' : 'Neue Welt'}</h1>
+<h1>{reload ? 'Neu laden' : packed || initialCode ? '📩 Von einem Freund' : 'Neue Lektion'}</h1>
 
 {#if challenge}
 	<p class="card challenge">

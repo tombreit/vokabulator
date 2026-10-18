@@ -44,13 +44,13 @@
 			: undefined;
 
 	function remove() {
-		if (!confirm(`Welt „${unit.title}“ mit allem Lernfortschritt löschen?`)) return;
+		if (!confirm(`Lektion „${unit.title}“ mit allem Lernfortschritt löschen?`)) return;
 		deleteUnit(unit.id);
 		goto(resolve('/'));
 	}
 </script>
 
-<a class="back" href={resolve('/')}>‹ Meine Welten</a>
+<a class="back" href={resolve('/')}>‹ Meine Lektionen</a>
 <h1>{unit.title}</h1>
 
 <div class="card summary">
@@ -112,7 +112,7 @@
 	{#if reloadHref}
 		<a class="button" href={reloadHref}>Neu laden</a>
 	{/if}
-	<button class="button danger" onclick={remove}>Welt löschen</button>
+	<button class="button danger" onclick={remove}>Lektion löschen</button>
 </div>
 
 <style>

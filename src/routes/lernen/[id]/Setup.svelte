@@ -120,7 +120,7 @@
 	/* one column on phones, two on wider screens – like the game's options menu */
 	.options {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
 		gap: 6px;
 		margin-bottom: var(--gap);
 	}
@@ -138,6 +138,7 @@
 		width: 100%;
 		min-height: 4rem;
 		margin-bottom: var(--gap);
-		font-size: 1.25rem;
+		font-size: clamp(1.05rem, 5vw, 1.25rem);
+		white-space: nowrap;
 	}
 </style>

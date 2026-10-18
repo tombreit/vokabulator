@@ -323,7 +323,7 @@
 </script>
 
 {#if phase === 'setup'}
-	<a class="back" href={resolve('/einheit/[id]', { id: unit.id })}>‹ Zur Welt</a>
+	<a class="back" href={resolve('/einheit/[id]', { id: unit.id })}>‹ Zur Lektion</a>
 	<h1>{unit.title}</h1>
 	{#if challenge}
 		<p class="card challenge">
@@ -351,7 +351,7 @@
 	<div class="round-stats">
 		<span class="round-xp"><Sprite name="xp" size={16} /> +{score.points} XP</span>
 		{#if multiplier(score.streak) > 1}
-			<span class="combo" title="Verzaubert: {multiplier(score.streak)}-fache XP"
+			<span class="combo" title="Serie: {multiplier(score.streak)}-fache XP"
 				>×{multiplier(score.streak)}</span
 			>
 		{/if}
@@ -408,7 +408,7 @@
 					class="slot"
 					onclick={useTip}
 					disabled={score.jokers === 0 || tipUsed}
-					aria-label="Fackel: {options.mode === 'choice'
+					aria-label="Joker: {options.mode === 'choice'
 						? '50:50'
 						: 'erster Buchstabe'}, kostet 3 XP"
 				>
@@ -419,7 +419,7 @@
 					class="slot"
 					onclick={useReveal}
 					disabled={score.jokers === 0}
-					aria-label="Fernrohr: Lösung aufdecken"
+					aria-label="Joker: Lösung aufdecken"
 				>
 					<Sprite name="spyglass" size={32} />
 					<span>Aufdecken</span>

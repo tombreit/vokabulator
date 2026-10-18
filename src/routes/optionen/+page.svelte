@@ -42,7 +42,7 @@
 		try {
 			const count = importBackup(JSON.parse(await file.text()));
 			unitCount = loadUnits().length;
-			message = `✅ ${count} ${count === 1 ? 'Welt' : 'Welten'} wiederhergestellt.`;
+			message = `✅ ${count} ${count === 1 ? 'Lektion' : 'Lektionen'} wiederhergestellt.`;
 		} catch (error) {
 			message = `❌ ${error instanceof SyntaxError ? 'Die Datei ist kaputt.' : /** @type {Error} */ (error).message}`;
 		}
@@ -60,10 +60,10 @@
 </button>
 
 <section class="card">
-	<h2><Sprite name="chest" size={32} /> Truhe: deine Sicherung</h2>
+	<h2><Sprite name="chest" size={32} /> Sicherung</h2>
 	<p class="read">
 		Deine {unitCount}
-		{unitCount === 1 ? 'Welt' : 'Welten'}, dein Lernstand, deine XP und Erfolge liegen nur auf
+		{unitCount === 1 ? 'Lektion' : 'Lektionen'}, dein Lernstand, deine XP und Erfolge liegen nur auf
 		diesem Gerät. Mit einer Sicherungsdatei nimmst du alles auf ein neues Handy mit.
 	</p>
 	<div class="buttons">

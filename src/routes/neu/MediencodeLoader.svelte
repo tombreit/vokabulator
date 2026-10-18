@@ -1,7 +1,7 @@
 <!--
   Imports the vocabulary of one C.C.Buchner Mediencode – no preview, no extra tap:
   load, save, say so ("Vokabeln importiert!") and go straight to the round setup.
-  A code that was imported before simply continues that world (progress included).
+  A code that was imported before simply continues that unit (progress included).
   Used by the "Scannen" and "Code" tabs and for links like /neu?code=40702-229.
 -->
 <script>
@@ -17,13 +17,13 @@
 
 	/**
 	 * @type {{ code: string, reload?: boolean }}
-	 * code: e.g. "40702-229"; reload: load again even if the world exists ("Neu laden")
+	 * code: e.g. "40702-229"; reload: load again even if the unit exists ("Neu laden")
 	 */
 	let { code, reload = false } = $props();
 
 	let error = $state('');
 
-	/** the round setup of a world – a friend's challenge from the link goes along */
+	/** the round setup of a unit – a friend's challenge from the link goes along */
 	const learn = (/** @type {string} */ id) =>
 		withChallenge(
 			resolve('/lernen/[id]', { id }),

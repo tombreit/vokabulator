@@ -101,8 +101,8 @@
 	{#if isRecord}
 		<p class="record">
 			{summary.previousBest
-				? `Neuer Rekord in dieser Welt! (vorher ${summary.previousBest} XP)`
-				: 'Dein erster Rekord in dieser Welt!'}
+				? `Neuer Rekord in dieser Lektion! (vorher ${summary.previousBest} XP)`
+				: 'Dein erster Rekord in dieser Lektion!'}
 		</p>
 	{/if}
 	{#if challenge}
@@ -176,7 +176,7 @@
 		</div>
 	{/if}
 	<div>
-		<dt><Sprite name="sun" size={20} /> Überlebt</dt>
+		<dt><Sprite name="sun" size={20} /> In Folge</dt>
 		<dd>{summary.days} {summary.days === 1 ? 'Tag' : 'Tage'}</dd>
 	</div>
 </dl>
@@ -206,7 +206,7 @@
 	{#if summary.points > 0}
 		<ShareButton label="Ergebnis teilen" {...share} />
 	{/if}
-	<a class="button" href={resolve('/einheit/[id]', { id: unitId })}>Zur Welt</a>
+	<a class="button" href={resolve('/einheit/[id]', { id: unitId })}>Zur Lektion</a>
 </div>
 
 <style>

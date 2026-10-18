@@ -1,7 +1,7 @@
 <!--
   A unit a friend shared: its words are inside the link (after "#d="), see #lib/share.js.
   Unpacked, saved and straight on to the round setup – with the friend's challenge, if any.
-  Sharing a world you already have updates its words, your progress stays.
+  Sharing a unit you already have updates its words, your progress stays.
 -->
 <script>
 	import { untrack } from 'svelte';
@@ -29,7 +29,7 @@
 				saveUnit(unit);
 				showToast({
 					sprite: 'chest',
-					title: known ? 'Welt aktualisiert!' : 'Vokabeln importiert!',
+					title: known ? 'Lektion aktualisiert!' : 'Vokabeln importiert!',
 					text: `${unit.entries.length} Vokabeln: „${unit.title}“`
 				});
 				goto(

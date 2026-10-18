@@ -1,7 +1,6 @@
 <!--
-  Start page, like the title screen of the game: logo with a yellow splash text,
-  the learner's level and days survived, the big scan button, and "Meine Welten" –
-  every learning unit is a world, shown with the best ore found in it so far.
+  Start page: days in a row and level, the big scan button, and "Meine Lektionen" –
+  every unit with how much of it is learned (the name and splash text sit in +layout.svelte).
 -->
 <script>
 	import { resolve } from '$app/paths';
@@ -9,76 +8,68 @@
 	import { canScanQr } from '#lib/components/QrScanner.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
-	import { splash } from '#lib/learn/feedback.js';
-	import { BOX_COUNT, learnedShare, oreOf, progressOf } from '#lib/learn/leitner.js';
+	import { BOX_COUNT, learnedShare, progressOf } from '#lib/learn/leitner.js';
 	import { currentDays, localDay } from '#lib/learn/streak.js';
 	import { LANGS } from '#lib/model.js';
 	import { loadProgress, loadStats, loadUnits } from '#lib/storage.js';
 
 	const stats = loadStats();
 	const days = currentDays(stats.days, localDay());
-	const splashText = splash();
 
-	const worlds = loadUnits().map((unit) => {
+	const units = loadUnits().map((unit) => {
 		const progress = loadProgress(unit.id);
-		const boxes = unit.entries.map((e) => progressOf(progress, e.id).box);
 		return {
 			...unit,
 			learned: learnedShare(unit.entries, progress),
-			bestOre: oreOf(Math.max(1, ...boxes)),
-			diamonds: boxes.filter((box) => box === BOX_COUNT).length,
+			/** words on the last stage (the diamond) */
+			mastered: unit.entries.filter((e) => progressOf(progress, e.id).box === BOX_COUNT).length,
 			highscore: stats.highscores[unit.id] ?? 0
 		};
 	});
 </script>
 
-<section class="title">
-	<!-- "VOKABVLATOR": Roman inscriptions write U as V -->
-	<h1 class="logo" aria-label="Vokabulator">VOKABVLATOR</h1>
-	<p class="splash" aria-hidden="true">{splashText}</p>
-</section>
-
 <div class="status">
 	<span class="days">
 		<Sprite name="sun" size={32} />
-		{days > 0 ? `${days} ${days === 1 ? 'Tag' : 'Tage'} überlebt` : 'Tag 1 – leg los!'}
+		{days > 0 ? `${days} ${days === 1 ? 'Tag' : 'Tage'} in Folge` : 'Tag 1 – leg los!'}
 	</span>
 	<div class="level"><XpBar xp={stats.xp} /></div>
 </div>
 
 <a class="button primary scan" href={resolve('/neu')}>
 	<Sprite name="pickaxe" size={32} />
-	{canScanQr ? 'QR-Code scannen' : 'Neue Welt anlegen'}
+	{canScanQr ? 'QR-Code scannen' : 'Neue Lektion anlegen'}
 </a>
 
-<h2>Meine Welten</h2>
+<h1>Meine Lektionen</h1>
 
-{#if worlds.length === 0}
+{#if units.length === 0}
 	<p class="card read">
-		Noch keine Welt. {canScanQr
+		Noch keine Lektion. {canScanQr
 			? 'Scanne den QR-Code neben den Vokabeln in deinem Buch'
-			: 'Gib den Mediencode aus deinem Buch ein'} – und aus jeder Vokabel wird mit der Zeit ein Diamant.
+			: 'Gib den Mediencode aus deinem Buch ein'} – dann kannst du sofort loslegen.
 	</p>
 {:else}
-	<ul class="worlds">
-		{#each worlds as world (world.id)}
+	<ul class="units">
+		{#each units as unit (unit.id)}
 			<li>
-				<a class="world" href={resolve('/einheit/[id]', { id: world.id })}>
-					<Sprite name={world.bestOre.sprite} size={56} label="Bestes Erz: {world.bestOre.name}" />
+				<a class="unit" href={resolve('/einheit/[id]', { id: unit.id })}>
+					<Sprite name="book" size={48} />
 					<span class="info">
-						<strong>{world.title}</strong>
+						<strong>{unit.title}</strong>
 						<span class="details">
-							{LANGS[world.lang].name}, {world.entries.length} Vokabeln
+							{LANGS[unit.lang].name}, {unit.entries.length} Vokabeln
 						</span>
 						<span class="details">
-							<Sprite name="diamond" size={16} />
-							{world.diamonds}
-							{world.diamonds === 1 ? 'Diamant' : 'Diamanten'}
-							{#if world.highscore}
-								<Sprite name="xp" size={16} /> Rekord {world.highscore} XP
+							<span class="detail"
+								><Sprite name="diamond" size={16} /> {unit.mastered} sicher gelernt</span
+							>
+							{#if unit.highscore}
+								<span class="detail"><Sprite name="xp" size={16} /> Rekord {unit.highscore} XP</span
+								>
 							{/if}
 						</span>
-						<ProgressBar value={world.learned} label="Anteil gelernter Wörter" />
+						<ProgressBar value={unit.learned} label="Anteil gelernter Wörter" />
 					</span>
 				</a>
 			</li>
@@ -87,52 +78,18 @@
 {/if}
 
 <style>
-	/* --- title: stone logo + splash ------------------------------------------------ */
-	.title {
-		position: relative;
-		margin: 0.5rem 0 2.5rem;
-		text-align: center;
-	}
-
-	.logo {
-		margin: 0;
-		font-size: clamp(1.9rem, 9.5vw, 3rem);
-		font-weight: 700;
-		letter-spacing: 0;
-		/* stone texture inside the letters, a dark block edge below them */
-		background: var(--stone) 0 0 / 32px 32px;
-		background-clip: text;
-		color: transparent;
-		text-shadow: none;
-		filter: drop-shadow(0 3px 0 #3a3a3a) drop-shadow(0 3px 0 #1c1c1c) drop-shadow(2px 2px 0 #000);
-	}
-
-	.splash {
-		position: absolute;
-		right: 0;
-		bottom: -1.1rem;
-		margin: 0;
-		color: var(--yellow);
-		font-weight: 700;
-		font-size: clamp(0.8rem, 3.6vw, 1rem);
-		text-shadow: 2px 2px 0 #3f3f15;
-		transform: rotate(-12deg);
-		animation: splash 0.45s ease-in-out infinite alternate;
-	}
-
-	@keyframes splash {
-		to {
-			transform: rotate(-12deg) scale(1.08);
-		}
-	}
-
 	/* --- status ---------------------------------------------------------------------- */
+	/* days and level side by side – the level bar takes its own line on small screens */
 	.status {
-		display: grid;
-		grid-template-columns: auto 1fr;
+		display: flex;
+		flex-wrap: wrap;
 		align-items: end;
-		gap: 1rem;
+		gap: 0.5rem 1rem;
 		margin-bottom: var(--gap);
+	}
+
+	.level {
+		flex: 1 1 9rem;
 	}
 
 	.days {
@@ -150,8 +107,8 @@
 		white-space: nowrap;
 	}
 
-	/* --- world list: like the world selection of the game -------------------------- */
-	.worlds {
+	/* --- lesson list ------------------------------------------------------------------ */
+	.units {
 		list-style: none;
 		padding: 0;
 		margin: 0;
@@ -159,7 +116,7 @@
 		gap: 0.5rem;
 	}
 
-	.world {
+	.unit {
 		display: flex;
 		gap: 0.8rem;
 		align-items: center;
@@ -186,8 +143,14 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.3rem;
+		gap: 0.2rem 0.8rem;
 		color: var(--muted);
 		font-size: 0.9rem;
+	}
+
+	.detail {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
 	}
 </style>

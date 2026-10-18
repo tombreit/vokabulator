@@ -16,11 +16,11 @@ import { levelFor } from './level.js';
  * @property {number} known           words known (right or typo) in the round
  * @property {number} planned         words in the round
  * @property {number} bestStreak      most right answers in a row
- * @property {boolean} usedJokers     torch or spyglass used
+ * @property {boolean} usedJokers     a joker used (tip, 50:50 or reveal)
  * @property {boolean} timeUp         the chess clock ran out
  * @property {number} clockShareLeft  share of the chess clock left at the end, 0..1 (0 without clock)
- * @property {boolean} beatRecord     beat an earlier record in this world (not the first one)
- * @property {number[]} boxes         the boxes (1..5) of all words of the world, after the round
+ * @property {boolean} beatRecord     beat an earlier record in this unit (not the first one)
+ * @property {number[]} boxes         the boxes (1..5) of all words of the unit, after the round
  * @property {number} xpTotal         all XP ever earned, including this round
  * @property {number} days            days in a row, including today
  */
@@ -46,43 +46,43 @@ export const ADVANCEMENTS = [
 	{
 		id: 'first-diamond',
 		sprite: 'diamond',
-		title: 'Diamanten!',
-		text: 'Eine Vokabel bis zum Diamanten gebracht.',
+		title: 'Die erste sitzt',
+		text: 'Eine Vokabel bis Stufe 5 gebracht – sicher gelernt.',
 		check: (f) => f.boxes.includes(5)
 	},
 	{
 		id: 'iron-age',
 		sprite: 'iron',
-		title: 'Eisenzeit',
-		text: '10 Vokabeln einer Welt mindestens auf Eisen.',
+		title: 'Zehn auf Stufe 3',
+		text: '10 Vokabeln einer Lektion mindestens auf Stufe 3.',
 		check: (f) => f.boxes.filter((box) => box >= 3).length >= 10
 	},
 	{
 		id: 'combo',
 		sprite: 'xp',
-		title: 'Combo-Meister',
-		text: '6 richtige Antworten in Folge.',
+		title: 'Serie',
+		text: '6 richtige Antworten hintereinander.',
 		check: (f) => f.bestStreak >= 6
 	},
 	{
 		id: 'flawless',
 		sprite: 'star',
-		title: 'Makellos',
+		title: 'Fehlerfrei',
 		text: 'Eine Runde mit mindestens 10 Vokabeln ohne Fehler.',
 		check: (f) => f.planned >= 10 && f.known === f.planned
 	},
 	{
 		id: 'no-torch',
 		sprite: 'torch',
-		title: 'Ohne Fackel',
+		title: 'Ganz ohne Hilfe',
 		text: 'Eine Runde mit mindestens 10 Vokabeln ohne Fehler und ohne Joker.',
 		check: (f) => f.planned >= 10 && f.known === f.planned && !f.usedJokers
 	},
 	{
 		id: 'record',
-		sprite: 'chest',
+		sprite: 'trophy',
 		title: 'Neuer Rekord',
-		text: 'Den eigenen Rekord in einer Welt geschlagen.',
+		text: 'Den eigenen Rekord in einer Lektion geschlagen.',
 		check: (f) => f.beatRecord
 	},
 	{
@@ -95,22 +95,22 @@ export const ADVANCEMENTS = [
 	{
 		id: 'days-3',
 		sprite: 'sun',
-		title: '3 Tage überlebt',
+		title: '3 Tage in Folge',
 		text: 'An drei Tagen hintereinander gelernt.',
 		check: (f) => f.days >= 3
 	},
 	{
 		id: 'days-7',
 		sprite: 'sun',
-		title: 'Eine Woche überlebt',
+		title: 'Eine Woche dabei',
 		text: 'Sieben Tage am Stück gelernt.',
 		check: (f) => f.days >= 7
 	},
 	{
 		id: 'diamond-mine',
 		sprite: 'diamond',
-		title: 'Diamantenmine',
-		text: 'Alle Vokabeln einer Welt sind Diamanten.',
+		title: 'Lektion gemeistert',
+		text: 'Alle Vokabeln einer Lektion auf Stufe 5.',
 		check: (f) => f.boxes.length > 0 && f.boxes.every((box) => box === 5)
 	},
 	{

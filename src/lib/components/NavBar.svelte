@@ -17,7 +17,12 @@
 
 	/** each area with the pages that belong to it */
 	const areas = [
-		{ href: resolve('/'), sprite: 'grass', label: 'Welten', pages: ['/', '/einheit/', '/lernen/'] },
+		{
+			href: resolve('/'),
+			sprite: 'book',
+			label: 'Lektionen',
+			pages: ['/', '/einheit/', '/lernen/']
+		},
 		{ href: resolve('/neu'), sprite: 'qr', label: canScanQr ? 'Scannen' : 'Neu', pages: ['/neu'] },
 		{ href: resolve('/erfolge'), sprite: 'trophy', label: 'Erfolge', pages: ['/erfolge'] },
 		{ href: resolve('/optionen'), sprite: 'gear', label: 'Optionen', pages: ['/optionen'] }
@@ -75,7 +80,8 @@
 		border: 2px solid #555;
 		background: rgb(0 0 0 / 0.35);
 		color: var(--muted);
-		font-size: 0.72rem;
+		/* "Lektionen" still fits on a 280 px screen */
+		font-size: min(0.72rem, 3.7vw);
 		text-decoration: none;
 		white-space: nowrap;
 
