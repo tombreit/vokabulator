@@ -22,6 +22,7 @@
 | 11 | QR-Scanner auf allen Geräten (ZXing-Fallback) | ✅ live geprüft |
 | 12 | Schneller & klarer: Import ohne Umwege, Navigation, Karte im Fokus | ✅ live, von dir getestet (Fehler → 13a) |
 | 13 | Klarer benannt: Header, Wording, Stufen statt Erze, Amboss, Zeit pro Vokabel, 280 px | ✅ lokal geprüft – Deploy durch dich |
+| 14 | Rückmeldung nach einer Antwort lesbar (Chatzeile bleibt 6 s) | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -420,6 +421,18 @@ Rückmeldung nach Batch 12: Der Name „Vokabulator“ soll oben stehen. Das Wor
 Bildschirm. Ein Browser-Skript meldet jedes Element, das über seine Karte oder den Bildschirm ragt. Es findet bei
 280, 320 und 390 px auf keiner Seite mehr etwas.
 
+### Batch 14 – Rückmeldung zum Lesen
+Rückmeldung: Nach „Noch nicht“/„Gewusst“ erscheint kurz eine Meldung, aber zu kurz zum Lesen. Sie ersetzte die
+Buttons für 1 s, dann kam die nächste Karte. Beim Tippen und bei der Auswahl ging es nach richtigen Antworten
+ebenfalls nach 1,2 s weiter.
+- Die Meldung ist jetzt eine **Chatzeile unter den Buttons** (`ChatLine.svelte`), wie der Chat im Spiel. Sie hängt
+  nicht an der Karte: Sie bleibt 6 s stehen, auch über der nächsten Karte, und blendet in der letzten Sekunde aus.
+  Die nächste Antwort ersetzt sie. Das Tempo der Runde bleibt gleich.
+- Karteikarten: Die Buttons bleiben nach der Bewertung stehen (`inert`). Der gewählte bleibt hell, der andere
+  wird blass. Nichts springt mehr.
+- Tippen/Auswahl: „Du: …“, „Ich lag doch richtig“ und „Weiter“ bleiben in `Feedback.svelte`, die Meldung steht
+  darunter in derselben Chatzeile.
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -520,6 +533,9 @@ Bildschirm. Ein Browser-Skript meldet jedes Element, das über seine Karte oder 
   - **Amboss für „schwer“:** „schwer wie ein Amboss“ ist eindeutig und passt zum Design; der Stern hieß „Favorit“.
   - **Zeit pro Vokabel statt pro Runde.** Alte Rundenzeiten (60/180/300 s) aus Einstellungen und Challenge-Links
     werden zu „Aus“, damit niemand unerwartet unter Zeitdruck gerät.
+- 2026-10-18 (Batch 14): **Meldung lesbar machen, ohne die Runde zu bremsen.** Ein „Weiter“-Tipp nach jeder
+  Karteikarte hätte die Meldung lesbar gemacht, aber jede Runde verlangsamt. Längeres Warten auf der Karte ebenso.
+  Deshalb wird die Meldung von der Karte entkoppelt und bleibt eine Weile stehen, wie Chatzeilen im Spiel.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -579,6 +595,9 @@ Bildschirm. Ein Browser-Skript meldet jedes Element, das über seine Karte oder 
   - Zeit pro Vokabel: Balken, Zeit um, Stopp beim Aufdecken, Tempo-Bonus, alte Einstellung → Aus
   - Import, Navigation, ganze Runde mit Stufen und Erfolgen, Teilen/Challenge (alter `clock=60` → Aus), offline
   - kein Element zu breit bei 280, 320 und 390 px
+- 2026-10-18: Batch 14 – Chatzeile unter den Buttons, bleibt 6 s, auch über der nächsten Karte. Karteikarten-Buttons
+  bleiben stehen. Im Chromium geprüft: Zeile nach 1,2 s noch da, nach 6,5 s weg, neue Antwort ersetzt sie, Buttons
+  bewegen sich nicht. Alle drei Modi, Zeit pro Vokabel, Teilen/Challenge und Runde mit Erfolgen erneut grün.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

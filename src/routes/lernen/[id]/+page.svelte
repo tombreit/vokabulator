@@ -3,7 +3,8 @@
 
     setup     Setup.svelte          mode, direction, time per word, which words, how many
     question  QuestionCard.svelte   + one of Flashcards / Typing / Choice .svelte
-              Feedback.svelte       after an answer in "Tippen" / "Auswahl"
+              Feedback.svelte       after an answer in "Tippen" / "Auswahl" ("Weiter")
+              ChatLine.svelte       what Vokabulator says about the last answer
     result    Result.svelte         points, record, mistakes, share the result as a challenge
 
   /lernen/<id>?challenge=57&mode=…  a friend's challenge (see #lib/share.js): same rules, beat the points
@@ -48,6 +49,7 @@
 	import { play } from '#lib/sound.js';
 	import { showToast } from '#lib/toasts.svelte.js';
 	import { keepScreenOn } from '#lib/wake-lock.js';
+	import ChatLine from './ChatLine.svelte';
 	import Choice from './Choice.svelte';
 	import Feedback from './Feedback.svelte';
 	import Flashcards from './Flashcards.svelte';
@@ -120,6 +122,9 @@
 	let current = $state();
 	/** flash cards: solution visible */
 	let revealed = $state(false);
+	/** @type {import('./ChatLine.svelte').Line | undefined} what Vokabulator said last */
+	let chatLine = $state();
+	let chatId = 0;
 	/** 💡 joker used on the current card */
 	let tipUsed = $state(false);
 	let score = $state(newScore());
@@ -177,6 +182,7 @@
 		current = undefined;
 		revealed = false;
 		tipUsed = false;
+		chatLine = undefined;
 		score = newScore();
 		clockLeft = clock * 1000;
 		startedAt = Date.now();
@@ -239,6 +245,7 @@
 		};
 		answers.push(answered);
 		current = answered;
+		chatLine = { id: ++chatId, outcome, text: said, gained: result.gained };
 	}
 
 	/** "Ich lag doch richtig": count the last answer as right after all. */
@@ -257,6 +264,7 @@
 			phrase: phrase('right')
 		});
 		current = last;
+		chatLine = { id: ++chatId, outcome: 'right', text: last.phrase, gained: last.gained };
 	}
 
 	/** 🔥 torch: first letter (typing) or 50:50 (multiple choice) – costs a joker and 3 XP */
@@ -402,18 +410,21 @@
 			{/if}
 		</QuestionCard>
 
-		{#if current}
-			<!-- flash cards go on by themselves (see the $effect above), the others wait for "Weiter" -->
+		{#if options.mode === 'cards'}
+			<!-- after rating, flash cards go on by themselves (see the $effect above) -->
+			<Flashcards
+				{revealed}
+				chosen={current?.outcome}
+				onreveal={() => (revealed = true)}
+				onanswer={answer}
+			/>
+		{:else if current}
 			<Feedback
 				outcome={current.outcome}
-				phrase={current.phrase}
-				gained={current.gained}
 				given={current.given}
-				onnext={options.mode === 'cards' ? undefined : next}
+				onnext={next}
 				onoverride={options.mode === 'typing' ? override : undefined}
 			/>
-		{:else if options.mode === 'cards'}
-			<Flashcards {revealed} onreveal={() => (revealed = true)} onanswer={answer} />
 		{:else if options.mode === 'typing'}
 			<Typing
 				entry={card.entry}
@@ -453,6 +464,9 @@
 			</div>
 		{/if}
 	{/key}
+
+	<!-- outside the {#key}: the line stays while the next card comes -->
+	<ChatLine line={chatLine} />
 {:else if phase === 'result' && summary}
 	<Result
 		unitId={unit.id}
