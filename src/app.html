@@ -7,10 +7,11 @@
 		<meta name="color-scheme" content="light dark" />
 		<meta name="theme-color" content="#6a4cff" />
 		<title>Vokabulator</title>
-		<!-- Installable app (PWA): name, icons and colors live in static/manifest.webmanifest -->
+		<!-- Installable app (PWA): name, icons and colors live in static/manifest.webmanifest.
+		     Icons are in /app-icons/, not /icons/: Debian's Apache maps /icons/ to its own images. -->
 		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
-		<link rel="icon" href="%sveltekit.assets%/icons/icon.svg" type="image/svg+xml" />
-		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
+		<link rel="icon" href="%sveltekit.assets%/app-icons/icon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/app-icons/apple-touch-icon.png" />
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

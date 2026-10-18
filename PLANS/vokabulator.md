@@ -305,6 +305,10 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
   `DOMParser`. Das reicht für die kleine Seite und ist ohne Browser testbar. `importMediencode` bekommt `fetch` und
   pdf.js als austauschbare Abhängigkeiten, deshalb sind die Fehlerfälle per Unit-Test geprüft. Die Sprachauswahl sitzt
   jetzt in der gemeinsamen Vorschau (`DraftPreview.svelte`), Standard ist Latein. Beim Scannen muss also niemand vorher etwas wählen.
+- 2026-10-18 (Live-Test): App-Icons liegen unter `/app-icons/` statt `/icons/`. Debians Apache hat global
+  `Alias /icons/ /usr/share/apache2/icons/`. Dadurch fehlten die Icons, und die Installation des Service Workers
+  brach ab (`cache.addAll` ist alles oder nichts). Weitere globale Debian-Pfade (`/manual`, `/javascript`, `/cgi-bin/`,
+  `/server-status`) nicht als Routen verwenden.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -329,6 +333,7 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18: `pnpm check:htaccess` (`deploy/check-htaccess.mjs`): Wegwerf-Apache prüft `build/.htaccess` vor jedem Deploy; Teil von `deploy/deploy.sh`.
 - 2026-10-18: Batch 5 – `ccbuchner.js` (Mediencode erkennen, Seite + PDF über `/proxy/ccbuchner/…`), Dev-/Preview-Proxy, Tab „🔢 Code“ (Standard), `/neu?code=…`, bekannte Codes öffnen direkt die Einheit, „🔄 Neu laden“ auf der Einheitsseite. Im Chromium über den Dev-Proxy mit echtem ccbuchner.de geprüft: Import, Wiederöffnen, Neu laden, ungültige Eingabe, unbekannter Code, geteilter Link, offline.
 - 2026-10-18: `.htaccess`-Check auf deinen Wunsch wieder entfernt. Der Server ist eingerichtet, geprüft wird nach dem Deploy (Abschnitt „Deployment“). Deployment-Anleitung vor Batch 6 ergänzt.
+- 2026-10-18: Live-Prüfung von https://vokabulator.thms.de/: App, `.htaccess`, Header ok. Icons kollidierten mit Debians `/icons/`-Alias, deshalb umbenannt in `/app-icons/`. Der Proxy liefert 500 (Server-Konfiguration, siehe Deployment).
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
