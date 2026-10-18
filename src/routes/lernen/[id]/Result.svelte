@@ -17,6 +17,7 @@
 <script>
 	import { resolve } from '$app/paths';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import ShareButton from '#lib/components/ShareButton.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
 	import { phrase, verdict } from '#lib/learn/feedback.js';
 
@@ -26,6 +27,8 @@
 	 * @type {{
 	 *   unitId: string,
 	 *   summary: Summary,
+	 *   challenge?: number,
+	 *   share: { title: string, text: string, url: () => Promise<string> },
 	 *   answers: { entry: Entry, outcome: import('#lib/learn/check-answer.js').Outcome }[],
 	 *   isHard: (entryId: string) => boolean,
 	 *   ontogglestar: (entryId: string) => void,
@@ -33,12 +36,13 @@
 	 *   onnewround: () => void
 	 * }}
 	 */
-	let { unitId, summary, answers, isHard, ontogglestar, onrepeat, onnewround } = $props();
+	let { unitId, summary, challenge, share, answers, isHard, ontogglestar, onrepeat, onnewround } =
+		$props();
 
 	const known = $derived(answers.filter((a) => a.outcome !== 'wrong').length);
 	const mistakes = $derived(answers.filter((a) => a.outcome === 'wrong').map((a) => a.entry));
-	const share = $derived(summary.planned ? known / summary.planned : 0);
-	const headline = $derived(verdict(share));
+	const knownShare = $derived(summary.planned ? known / summary.planned : 0);
+	const headline = $derived(verdict(knownShare));
 	const timeUpText = phrase('timeUp');
 	const isRecord = $derived(summary.points > summary.previousBest && summary.points > 0);
 	const seconds = $derived(Math.round(summary.durationMs / 1000));
@@ -57,8 +61,15 @@
 				: 'Dein erster Rekord!'}
 		</p>
 	{/if}
+	{#if challenge}
+		<p class="challenge">
+			{summary.points > challenge
+				? `🎉 Challenge geschafft – ${challenge} Punkte geschlagen!`
+				: `😤 Noch ${challenge - summary.points + 1} Punkte bis zum Sieg. Nochmal?`}
+		</p>
+	{/if}
 	<p>{known} von {summary.planned} gewusst</p>
-	<ProgressBar value={share} label="Anteil gewusst" />
+	<ProgressBar value={knownShare} label="Anteil gewusst" />
 
 	<dl class="facts">
 		<div>
@@ -101,6 +112,9 @@
 		</button>
 	{/if}
 	<button class="button big" onclick={onnewround}>Neue Runde</button>
+	{#if summary.points > 0}
+		<ShareButton label="📤 Ergebnis teilen – schafft's ein Freund?" {...share} />
+	{/if}
 	<a class="button" href={resolve('/einheit/[id]', { id: unitId })}>Zur Lerneinheit</a>
 </div>
 
@@ -124,6 +138,10 @@
 		.record {
 			font-weight: 700;
 			color: var(--star);
+		}
+
+		.challenge {
+			font-weight: 700;
 		}
 
 		.time-up {

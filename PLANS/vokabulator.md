@@ -13,10 +13,10 @@
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ✅ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ✅ |
 | 5 | Mediencode-Import über Proxy | ✅ (lokal; Server nach Deploy prüfen) |
-| – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ✅ deployt; Proxy liefert noch 500 (siehe Deployment) |
+| – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ✅ live: Proxy, Offline, Scanner-Ablauf, Spiel geprüft |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ✅ (lokal; Kamera-Test auf dem Handy offen) |
-| 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ✅ (lokal; nach Deploy live prüfen) |
-| 8 | Teilen | ⬜ |
+| 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ✅ (live geprüft) |
+| 8 | Teilen | ✅ (lokal; nach Deploy live prüfen) |
 | 9 | Design & Polish | ⬜ |
 
 ## Kontext
@@ -332,6 +332,13 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
   - Die Schachuhr steht während des Feedbacks.
   - Läuft die Zeit ab, zählt das Ergebnis alle Karten der Runde. So steht nach 1 von 5 kein „Perfekt“.
   - Rekorde und Tage in Folge liegen in `vokabulator.stats`.
+- 2026-10-18 (Batch 8):
+  - Eine Challenge überträgt nicht nur die Punkte, sondern auch Modus, Wortzahl, Richtung und Uhr. Der Freund spielt
+    also nach denselben Regeln, die Abschnitte bleiben frei wählbar.
+  - Der Challenge-Teil des Links wird mit `withChallenge()` von `/neu` zur Lernseite mitgenommen statt über
+    Komponenten-Props weitergereicht.
+  - Geteilte Text- und PDF-Einheiten behalten ihre ID. Ein erneutes Öffnen aktualisiert dann statt zu verdoppeln.
+  - Teilen nutzt `navigator.share` (Android) und sonst die Zwischenablage.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -361,6 +368,8 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18: Live: Proxy läuft nach `ProxyPreserveHost Off`/`SSLProxyProtocol`. Import über den echten Server im Chromium geprüft. Der Server hat noch den Build von 20:05, Icon-Fix und Scanner fehlen dort.
 - 2026-10-18: Batch 7a – Lernmodi „⌨️ Tippen“ (tolerante Prüfung, Tippfehler, „Ich lag doch richtig“) und „🔘 Auswahl“ (4 Optionen), Modus wird gemerkt. Lernseite in Komponenten aufgeteilt.
 - 2026-10-18: Batch 7b – Punkte, Combo ×2/×3, Joker (💡 Tipp/50:50, 👀 Aufdecken), Schachuhr (1/3/5 Min, Zeitbonus), Sprüche in `feedback.js`, Ergebnis mit Rekord, bester Serie, Zeit und Tagen in Folge; Startseite zeigt 🔥 Tage und 🏆 pro Einheit. Tests für `scoring.js` und `streak.js`; im Chromium inkl. vorgespulter Uhr geprüft.
+- 2026-10-18: Live-Prüfung des Builds von 20:54: alle Dateien für den Offline-Cache laden, Offline-Modus, Backup, Scanner-Ablauf (Fake-Kamera), Spielmechanik und Proxy grün.
+- 2026-10-18: Batch 8 – `share.js` (Links: Mediencode bzw. komprimierte Wörter nach `#d=`, Challenge-Parameter) mit Tests, `ShareButton.svelte`, „📤 Teilen“ auf der Einheitsseite, „📤 Ergebnis teilen“ als Challenge, Challenge-Banner auf `/neu` und Lernseite, Vergleich im Ergebnis. Im Chromium mit zwei Profilen geprüft.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

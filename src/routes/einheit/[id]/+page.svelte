@@ -4,9 +4,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import ShareButton from '#lib/components/ShareButton.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
 	import { BOX_COUNT, learnedShare, progressOf, toggleHard } from '#lib/learn/leitner.js';
 	import { LANGS } from '#lib/model.js';
+	import { sharePath } from '#lib/share.js';
 	import { deleteUnit, loadProgress, saveProgress } from '#lib/storage.js';
 
 	/** @type {import('./$types').PageProps} */
@@ -75,6 +77,12 @@
 {/each}
 
 <div class="actions">
+	<ShareButton
+		label="📤 Teilen"
+		title={unit.title}
+		text={`Lern mit mir „${unit.title}“ im Vokabulator 🧠`}
+		url={() => sharePath(unit)}
+	/>
 	{#if reloadHref}
 		<a class="button" href={reloadHref}>🔄 Neu laden</a>
 	{/if}

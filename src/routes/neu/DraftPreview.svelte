@@ -5,8 +5,10 @@
 <script>
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { buildUnit, LANGS } from '#lib/model.js';
+	import { withChallenge } from '#lib/share.js';
 	import { getUnit, saveUnit } from '#lib/storage.js';
 
 	/** @type {{ draft: import('#lib/model.js').UnitDraft }} */
@@ -22,7 +24,12 @@
 	/** @param {'/lernen/[id]' | '/einheit/[id]'} next  where to go after saving */
 	function save(next) {
 		saveUnit(unit);
-		goto(resolve(next, { id: unit.id }));
+		// a challenge from a shared link goes along to the learning page
+		goto(
+			next === '/lernen/[id]'
+				? withChallenge(resolve(next, { id: unit.id }), page.url)
+				: resolve(next, { id: unit.id })
+		);
 	}
 </script>
 

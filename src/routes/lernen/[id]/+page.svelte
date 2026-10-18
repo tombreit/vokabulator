@@ -4,7 +4,9 @@
     setup     Setup.svelte          mode, direction, clock, which words, how many
     question  QuestionCard.svelte   + one of Flashcards / Typing / Choice .svelte
               Feedback.svelte       after an answer in "Tippen" / "Auswahl"
-    result    Result.svelte         points, record, mistakes
+    result    Result.svelte         points, record, mistakes, share the result as a challenge
+
+  /lernen/<id>?challenge=57&mode=…  a friend's challenge (see #lib/share.js): same rules, beat the points
 
   The rules of the game are in #lib/learn: check-answer.js (is it right?), scoring.js
   (points, combo, jokers), feedback.js (what we say), streak.js (days in a row).
@@ -12,6 +14,7 @@
 -->
 <script>
 	import { untrack } from 'svelte';
+	import { page } from '$app/state';
 	import ChessClock from '#lib/components/ChessClock.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
@@ -22,6 +25,7 @@
 	import { multiplier, newScore, scoreAnswer, timeBonus, useJoker } from '#lib/learn/scoring.js';
 	import { localDay, recordDay } from '#lib/learn/streak.js';
 	import { LANGS } from '#lib/model.js';
+	import { readChallenge, sharePath } from '#lib/share.js';
 	import {
 		loadProgress,
 		loadSettings,
@@ -69,11 +73,14 @@
 
 	// --- setup ---------------------------------------------------------------
 	/** @type {import('./Setup.svelte').Options} */
+	/** a friend's challenge from the link – it also sets the rules, so it is fair */
+	const challenge = readChallenge(page.url.searchParams);
+
 	let options = $state({
-		mode: settings.mode,
-		direction: settings.direction,
-		roundSize: settings.roundSize,
-		clock: settings.clock,
+		mode: challenge?.mode ?? settings.mode,
+		direction: challenge?.direction ?? settings.direction,
+		roundSize: challenge?.roundSize ?? settings.roundSize,
+		clock: challenge?.clock ?? settings.clock,
 		sections: unit.sections.map((_, i) => i),
 		onlyHard: false
 	});
@@ -260,6 +267,12 @@
 
 {#if phase === 'setup'}
 	<h1>{lang.flag} {unit.title}</h1>
+	{#if challenge}
+		<p class="card challenge">
+			🏆 <strong>Challenge:</strong> Schlag {challenge.points} Punkte! Die Regeln deines Freundes sind
+			schon eingestellt.
+		</p>
+	{/if}
 	<Setup
 		bind:options
 		{unit}
@@ -350,6 +363,19 @@
 	<Result
 		unitId={unit.id}
 		{summary}
+		challenge={challenge?.points}
+		share={{
+			title: unit.title,
+			text: `Ich hab ${summary.points} Punkte bei „${unit.title}“ geholt 🔥 Schaffst du mehr?`,
+			url: () =>
+				sharePath(unit, {
+					points: summary?.points ?? 0,
+					mode: options.mode,
+					roundSize: options.roundSize,
+					direction: options.direction,
+					clock: options.clock
+				})
+		}}
 		{answers}
 		isHard={(id) => progressOf(progress, id).hard}
 		ontogglestar={toggleStar}
@@ -359,6 +385,12 @@
 {/if}
 
 <style>
+	.challenge {
+		border-color: var(--star);
+		border-width: 2px;
+		margin-bottom: var(--gap);
+	}
+
 	.round-bar {
 		display: grid;
 		grid-template-columns: auto 1fr auto auto;
