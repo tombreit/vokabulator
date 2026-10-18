@@ -9,7 +9,6 @@
 	import { canScanQr } from '#lib/components/QrScanner.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
-	import { ADVANCEMENTS } from '#lib/learn/advancements.js';
 	import { splash } from '#lib/learn/feedback.js';
 	import { BOX_COUNT, learnedShare, oreOf, progressOf } from '#lib/learn/leitner.js';
 	import { currentDays, localDay } from '#lib/learn/streak.js';
@@ -19,7 +18,6 @@
 	const stats = loadStats();
 	const days = currentDays(stats.days, localDay());
 	const splashText = splash();
-	const unlocked = ADVANCEMENTS.filter((a) => stats.advancements[a.id]).length;
 
 	const worlds = loadUnits().map((unit) => {
 		const progress = loadProgress(unit.id);
@@ -87,15 +85,6 @@
 		{/each}
 	</ul>
 {/if}
-
-<div class="more">
-	{#if canScanQr}
-		<a class="button" href={resolve('/neu')}>Code, PDF oder Text</a>
-	{/if}
-	<a class="button" href={resolve('/fortschritte')}>
-		<Sprite name="book" size={24} /> Fortschritte {unlocked}/{ADVANCEMENTS.length}
-	</a>
-</div>
 
 <style>
 	/* --- title: stone logo + splash ------------------------------------------------ */
@@ -199,16 +188,5 @@
 		gap: 0.3rem;
 		color: var(--muted);
 		font-size: 0.9rem;
-	}
-
-	.more {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-top: 1rem;
-
-		.button {
-			flex: 1;
-		}
 	}
 </style>

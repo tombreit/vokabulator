@@ -1,5 +1,5 @@
 <!--
-  Messages that slide in at the top right, like "Fortschritt erzielt!" in the game:
+  Messages that slide in at the top right, like "Erfolg freigeschaltet!" in the game:
   a dark box with an item, a yellow title and a line of text. Shown one after another,
   each for 3.5 seconds. New ones come from showToast() in #lib/toasts.svelte.js.
   Rendered once, in +layout.svelte.

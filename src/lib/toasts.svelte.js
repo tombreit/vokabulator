@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Short messages at the top right – "Vokabeln importiert!", "Level-Up!", "Fortschritt erzielt!".
+ * Short messages at the top right – "Vokabeln importiert!", "Level-Up!", "Erfolg freigeschaltet!".
  * Any page or module calls showToast(); Toasts.svelte (in the layout) shows them one after
  * another, so a message survives a page change (e.g. from the scanner to the learning page).
  */

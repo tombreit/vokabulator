@@ -14,8 +14,10 @@
 -->
 <script>
 	import { untrack } from 'svelte';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import ChessClock from '#lib/components/ChessClock.svelte';
+	import { nav } from '#lib/components/NavBar.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
@@ -141,6 +143,12 @@
 
 	// No dimming display while thinking about an answer.
 	$effect(() => (phase === 'question' ? keepScreenOn() : undefined));
+
+	// Nothing but the word during a round: the navigation goes away.
+	$effect(() => {
+		nav.hidden = phase === 'question';
+		return () => (nav.hidden = false);
+	});
 
 	// Flash cards: after rating, the card shows its ore change for a moment, then the next one comes.
 	$effect(() => {
@@ -268,7 +276,7 @@
 		stats.days = recordDay(stats.days, localDay());
 		stats.xp += score.points;
 
-		// Fortschritte: what did this round unlock?
+		// Erfolge (advancements): what did this round unlock?
 		const known = answers.filter((a) => a.outcome !== 'wrong').length;
 		const unlocked = newAdvancements(
 			{
@@ -289,7 +297,7 @@
 			stats.advancements[advancement.id] = localDay();
 			showToast({
 				sprite: advancement.sprite,
-				title: 'Fortschritt erzielt!',
+				title: 'Erfolg freigeschaltet!',
 				text: advancement.title
 			});
 		}
@@ -318,6 +326,7 @@
 </script>
 
 {#if phase === 'setup'}
+	<a class="back" href={resolve('/einheit/[id]', { id: unit.id })}>‹ Zur Welt</a>
 	<h1>{unit.title}</h1>
 	{#if challenge}
 		<p class="card challenge">

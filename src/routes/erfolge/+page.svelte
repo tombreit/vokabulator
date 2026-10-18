@@ -12,8 +12,8 @@
 	const date = (/** @type {string} */ day) => day.split('-').reverse().join('.');
 </script>
 
-<h1>Fortschritte</h1>
-<p class="muted">{unlockedCount} von {ADVANCEMENTS.length} erzielt</p>
+<h1>Erfolge</h1>
+<p class="muted">{unlockedCount} von {ADVANCEMENTS.length} freigeschaltet</p>
 
 <div class="level"><XpBar xp={stats.xp} /></div>
 
@@ -25,7 +25,7 @@
 			<span class="info">
 				<strong>{advancement.title}</strong>
 				<span class="read">{advancement.text}</span>
-				{#if day}<span class="day">erzielt am {date(day)}</span>{/if}
+				{#if day}<span class="day">freigeschaltet am {date(day)}</span>{/if}
 			</span>
 		</li>
 	{/each}

@@ -1,7 +1,7 @@
 // @ts-check
 /**
- * Fortschritte (advancements): small goals that unlock once, with a message at the
- * top right ("Fortschritt erzielt!") and a place on the /fortschritte page.
+ * Erfolge (advancements): small goals that unlock once, with a message at the
+ * top right ("Erfolg freigeschaltet!") and a place on the /erfolge page.
  *
  * Each advancement has a pure `check` over the facts of a finished round. The learning
  * page calls newAdvancements() at the end of every round and stores the new ids with

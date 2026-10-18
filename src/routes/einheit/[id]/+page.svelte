@@ -50,6 +50,7 @@
 	}
 </script>
 
+<a class="back" href={resolve('/')}>‹ Meine Welten</a>
 <h1>{unit.title}</h1>
 
 <div class="card summary">

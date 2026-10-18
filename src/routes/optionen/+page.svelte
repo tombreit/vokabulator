@@ -1,5 +1,5 @@
 <!--
-  Settings: sounds on/off, and the chest – back up and restore all worlds, progress,
+  Optionen (settings): sounds on/off, and the chest – back up and restore all worlds, progress,
   XP and advancements (e.g. for a new phone).
 -->
 <script>
@@ -49,7 +49,7 @@
 	}
 </script>
 
-<h1>Einstellungen</h1>
+<h1>Optionen</h1>
 
 <button
 	class="button option"
@@ -63,7 +63,7 @@
 	<h2><Sprite name="chest" size={32} /> Truhe: deine Sicherung</h2>
 	<p class="read">
 		Deine {unitCount}
-		{unitCount === 1 ? 'Welt' : 'Welten'}, dein Lernstand, deine XP und Fortschritte liegen nur auf
+		{unitCount === 1 ? 'Welt' : 'Welten'}, dein Lernstand, deine XP und Erfolge liegen nur auf
 		diesem Gerät. Mit einer Sicherungsdatei nimmst du alles auf ein neues Handy mit.
 	</p>
 	<div class="buttons">

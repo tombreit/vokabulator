@@ -112,6 +112,16 @@ a {
 	color: var(--aqua);
 }
 
+/* "‹ Meine Welten" above a page title: one level up */
+.back {
+	display: inline-block;
+	padding-block: 0.4rem;
+	margin-bottom: 0.25rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+	text-decoration: none;
+}
+
 :focus-visible {
 	outline: 3px solid var(--yellow);
 	outline-offset: 2px;

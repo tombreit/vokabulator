@@ -27,9 +27,9 @@
 	const challenge = readChallenge(page.url.searchParams);
 
 	const methods = [
-		...(canScanQr ? [{ id: 'scan', label: '📷 Scannen' }] : []),
-		{ id: 'code', label: '🔢 Code' },
-		{ id: 'text', label: '✍️ Text' }
+		...(canScanQr ? [{ id: 'scan', label: 'Scannen' }] : []),
+		{ id: 'code', label: 'Code' },
+		{ id: 'text', label: 'Text' }
 	];
 	let activeId = $state(initialCode ? 'code' : methods[0].id);
 

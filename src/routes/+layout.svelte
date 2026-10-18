@@ -1,9 +1,7 @@
 <script>
 	import '../app.css';
 	import { onNavigate } from '$app/navigation';
-	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
-	import Sprite from '#lib/components/Sprite.svelte';
+	import NavBar from '#lib/components/NavBar.svelte';
 	import Toasts from '#lib/components/Toasts.svelte';
 	import { spriteDataUri } from '#lib/pixel/sprites.js';
 	import { migrate } from '#lib/storage.js';
@@ -30,29 +28,15 @@
 			});
 		});
 	});
-
-	/** the start page shows the big logo itself */
-	const onStartPage = $derived(page.url.pathname === resolve('/'));
 </script>
 
 <div class="grass" aria-hidden="true"></div>
-
-<header>
-	{#if onStartPage}
-		<span></span>
-	{:else}
-		<!-- "VOKABVLATOR": Roman inscriptions write U as V -->
-		<a class="wordmark" href={resolve('/')} aria-label="Vokabulator – Startseite">VOKABVLATOR</a>
-	{/if}
-	<a class="settings" href={resolve('/einstellungen')} aria-label="Einstellungen">
-		<Sprite name="chest" size={32} />
-	</a>
-</header>
 
 <main>
 	{@render children()}
 </main>
 
+<NavBar />
 <Toasts />
 
 <style>
@@ -65,36 +49,10 @@
 		border-bottom: 2px solid #000;
 	}
 
-	header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		max-width: 40rem;
-		margin-inline: auto;
-		padding: 0.5rem 1rem 0.25rem;
-
-		a {
-			color: inherit;
-			text-decoration: none;
-		}
-	}
-
-	.wordmark {
-		font-size: 1.25rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-	}
-
-	.settings {
-		display: grid;
-		place-items: center;
-		min-width: var(--tap);
-		min-height: var(--tap);
-	}
-
+	/* room at the bottom for the navigation (NavBar.svelte) */
 	main {
 		max-width: 40rem;
 		margin-inline: auto;
-		padding: 0 1rem 3rem;
+		padding: 0.75rem 1rem calc(6rem + env(safe-area-inset-bottom));
 	}
 </style>

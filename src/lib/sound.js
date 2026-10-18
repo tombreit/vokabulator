@@ -6,7 +6,7 @@
  *   levelUp  a rising chord
  *   wrong    a low thud
  *
- * Off by default (phones in school…); switched on in Einstellungen (settings.sound).
+ * Off by default (phones in school…); switched on in Optionen (settings.sound).
  */
 
 import { loadSettings } from './storage.js';

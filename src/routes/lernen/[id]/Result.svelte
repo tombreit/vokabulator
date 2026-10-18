@@ -123,7 +123,7 @@
 
 {#if summary.advancements.length}
 	<section class="unlocked">
-		<h2>Fortschritt erzielt!</h2>
+		<h2>Erfolg freigeschaltet!</h2>
 		<ul>
 			{#each summary.advancements as advancement (advancement.id)}
 				<li>
