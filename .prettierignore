@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# The plan is written by hand (wide tables, line breaks by meaning)
+/PLANS/

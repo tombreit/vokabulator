@@ -20,6 +20,7 @@
 | 9 | Design & Polish („Wachstafel“) | ✅ live, ersetzt durch Batch 10 |
 | 10 | „Blockwelt“: Minecraft-Stil mit Erzen, XP/Level, Fortschritten | ✅ live geprüft |
 | 11 | QR-Scanner auf allen Geräten (ZXing-Fallback) | ✅ live geprüft |
+| 12 | Schneller & klarer: Import ohne Umwege, Navigation, Karte im Fokus | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -102,14 +103,18 @@ src/lib/learn/check-answer.js   Normalisieren & Vergleichen           (+ Test)
 src/lib/learn/scoring.js        Punkte, Combo, Joker-Kosten           (+ Test)
 src/lib/learn/feedback.js       Sprüche & Emojis – reine Daten, frei editierbar
 src/lib/share.js                Teilen-Links bauen/lesen
-src/lib/components/             ProgressBar, Card, ChessClock, QrScanner, …
+src/lib/toasts.svelte.js        Einblendungen oben rechts (showToast), überleben einen Seitenwechsel
+src/lib/components/             ProgressBar, ChessClock, QrScanner, NavBar (Hotbar unten), Toasts, …
 src/routes/+layout.js           ssr = false
-src/routes/+page.svelte         „Meine Einheiten“
-src/routes/neu/+page.svelte     Import: Scannen | Code | PDF-Datei | Text   (?code=… für Teilen-Links)
-src/routes/neu/*Import.svelte   je Import-Weg eine Komponente; alle enden in DraftPreview.svelte (Vorschau + Speichern)
-src/routes/einheit/[id]/+page.svelte   Wortliste, Abschnitte, ⭐ schwer, Lernmodus wählen
-src/routes/lernen/[id]/+page.svelte    Abfrage + Ergebnisseite (ein Zustandsautomat in einer Datei)
-src/routes/einstellungen/+page.svelte  Backup, Feedback-Stil, Sound
+src/routes/+layout.svelte       Graskante, NavBar, Toasts
+src/routes/+page.svelte         „Meine Welten“
+src/routes/neu/+page.svelte     Import: Scannen | Code | Text   (?code=… und #d=… für Teilen-Links)
+src/routes/neu/*Import.svelte   je Import-Weg eine Komponente; Scan, Code und Link speichern sofort (MediencodeLoader,
+                                SharedImport), nur Text zeigt erst die Vorschau (DraftPreview)
+src/routes/einheit/[id]/+page.svelte   Wortliste, Abschnitte, ⭐ schwer, Erz-Inventar
+src/routes/lernen/[id]/+page.svelte    Setup → Abfrage → Ergebnis (ein Zustandsautomat in einer Datei)
+src/routes/erfolge/+page.svelte        alle Erfolge (Advancements)
+src/routes/optionen/+page.svelte       Sound, Sicherung speichern/laden
 ```
 
 Regeln für Nachvollziehbarkeit: Fachlogik steckt in kleinen reinen Modulen unter `src/lib`, jedes mit einem
@@ -326,7 +331,7 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
 | Joker | **Hotbar:** Fackel = Tipp/50:50, Fernrohr = Aufdecken |
 | Combo | **verzauberte Karte** (lila Schimmer) |
 | Tage in Folge | **„X Tage überlebt“** mit Pixel-Sonne |
-| Rekorde, Ziele | **Fortschritte** (`learn/advancements.js`, 12 Stück): Einblendung „Fortschritt erzielt!“ und Seite `/fortschritte` |
+| Rekorde, Ziele | **Fortschritte** (`learn/advancements.js`, 12 Stück): Einblendung „Fortschritt erzielt!“ und Seite `/fortschritte` – seit Batch 12 „Erfolge“, `/erfolge` |
 | Lerneinheiten | **Welten** („Meine Welten“, Weltliste mit dem besten Erz als Symbol) |
 | Feedback | **Chatzeile** `<Vokabulator> Sheesh! +20 XP`, dazu Blockwelt-Sprüche und ein gelber Splash-Text auf der Startseite |
 | Rundeneinstellungen | **Optionsknöpfe** „Modus: Tippen“, die beim Tippen den Wert wechseln |
@@ -344,6 +349,38 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
 **Ton:** kurze, selbst erzeugte WebAudio-Töne (`src/lib/sound.js`), standardmäßig aus, Schalter in den Einstellungen.
 **Sicherung** enthält jetzt auch XP, Level, Rekorde und Fortschritte; beim Wiederherstellen wird zusammengeführt (`mergeStats`).
 **App-Icon:** Diamant-Erz, erzeugt von `scripts/make-icons.mjs` aus dem Sprite.
+
+### Batch 12 – Schneller & klarer
+Rückmeldung nach Batch 11: Das Anlegen einer neuen Lektion hat zu viele Zwischenschritte. Nach dem Scan fehlt eine
+Bestätigung. Das Design wirkt „chaotisch und diffus“, die Karte soll sich auf die Vokabel konzentrieren. Es fehlt
+eine Navigation („ich weiß nie so recht, wo ich eigentlich bin“). Der PDF-Upload kann weg.
+
+**12a – Import ohne Umwege**
+- Scan, Code und Link vom Freund speichern die Welt sofort. Dann erscheint „Vokabeln importiert! 148 Vokabeln: …“,
+  und es geht direkt zur Runde. Scan → **ein Tipp auf „Los geht's“** (jetzt oben) → erste Karte.
+  Vorher waren es Vorschau, „Speichern & loslegen“ und dann erst die Optionen.
+- Ein bekannter Code führt mit „Kenn ich schon!“ direkt zur Runde. „Neu laden“ führt mit „Neu geladen!“ zurück zur Welt.
+- Toasts sind global (`src/lib/toasts.svelte.js`, gezeigt im Layout) und überstehen den Seitenwechsel.
+- pdf.js (~1 MB) lädt schon, während die Kamera sucht.
+- Der PDF-Upload ist entfernt. Der PDF-Parser bleibt, denn der Mediencode-Import nutzt ihn.
+  Der Text-Import zeigt weiter die Vorschau, weil getippter Text eine Kontrolle braucht.
+
+**12b – Navigation**
+- Feste Leiste unten wie die Hotbar im Spiel: **Welten · Scannen · Erfolge · Optionen**, mit neuen Sprites
+  `qr`, `trophy` und `gear` (`NavBar.svelte`).
+- Der aktuelle Bereich trägt den weißen Auswahlrahmen. Einheit und Lernen gehören zu „Welten“.
+- Während einer Runde ist die Leiste ausgeblendet (`nav.hidden`).
+- Zurück-Links „‹ Meine Welten“ (Welt) und „‹ Zur Welt“ (Runden-Setup).
+- Der Header mit Truhe und die Zusatz-Buttons auf der Startseite entfallen.
+
+**12c – Die Karte gehört der Vokabel**
+- Oben steht nur eine schlanke Zeile: ✕, Rundenfortschritt, 3/10, ★. Darunter klein: +XP, Combo ×2, Uhr.
+  Level-Balken und XP-Kugel sind aus der Runde raus; Level-Up meldet der Toast, das Level zeigen Ergebnis und Startseite.
+- Das Wort steht groß in der Mitte, das Erz klein als Abzeichen in der Ecke.
+  „Stein → Kohle!“ erscheint nur, wenn sich das Erz ändert.
+- Keine Beschriftungen „Latein“/„Deutsch“: Die Schrift zeigt die Sprache (Monocraft = Fremdsprache, Lexend = Deutsch).
+  Grammatik („m“, „Adv.“) steht leise unter dem Wort statt in einem Kasten.
+- Buttons bleiben bis 320 px einzeilig. Die Import-Tabs haben keine Emojis mehr, Joker-Slots und Tippfeld sind schmaler.
 
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
@@ -428,6 +465,15 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
   - Die `.wasm` kommt von unserem Server statt vom CDN (`prepareZXingModule`).
   - Sie liegt nicht im Offline-Cache, weil Scannen ohnehin Internet für den Import braucht.
   - Scan-Button und Tab sind jetzt immer da.
+- 2026-10-18 (Batch 12):
+  - **Kein Vorschau-Schritt nach Scan/Code/Link.** Die Daten kommen aus dem Buch bzw. von einem Freund, eine Kontrolle
+    bringt dem Schüler nichts. Die Wortliste steht auf der Weltseite, die Sprache lässt sich dort zwar nicht mehr ändern,
+    war beim Mediencode aber immer Latein.
+  - **„Fortschritte“ heißt jetzt „Erfolge“** (Seite `/erfolge`, Einblendung „Erfolg freigeschaltet!“). In einer
+    Lern-App klingt „Fortschritt“ nach Lernstand, und das kurze Wort passt in ein Hotbar-Feld.
+    **„Einstellungen“ heißt „Optionen“** (`/optionen`), wie im Spiel.
+  - **Navigation unten statt oben**, weil sie mit dem Daumen erreichbar ist und an die Hotbar erinnert.
+    In der Runde ausgeblendet, damit nichts von der Vokabel ablenkt.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -473,6 +519,13 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
 - 2026-10-18: Live: Batch 11 deployt und geprüft. `.wasm` kommt als `application/wasm`, mit gzip (~460 KB) und
   langem Cache. Echter Scan ohne eingebauten Leser liest den QR-Code aus dem Buch in 1,3 s. Eingebauter Leser, Spiel,
   Teilen/Challenge, Offline und Backup sind grün.
+- 2026-10-18: Batch 12 – Schneller & klarer. 12a: Import ohne Vorschau, globale Toasts, pdf.js lädt vor,
+  PDF-Upload entfernt. 12b: Navigation als Hotbar unten, Umbenennung Erfolge/Optionen. 12c: Karte im Fokus, schlanke
+  Rundenleiste. Im Chromium geprüft (390 und 320 px):
+  - echter Scan bis zur Runde in 1,3 s, ein Tipp bis zur ersten Karte
+  - bekannter Code, Neu laden, Link vom Freund, kaputter Link
+  - alle Bereiche über die Leiste, Leiste in der Runde weg, kein seitliches Scrollen
+  - drei Lernmodi, Erz-Aufwertung, Level-Up, Erfolge, Teilen/Challenge
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
