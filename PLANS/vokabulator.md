@@ -15,7 +15,7 @@
 | 5 | Mediencode-Import über Proxy | ✅ (lokal; Server nach Deploy prüfen) |
 | – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ✅ deployt; Proxy liefert noch 500 (siehe Deployment) |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ✅ (lokal; Kamera-Test auf dem Handy offen) |
-| 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ⬜ |
+| 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | 🔄 7a (Modi) ✅, 7b (Punkte & Co.) in Arbeit |
 | 8 | Teilen | ⬜ |
 | 9 | Design & Polish | ⬜ |
 
@@ -320,6 +320,10 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18 (Live-Test): Der Proxy scheiterte mit `AH00898` (TLS-Handshake). Mit `openssl s_client` geprüft: ccbuchner.de
   antwortet nur mit SNI `www.ccbuchner.de` und nur über TLS 1.2. Die VHost-Vorlage setzt deshalb ausdrücklich
   `ProxyPreserveHost Off` und `SSLProxyProtocol -all +TLSv1.2 +TLSv1.3`. Beides ist in `.htaccess` nicht erlaubt.
+- 2026-10-18 (Batch 7a): Die Lernseite ist ein schlanker Zustandsautomat. Jeder Teil ist eine Komponente im Routenordner:
+  `Setup`, `QuestionCard`, `Flashcards`/`Typing`/`Choice`, `Feedback`, `Result`. Die Antwortprüfung (`check-answer.js`)
+  und die Auswahl-Optionen (`choices.js`) sind reine Module mit Tests. „Ich lag doch richtig“ rechnet das Leitner-Fach
+  vom gespeicherten Stand vor der Antwort neu.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -346,6 +350,8 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18: `.htaccess`-Check auf deinen Wunsch wieder entfernt. Der Server ist eingerichtet, geprüft wird nach dem Deploy (Abschnitt „Deployment“). Deployment-Anleitung vor Batch 6 ergänzt.
 - 2026-10-18: Live-Prüfung von https://vokabulator.thms.de/: App, `.htaccess`, Header ok. Icons kollidierten mit Debians `/icons/`-Alias, deshalb umbenannt in `/app-icons/`. Der Proxy liefert 500 (Server-Konfiguration, siehe Deployment).
 - 2026-10-18: Batch 6 – `QrScanner.svelte` (Rückkamera + nativer `BarcodeDetector`, Vibration, Kamera aus beim Verlassen), Tab „📷 Scannen“ als Standard, großer Scan-Button auf der Startseite, Hinweis bei fremden QR-Codes, Tabs als 2×2-Raster. Im Chromium mit Fake-Kamera und nachgebautem `BarcodeDetector` geprüft: Scan → Vorschau → Lernen, fremder QR-Code, bekannter Code, ohne Detector, Kamera verweigert.
+- 2026-10-18: Live: Proxy läuft nach `ProxyPreserveHost Off`/`SSLProxyProtocol`. Import über den echten Server im Chromium geprüft. Der Server hat noch den Build von 20:05, Icon-Fix und Scanner fehlen dort.
+- 2026-10-18: Batch 7a – Lernmodi „⌨️ Tippen“ (tolerante Prüfung, Tippfehler, „Ich lag doch richtig“) und „🔘 Auswahl“ (4 Optionen), Modus wird gemerkt. Lernseite in Komponenten aufgeteilt.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

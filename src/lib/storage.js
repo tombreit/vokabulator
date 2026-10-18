@@ -105,10 +105,11 @@ export function saveProgress(unitId, progress) {
  * @typedef {object} Settings
  * @property {'front-back' | 'back-front' | 'mixed'} direction  front-back = Latein → Deutsch
  * @property {number} roundSize  number of words per round, 0 = all
+ * @property {'cards' | 'typing' | 'choice'} mode  flash cards, type the answer, or multiple choice
  */
 
 /** @type {Settings} */
-const DEFAULT_SETTINGS = { direction: 'front-back', roundSize: 10 };
+const DEFAULT_SETTINGS = { direction: 'front-back', roundSize: 10, mode: 'cards' };
 
 /** @returns {Settings} */
 export function loadSettings() {
