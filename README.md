@@ -1,0 +1,48 @@
+# Vokabulator 🧠
+
+Vokabeltrainer fürs Smartphone: QR-Code im Schulbuch scannen, Vokabeln landen offline auf dem Handy,
+dann wird gelernt – mit Karteikarten, Punkten und Emojis.
+
+Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (living document).
+
+## Wie die App aufgebaut ist
+
+- **SvelteKit 3 als Single-Page-App.** Alles läuft im Browser, und `pnpm build` erzeugt rein statische Dateien in `build/`.
+- **Daten liegen im `localStorage`** des Handys (siehe `src/lib/storage.js`). Es gibt keinen Server und keine Accounts.
+- **Fachlogik** steckt in kleinen Modulen unter `src/lib/`, jeweils mit Test daneben (`*.test.js`).
+  **Seiten** liegen unter `src/routes/` (`+page.svelte` = eine Seite).
+- **Einziger serverseitiger Baustein:** ein eng begrenzter Apache-Proxy zu ccbuchner.de, nötig wegen CORS
+  (`deploy/apache-vokabulator.conf`).
+
+## Entwickeln
+
+Voraussetzungen: Node ≥ 22.17 und pnpm.
+
+```sh
+pnpm install
+pnpm dev          # http://localhost:5173
+pnpm check        # Typprüfung (JSDoc) mit svelte-check
+pnpm test         # Unit-Tests (Vitest)
+pnpm build        # statischer Build nach build/
+pnpm preview      # Build lokal ansehen (inkl. Service Worker)
+```
+
+### Auf dem Handy testen
+
+Kamera und Service Worker brauchen einen „sicheren Kontext“, also HTTPS oder `localhost`. Am einfachsten:
+
+1. Handy per USB anschließen, USB-Debugging aktivieren.
+2. Am Rechner in Chrome `chrome://inspect/#devices` öffnen → **Port forwarding** `5173 → localhost:5173`.
+3. Auf dem Handy in Chrome `http://localhost:5173` öffnen.
+
+## Deployen
+
+Einmalig auf dem Server: Apache-Konfiguration einrichten (Anleitung im Kopf von `deploy/apache-vokabulator.conf`).
+
+Danach für jede neue Version:
+
+```sh
+export VOKABULATOR_TARGET=user@server:/var/www/vokabulator
+./deploy/deploy.sh --dry-run   # zeigt nur, was kopiert würde
+./deploy/deploy.sh             # prüft, testet, baut und kopiert per rsync
+```
