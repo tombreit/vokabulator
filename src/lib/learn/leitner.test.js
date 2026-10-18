@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	learnedShare,
 	newProgress,
-	oreOf,
+	stageOf,
 	pickRound,
 	recordAnswer,
 	shuffle,
@@ -87,14 +87,14 @@ describe('shuffle', () => {
 	});
 });
 
-describe('oreOf', () => {
+describe('stageOf', () => {
 	it('goes from stone to diamond and stays in range', () => {
-		expect([0, 1, 2, 3, 4, 5, 9].map((box) => oreOf(box).name)).toEqual([
+		expect([0, 1, 2, 3, 4, 5, 9].map((box) => stageOf(box).item)).toEqual([
 			'Stein',
 			'Stein',
 			'Kohle',
-			'Eisen',
-			'Gold',
+			'Eisenbarren',
+			'Goldbarren',
 			'Diamant',
 			'Diamant'
 		]);

@@ -55,7 +55,7 @@
 		position: fixed;
 		inset: auto 0 0;
 		z-index: 10;
-		padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+		padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
 		border-top: 2px solid #000;
 		background: #1e1e1e;
 		box-shadow: inset 0 2px 0 #3a3a3a;
@@ -64,7 +64,7 @@
 	ul {
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: 4px;
+		gap: 2px;
 		max-width: 40rem;
 		margin: 0 auto;
 		padding: 0;
@@ -80,8 +80,8 @@
 		border: 2px solid #555;
 		background: rgb(0 0 0 / 0.35);
 		color: var(--muted);
-		/* "Lektionen" still fits on a 280 px screen */
-		font-size: min(0.72rem, 3.7vw);
+		/* "Lektionen" (9 letters, 0.67em each in Monocraft) still fits on a 280 px screen */
+		font-size: min(0.72rem, 3.4vw);
 		text-decoration: none;
 		white-space: nowrap;
 

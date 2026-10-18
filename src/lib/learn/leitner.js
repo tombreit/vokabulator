@@ -2,9 +2,9 @@
 /**
  * Learning progress following the Leitner system (the classic card box).
  *
- * Every word sits in one of 5 boxes (shown as ores, see BOX_ORES).
- * Known → one box up, not known → back to box 1.
- * Words in low boxes and words marked as "hard" (⭐) are asked more often.
+ * Every word sits in one of 5 boxes, called "Stufe 1" to "Stufe 5" (see STAGES).
+ * Known → one stage up, not known → back to stage 1.
+ * Words on low stages and words marked as hard (the anvil) are asked more often.
  *
  * Unlike Anki there are no due dates: a vocabulary test is usually a few days
  * away, so every round simply picks the words that need practice most.
@@ -16,7 +16,7 @@
  * Progress of one word.
  * @typedef {object} EntryProgress
  * @property {number} box       1..5
- * @property {boolean} hard     marked as difficult by the learner (⭐)
+ * @property {boolean} hard     marked as difficult by the learner (the anvil)
  * @property {number} right     how often known
  * @property {number} wrong     how often not known
  * @property {number} lastSeen  timestamp (ms) of the last answer, 0 = never asked
@@ -30,23 +30,24 @@ export const BOX_COUNT = 5;
 /** From this box on a word counts as learned. */
 export const LEARNED_BOX = 4;
 /**
- * How the boxes look: ores, from stone to diamond. Every known word is upgraded
- * one step – the goal is a unit full of diamonds. Sprites in #lib/pixel/sprites.js.
+ * The boxes as the learner sees them: "Stufe 1" (new) to "Stufe 5" (learned for sure),
+ * each drawn as a different item – rock, coal, iron bar, gold bar, diamond.
+ * Sprites in #lib/pixel/sprites.js.
  */
-export const BOX_ORES = [
-	{ sprite: 'stone', name: 'Stein' },
-	{ sprite: 'coal', name: 'Kohle' },
-	{ sprite: 'iron', name: 'Eisen' },
-	{ sprite: 'gold', name: 'Gold' },
-	{ sprite: 'diamond', name: 'Diamant' }
+export const STAGES = [
+	{ name: 'Stufe 1', item: 'Stein', sprite: 'rock' },
+	{ name: 'Stufe 2', item: 'Kohle', sprite: 'coal' },
+	{ name: 'Stufe 3', item: 'Eisenbarren', sprite: 'iron' },
+	{ name: 'Stufe 4', item: 'Goldbarren', sprite: 'gold' },
+	{ name: 'Stufe 5', item: 'Diamant', sprite: 'diamond' }
 ];
 
 /**
- * The ore of a box.
+ * The stage of a box.
  * @param {number} box  1..5
  */
-export function oreOf(box) {
-	return BOX_ORES[Math.min(Math.max(box, 1), BOX_COUNT) - 1];
+export function stageOf(box) {
+	return STAGES[Math.min(Math.max(box, 1), BOX_COUNT) - 1];
 }
 
 /** @returns {EntryProgress} */

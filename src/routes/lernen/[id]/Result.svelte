@@ -1,6 +1,6 @@
 <!--
-  After a round: XP and level, which words were upgraded (the ore balance), the mistakes
-  (mark them ⭐), and what to do next.
+  After a round: XP and level, which words moved up a stage, the mistakes
+  (mark them as hard), and what to do next.
 -->
 <script module>
 	/**
@@ -25,10 +25,10 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
-	import StarButton from '#lib/components/StarButton.svelte';
+	import HardButton from '#lib/components/HardButton.svelte';
 	import XpBar from '#lib/components/XpBar.svelte';
 	import { phrase, verdict } from '#lib/learn/feedback.js';
-	import { BOX_ORES, oreOf } from '#lib/learn/leitner.js';
+	import { STAGES, stageOf } from '#lib/learn/leitner.js';
 	import { levelFor } from '#lib/learn/level.js';
 
 	/** @typedef {import('#lib/model.js').Entry} Entry */
@@ -42,7 +42,7 @@
 	 *   answers: { entry: Entry, outcome: import('#lib/learn/check-answer.js').Outcome, before: { box: number } }[],
 	 *   boxOf: (entryId: string) => number,
 	 *   isHard: (entryId: string) => boolean,
-	 *   ontogglestar: (entryId: string) => void,
+	 *   ontogglehard: (entryId: string) => void,
 	 *   onrepeat: (entries: Entry[]) => void,
 	 *   onnewround: () => void
 	 * }}
@@ -56,7 +56,7 @@
 		answers,
 		boxOf,
 		isHard,
-		ontogglestar,
+		ontogglehard,
 		onrepeat,
 		onnewround
 	} = $props();
@@ -73,9 +73,9 @@
 	const levelBefore = $derived(levelFor(summary.xpBefore).level);
 	const levelNow = $derived(levelFor(summary.xpBefore + summary.points).level);
 
-	/** the ore balance: how many words reached which ore, and how many fell back to stone */
+	/** how many words reached which stage, and how many fell back to stage 1 */
 	const balance = $derived.by(() => {
-		const upgradedTo = BOX_ORES.map(() => 0);
+		const upgradedTo = STAGES.map(() => 0);
 		let fellBack = 0;
 		for (const answer of answers) {
 			const now = boxOf(answer.entry.id);
@@ -116,7 +116,7 @@
 	<ProgressBar value={knownShare} label="Anteil gewusst" />
 </div>
 
-<!-- level and ore balance on dark ground, like the game's screens -->
+<!-- level and stages on dark ground, like the game's screens -->
 <div class="level">
 	<XpBar xp={summary.xpBefore + summary.points} />
 </div>
@@ -140,20 +140,20 @@
 
 {#if balance.upgraded || balance.fellBack}
 	<section class="balance">
-		<h2>Abgebaut</h2>
+		<h2>Aufgestiegen</h2>
 		<ul>
-			{#each BOX_ORES as ore, i (ore.sprite)}
+			{#each STAGES as stage, i (stage.sprite)}
 				{#if balance.upgradedTo[i]}
 					<li>
-						<Sprite name={ore.sprite} size={32} />
-						{balance.upgradedTo[i]}× zu {ore.name}
+						<Sprite name={stage.sprite} size={32} />
+						{balance.upgradedTo[i]}× auf {stage.name}
 					</li>
 				{/if}
 			{/each}
 			{#if balance.fellBack}
 				<li class="back">
-					<Sprite name="stone" size={32} />
-					{balance.fellBack}× zurück zu Stein
+					<Sprite name={STAGES[0].sprite} size={32} />
+					{balance.fellBack}× zurück auf {STAGES[0].name}
 				</li>
 			{/if}
 		</ul>
@@ -187,9 +187,9 @@
 		<ul>
 			{#each mistakes as entry (entry.id)}
 				<li>
-					<Sprite name={oreOf(boxOf(entry.id)).sprite} size={28} />
+					<Sprite name={stageOf(boxOf(entry.id)).sprite} size={28} />
 					<span class="read"><strong>{entry.front}</strong> – {entry.back}</span>
-					<StarButton hard={isHard(entry.id)} ontoggle={() => ontogglestar(entry.id)} />
+					<HardButton hard={isHard(entry.id)} ontoggle={() => ontogglehard(entry.id)} />
 				</li>
 			{/each}
 		</ul>

@@ -1,14 +1,15 @@
 <!--
   The question on a stone panel – the word big in the middle, nothing else competing with it.
   The type tells the language: the foreign word in the pixel face, German in the reading face.
-  The word's ore sits small in the corner; once answered it shows what happened:
-    known     → it cracks (three stages) and turns into the next ore: "Kohle → Eisen!"
-    not known → it shakes and falls back to stone
-  During a combo the panel is "enchanted" (a purple shimmer).
+  The word's stage sits small in the corner (its item, see STAGES in #lib/learn/leitner.js);
+  once answered it shows what happened:
+    known     → it pops up as the next item: "↑ Stufe 3"
+    not known → it shakes and falls back: "↓ Stufe 1"
+  During a series of right answers the panel shimmers purple ("enchanted").
 -->
 <script>
 	import Sprite from '#lib/components/Sprite.svelte';
-	import { oreOf } from '#lib/learn/leitner.js';
+	import { stageOf } from '#lib/learn/leitner.js';
 
 	/**
 	 * @type {{
@@ -25,27 +26,10 @@
 	 */
 	let { entry, reverse, lang, showAnswer, box, newBox, enchanted = false } = $props();
 
-	/** 0 = whole, 1–3 = cracks, 4 = done (showing the new ore) */
-	let stage = $state(0);
-
-	$effect(() => {
-		if (newBox === undefined) return;
-		// cracks only when the word moves up; otherwise straight to the end state
-		const steps = newBox > box ? [1, 2, 3, 4] : [4];
-		const timers = steps.map((step, i) => setTimeout(() => (stage = step), i * 120));
-		return () => timers.forEach(clearTimeout);
-	});
-
-	const done = $derived(stage === 4 && newBox !== undefined);
-	const shown = $derived(oreOf(done && newBox !== undefined ? newBox : box));
+	const shown = $derived(stageOf(newBox ?? box));
 	const direction = $derived(
 		newBox === undefined ? '' : newBox > box ? 'up' : newBox < box ? 'down' : ''
 	);
-	/** only when the ore changed: "Kohle → Eisen!" or "Stein …" */
-	const caption = $derived.by(() => {
-		if (!done || newBox === undefined || newBox === box) return '';
-		return newBox > box ? `${oreOf(box).name} → ${oreOf(newBox).name}!` : `${oreOf(newBox).name} …`;
-	});
 </script>
 
 {#snippet foreign()}
@@ -58,14 +42,13 @@
 {/snippet}
 
 <div class="card question" class:enchanted>
-	<div class="ore" title={shown.name}>
-		<span class="block" class:pop={done && direction === 'up'} class:hurt={direction === 'down'}>
-			<Sprite name={shown.sprite} size={32} label={shown.name} />
-			{#if stage >= 1 && stage <= 3}
-				<span class="crack"><Sprite name="crack{stage}" size={32} /></span>
-			{/if}
+	<div class="stage" title="{shown.name} ({shown.item})">
+		<span class="item" class:pop={direction === 'up'} class:hurt={direction === 'down'}>
+			<Sprite name={shown.sprite} size={32} label="{shown.name} ({shown.item})" />
 		</span>
-		{#if caption}<span class="caption {direction}">{caption}</span>{/if}
+		{#if direction}
+			<span class="caption {direction}">{direction === 'up' ? '↑' : '↓'} {shown.name}</span>
+		{/if}
 	</div>
 
 	{@render (reverse ? german : foreign)()}
@@ -121,8 +104,8 @@
 		border-top: 2px solid var(--line);
 	}
 
-	/* --- the word's ore, small in the corner ----------------------------------------- */
-	.ore {
+	/* --- the word's stage, small in the corner --------------------------------------- */
+	.stage {
 		position: absolute;
 		top: 0.6rem;
 		left: 0.6rem;
@@ -133,20 +116,14 @@
 		font-weight: 700;
 	}
 
-	.block {
+	.item {
 		position: relative;
 		display: block;
 		width: 32px;
 		height: 32px;
-		outline: 2px solid #000;
 
 		:global(.sprite) {
 			display: block;
-		}
-
-		.crack {
-			position: absolute;
-			inset: 0;
 		}
 	}
 
@@ -159,28 +136,23 @@
 		}
 	}
 
-	/* --- the block reacts ------------------------------------------------------------ */
+	/* --- the item reacts ------------------------------------------------------------- */
 	.pop {
 		animation: pop 0.25s ease-out;
 	}
 
 	@keyframes pop {
 		from {
+			scale: 0.4;
+		}
+		60% {
 			scale: 1.4;
 		}
 	}
 
-	/* not known: shake, flash red (like taking damage in the game) */
+	/* not known: shake */
 	.hurt {
 		animation: shake 0.35s;
-
-		&::after {
-			content: '';
-			position: absolute;
-			inset: 0;
-			background: rgb(255 0 0 / 0.45);
-			animation: flash 0.35s forwards;
-		}
 	}
 
 	@keyframes shake {
@@ -195,12 +167,6 @@
 		}
 		80% {
 			translate: 2px 0;
-		}
-	}
-
-	@keyframes flash {
-		to {
-			opacity: 0;
 		}
 	}
 

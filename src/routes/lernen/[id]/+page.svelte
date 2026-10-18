@@ -20,7 +20,7 @@
 	import { nav } from '#lib/components/NavBar.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
-	import StarButton from '#lib/components/StarButton.svelte';
+	import HardButton from '#lib/components/HardButton.svelte';
 	import { firstLetterTip } from '#lib/learn/check-answer.js';
 	import { newAdvancements } from '#lib/learn/advancements.js';
 	import { choicesFor } from '#lib/learn/choices.js';
@@ -316,7 +316,7 @@
 	}
 
 	/** @param {string} entryId */
-	function toggleStar(entryId) {
+	function toggleHardWord(entryId) {
 		progress[entryId] = toggleHard(progressOf(progress, entryId));
 		saveProgress(unit.id, progress);
 	}
@@ -343,9 +343,9 @@
 		<button class="leave" onclick={() => (phase = 'setup')} aria-label="Runde abbrechen">✕</button>
 		<ProgressBar value={index / cards.length} label="Fortschritt der Runde" />
 		<span class="count">{index + 1}/{cards.length}</span>
-		<StarButton
+		<HardButton
 			hard={progressOf(progress, card.entry.id).hard}
-			ontoggle={() => toggleStar(card.entry.id)}
+			ontoggle={() => toggleHardWord(card.entry.id)}
 		/>
 	</div>
 	<div class="round-stats">
@@ -448,7 +448,7 @@
 		{answers}
 		boxOf={(id) => progressOf(progress, id).box}
 		isHard={(id) => progressOf(progress, id).hard}
-		ontogglestar={toggleStar}
+		ontogglehard={toggleHardWord}
 		onrepeat={(entries) => start(entries, 0)}
 		onnewround={() => (phase = 'setup')}
 	/>

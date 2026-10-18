@@ -98,7 +98,7 @@
 	{@render option('Richtung', label('direction'), () => cycle('direction'))}
 	{@render option('Vokabeln', label('roundSize'), () => cycle('roundSize'))}
 	{@render option('Schachuhr', label('clock'), () => cycle('clock'))}
-	{@render option('Nur schwere ⭐', options.onlyHard ? 'An' : 'Aus', () => {
+	{@render option('Nur schwere', options.onlyHard ? 'An' : 'Aus', () => {
 		options.onlyHard = !options.onlyHard;
 	})}
 </div>

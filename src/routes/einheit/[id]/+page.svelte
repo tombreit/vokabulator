@@ -1,6 +1,6 @@
 <!--
-  One learning unit ("Welt"): the inventory – how many words are stone, coal, iron,
-  gold or diamond – then all words by section, and the way into learning.
+  One learning unit (a "Lektion"): how many words are on which stage (1 = new … 5 = learned
+  for sure, see STAGES in #lib/learn/leitner.js), then all words by section, and the way into learning.
 -->
 <script>
 	import { untrack } from 'svelte';
@@ -9,8 +9,8 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
-	import StarButton from '#lib/components/StarButton.svelte';
-	import { BOX_ORES, learnedShare, oreOf, progressOf, toggleHard } from '#lib/learn/leitner.js';
+	import HardButton from '#lib/components/HardButton.svelte';
+	import { STAGES, learnedShare, progressOf, stageOf, toggleHard } from '#lib/learn/leitner.js';
 	import { LANGS } from '#lib/model.js';
 	import { sharePath } from '#lib/share.js';
 	import { deleteUnit, loadProgress, saveProgress } from '#lib/storage.js';
@@ -24,15 +24,15 @@
 	let progress = $state(loadProgress(unit.id));
 	const learned = $derived(learnedShare(unit.entries, progress));
 	const hardCount = $derived(unit.entries.filter((e) => progressOf(progress, e.id).hard).length);
-	/** how many words are stone, coal, iron, gold, diamond */
-	const perOre = $derived(
-		BOX_ORES.map(
+	/** how many words are on stage 1, 2, … 5 */
+	const perStage = $derived(
+		STAGES.map(
 			(_, i) => unit.entries.filter((e) => progressOf(progress, e.id).box === i + 1).length
 		)
 	);
 
 	/** @param {string} entryId */
-	function toggleStar(entryId) {
+	function toggleHardWord(entryId) {
 		progress[entryId] = toggleHard(progressOf(progress, entryId));
 		saveProgress(unit.id, progress);
 	}
@@ -62,17 +62,19 @@
 	</p>
 	<ProgressBar value={learned} label="Anteil gelernter Wörter" />
 
-	<!-- the inventory: one slot per ore, the number is the stack size -->
-	<ol class="inventory" aria-label="Vokabeln je Erz">
-		{#each BOX_ORES as ore, i (ore.sprite)}
-			<li class="slot" title="{ore.name}: {perOre[i]}">
-				<Sprite name={ore.sprite} size={40} label={ore.name} />
-				<span class="count">{perOre[i]}</span>
+	<!-- one inventory slot per stage, the number is how many words are on it -->
+	<ol class="stages" aria-label="Vokabeln je Stufe">
+		{#each STAGES as stage, i (stage.sprite)}
+			<li class="slot" title="{stage.name} ({stage.item}): {perStage[i]} Vokabeln">
+				<Sprite name={stage.sprite} size={32} label="{stage.name} ({stage.item})" />
+				<span class="count">{perStage[i]}</span>
 			</li>
 		{/each}
 	</ol>
 	<p class="muted hint read">
-		Jede gewusste Vokabel wird ein Erz besser – von Stein bis Diamant. Falsch? Dann zurück zu Stein.
+		Jede gewusste Vokabel steigt eine Stufe auf – vom Stein bis zum Diamanten, dann sitzt sie
+		sicher. Falsch? Zurück auf Stufe 1. Schwere Vokabeln markierst du mit dem Amboss, sie kommen
+		öfter dran.
 	</p>
 	<a class="button primary learn" href={resolve('/lernen/[id]', { id: unit.id })}>
 		<Sprite name="pickaxe" size={32} /> Lernen
@@ -88,13 +90,17 @@
 				{@const p = progressOf(progress, entryId)}
 				{#if entry}
 					<li>
-						<Sprite name={oreOf(p.box).sprite} size={32} label={oreOf(p.box).name} />
+						<Sprite
+							name={stageOf(p.box).sprite}
+							size={24}
+							label="{stageOf(p.box).name} ({stageOf(p.box).item})"
+						/>
 						<div>
 							<strong class="foreign">{entry.front}</strong>
-							{#if entry.frontInfo}<span class="tooltip">{entry.frontInfo}</span>{/if}
+							{#if entry.frontInfo}<span class="info read">{entry.frontInfo}</span>{/if}
 							<span class="meaning read">{entry.back}</span>
 						</div>
-						<StarButton hard={p.hard} ontoggle={() => toggleStar(entryId)} />
+						<HardButton hard={p.hard} ontoggle={() => toggleHardWord(entryId)} />
 					</li>
 				{/if}
 			{/each}
@@ -131,9 +137,11 @@
 		font-weight: 700;
 	}
 
-	/* inventory slots: sunken grey squares, stack size bottom right in white */
-	.inventory {
-		display: flex;
+	/* inventory slots: sunken grey squares, stack size bottom right in white –
+	   they shrink with the screen, so all five always fit */
+	.stages {
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 56px));
 		gap: 4px;
 		list-style: none;
 		padding: 0;
@@ -144,12 +152,16 @@
 		position: relative;
 		display: grid;
 		place-items: center;
-		width: 56px;
-		height: 56px;
+		aspect-ratio: 1;
 		background: #8b8b8b;
 		box-shadow:
 			inset 2px 2px 0 #373737,
 			inset -2px -2px 0 #ffffff;
+	}
+
+	.slot :global(.sprite) {
+		width: 70%;
+		height: 70%;
 	}
 
 	.count {
@@ -182,7 +194,7 @@
 
 		li {
 			display: grid;
-			grid-template-columns: auto 1fr auto;
+			grid-template-columns: auto minmax(0, 1fr) auto;
 			align-items: center;
 			gap: 0.6rem;
 			padding: 0.4rem 0;
@@ -191,6 +203,7 @@
 
 		.foreign {
 			font-size: 1.1rem;
+			overflow-wrap: anywhere;
 		}
 
 		.meaning {
@@ -198,16 +211,11 @@
 		}
 	}
 
-	/* grammar info in a tooltip box, like item descriptions in the game */
-	.tooltip {
-		display: inline-block;
+	/* grammar ("m", "Adv.") – quiet, like on the question card */
+	.info {
 		margin-left: 0.35em;
-		padding: 0 0.35em;
-		border: 2px solid #2a0a5e;
-		outline: 1px solid #100010;
-		background: #100010;
-		color: #fff;
-		font-size: 0.85rem;
+		color: var(--muted);
+		font-size: 0.9rem;
 	}
 
 	.actions {

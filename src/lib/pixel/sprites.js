@@ -12,7 +12,7 @@
 
 /** @typedef {{ palette: Record<string, string>, rows: string[] }} SpriteDef */
 
-// --- stone and ores --------------------------------------------------------------
+// --- stone (the block: texture of the logo) ----------------------------------------
 
 const STONE_ROWS = [
 	'aaacaaabbaaacaaa',
@@ -33,50 +33,127 @@ const STONE_ROWS = [
 	'caaaabaaaacaabaa'
 ];
 
-/** where an ore shows its colour: x = light, y = dark */
-const ORE_SPECKS = [
-	'................',
-	'..xy......xx....',
-	'..yy.....xyy....',
-	'.........yy.....',
-	'.....xx.........',
-	'....xyy.........',
-	'.....y......xy..',
-	'...........xyy..',
-	'..xx........y...',
-	'.xyy............',
-	'..y.....xx......',
-	'........xyy.....',
-	'.........y...xx.',
-	'....xy......xyy.',
-	'....yy.......y..',
-	'................'
-];
-
 const STONE_PALETTE = { a: '#8f8f8f', b: '#747474', c: '#a8a8a8' };
 
-/**
- * Stone with coloured specks.
- * @param {string} light
- * @param {string} dark
- * @returns {SpriteDef}
- */
-function ore(light, dark) {
-	return {
-		palette: { ...STONE_PALETTE, x: light, y: dark },
-		rows: STONE_ROWS.map((row, y) =>
-			[...row].map((char, x) => (ORE_SPECKS[y][x] === '.' ? char : ORE_SPECKS[y][x])).join('')
-		)
-	};
-}
+/** iron and gold bars have the same shape */
+const INGOT_ROWS = [
+	'................',
+	'................',
+	'................',
+	'.....oooooo.....',
+	'....owwwwwlo....',
+	'...owwllllllo...',
+	'..owllllllllmo..',
+	'.oooooooooooooo.',
+	'.ommmmmmmmmmmdo.',
+	'.ommmmmmmmmmmdo.',
+	'.ommmmmmmmmmmdo.',
+	'.oddddddddddddo.',
+	'.oooooooooooooo.',
+	'................',
+	'................',
+	'................'
+];
 
 /** @type {Record<string, SpriteDef>} */
 export const SPRITES = {
 	stone: { palette: STONE_PALETTE, rows: STONE_ROWS },
-	coal: ore('#3a3a3a', '#161616'),
-	iron: ore('#e8c9ad', '#b88b67'),
-	gold: ore('#fcee4b', '#d18f00'),
-	diamond: ore('#8ff7ec', '#1fb3a2'),
+
+	// --- the five stages of a word (#lib/learn/leitner.js): each looks different ---
+	rock: {
+		palette: { o: '#3a3a3a', a: '#9a9a9a', b: '#7d7d7d', c: '#bdbdbd', d: '#666666' },
+		rows: [
+			'................',
+			'................',
+			'................',
+			'................',
+			'......ooooo.....',
+			'....oocacaaoo...',
+			'...ocaaabaacao..',
+			'..ocaabaaaabado.',
+			'..oaabaaacaaado.',
+			'.oaaaaaabaaabdo.',
+			'.obaacaaaaabddo.',
+			'.odbaaaabaabddo.',
+			'..oddbbbbbdddo..',
+			'...ooooooooooo..',
+			'................',
+			'................'
+		]
+	},
+	coal: {
+		palette: { o: '#000000', k: '#202020', d: '#333333', g: '#4f4f4f', h: '#767676' },
+		rows: [
+			'................',
+			'................',
+			'......oooo......',
+			'....ookkddoo....',
+			'...okkdgkkddo...',
+			'..okdhgkkkdkko..',
+			'..okkgkkdkkgdo..',
+			'.okkkkkdhgkkkko.',
+			'.okdkkkkgkkdkdo.',
+			'.okhgkkkkkkhgko.',
+			'..okgkkdkkkgkko.',
+			'..okkkkhgkkkko..',
+			'...ookkkkkdoo...',
+			'.....oooooo.....',
+			'................',
+			'................'
+		]
+	},
+	iron: {
+		palette: { o: '#2f2f2f', w: '#ffffff', l: '#e0e0e0', m: '#bdbdbd', d: '#8a8a8a' },
+		rows: INGOT_ROWS
+	},
+	gold: {
+		palette: { o: '#5a3c00', w: '#fffbd0', l: '#fcee4b', m: '#e8b300', d: '#b07400' },
+		rows: INGOT_ROWS
+	},
+	diamond: {
+		palette: { o: '#0b3b38', w: '#e8fffd', l: '#8ff7ec', m: '#4ae0d0', d: '#1fb3a2' },
+		rows: [
+			'................',
+			'................',
+			'....oooooooo....',
+			'...owwlwllmmo...',
+			'..owwllwllmmmo..',
+			'.owllllwlllmmmo.',
+			'.oooooooooooooo.',
+			'..odllllllldmo..',
+			'...odlllllldo...',
+			'....odllllmo....',
+			'.....odllmo.....',
+			'......odmo......',
+			'.......oo.......',
+			'................',
+			'................',
+			'................'
+		]
+	},
+
+	// --- a word marked as hard: heavy as an anvil ----------------------------------------
+	anvil: {
+		palette: { o: '#111111', h: '#8c8c8c', a: '#6b6b6b', b: '#4d4d4d', c: '#363636' },
+		rows: [
+			'................',
+			'................',
+			'................',
+			'.ooooooooooooo..',
+			'ohhhhhhhhhhhhao.',
+			'.ooaaaaaaaaaabo.',
+			'...oooabbbbbooo.',
+			'.....oabbbbco...',
+			'.....oabbbbco...',
+			'.....oabbbbco...',
+			'....oabbbbbcco..',
+			'...ooooooooooooo',
+			'...oaaaaaaabbcco',
+			'...occccccccccco',
+			'...ooooooooooooo',
+			'................'
+		]
+	},
 
 	// --- ground ---------------------------------------------------------------------
 	dirt: {
@@ -291,27 +368,6 @@ export const SPRITES = {
 			'................'
 		]
 	},
-	star_off: {
-		palette: { o: '#8b8b8b' },
-		rows: [
-			'................',
-			'.......oo.......',
-			'......o..o......',
-			'......o..o......',
-			'.....o....o.....',
-			'ooooo......ooooo',
-			'o..............o',
-			'.o............o.',
-			'..o..........o..',
-			'...o........o...',
-			'...o........o...',
-			'..o....oo....o..',
-			'..o...o..o...o..',
-			'.o..oo....oo..o.',
-			'.ooo........ooo.',
-			'................'
-		]
-	},
 	sun: {
 		palette: { o: '#e0a800', y: '#ffe14a', w: '#fff8c4' },
 		rows: [
@@ -396,71 +452,6 @@ export const SPRITES = {
 			'..ddd.dccd.ddd..',
 			'......dccd......',
 			'......dddd......'
-		]
-	},
-
-	// --- breaking a block: three crack stages, drawn over an ore ------------------------
-	crack1: {
-		palette: { k: '#1a1a1a' },
-		rows: [
-			'................',
-			'................',
-			'................',
-			'.......k........',
-			'.......k........',
-			'......kk........',
-			'.......kk.......',
-			'........k.......',
-			'................',
-			'................',
-			'................',
-			'................',
-			'................',
-			'................',
-			'................',
-			'................'
-		]
-	},
-	crack2: {
-		palette: { k: '#1a1a1a' },
-		rows: [
-			'................',
-			'................',
-			'....k...........',
-			'.....k.k........',
-			'......kk........',
-			'......kk....k...',
-			'.....k.kk..k....',
-			'....k...kkk.....',
-			'........k.......',
-			'.......k.k......',
-			'......k...k.....',
-			'..........k.....',
-			'................',
-			'................',
-			'................',
-			'................'
-		]
-	},
-	crack3: {
-		palette: { k: '#1a1a1a' },
-		rows: [
-			'..k.............',
-			'...k.......k....',
-			'....k.....k.....',
-			'.....k.k.k......',
-			'......kk........',
-			'.k....kk....k...',
-			'..k..k.kk..k....',
-			'...kk...kkk...k.',
-			'....k...k....k..',
-			'.......k.k..k...',
-			'..k...k...kk....',
-			'...k.k....k.....',
-			'....k....k.k....',
-			'....k...k...k...',
-			'...k...k.....k..',
-			'..k.............'
 		]
 	}
 };
