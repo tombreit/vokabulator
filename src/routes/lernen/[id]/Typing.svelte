@@ -1,6 +1,7 @@
 <!-- Mode "Tippen": type the answer; check-answer.js decides how right it is. -->
 <script>
 	import { checkAnswer } from '#lib/learn/check-answer.js';
+	import { LANGS } from '#lib/model.js';
 
 	/**
 	 * @type {{
@@ -31,7 +32,7 @@
 	<!-- svelte-ignore a11y_autofocus: the learner came here to type -->
 	<input
 		bind:value={given}
-		placeholder={reverse ? 'Das Wort in der Fremdsprache …' : 'Was heißt das auf Deutsch?'}
+		placeholder={reverse ? `Auf ${LANGS[lang].name} …` : 'Auf Deutsch …'}
 		aria-label="Deine Antwort"
 		autocomplete="off"
 		autocapitalize="off"
@@ -39,7 +40,7 @@
 		enterkeyhint="send"
 		autofocus
 	/>
-	<button class="button primary">Prüfen ✔️</button>
+	<button class="button primary">Prüfen</button>
 </form>
 
 <style>
@@ -55,11 +56,13 @@
 	}
 
 	input {
+		min-width: 0;
 		font-size: 1.2rem;
 		min-height: 3.5rem;
 	}
 
 	button {
 		min-height: 3.5rem;
+		padding-inline: 0.75rem;
 	}
 </style>

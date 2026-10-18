@@ -21,7 +21,6 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import Sprite from '#lib/components/Sprite.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
-	import XpBar from '#lib/components/XpBar.svelte';
 	import { firstLetterTip } from '#lib/learn/check-answer.js';
 	import { newAdvancements } from '#lib/learn/advancements.js';
 	import { choicesFor } from '#lib/learn/choices.js';
@@ -37,7 +36,6 @@
 		useJoker
 	} from '#lib/learn/scoring.js';
 	import { localDay, recordDay } from '#lib/learn/streak.js';
-	import { LANGS } from '#lib/model.js';
 	import { readChallenge, sharePath } from '#lib/share.js';
 	import {
 		loadProgress,
@@ -81,7 +79,6 @@
 	let { data } = $props();
 	// The page works with the unit as it was when the page opened (it cannot change meanwhile).
 	const unit = untrack(() => data.unit);
-	const lang = LANGS[unit.lang];
 
 	let progress = $state(loadProgress(unit.id));
 	const settings = loadSettings();
@@ -341,28 +338,22 @@
 		onstart={() => start(pool, options.roundSize)}
 	/>
 {:else if phase === 'question' && card}
+	<!-- two slim lines above the card: leave, how far, mark as hard – then XP, combo, clock -->
 	<div class="round-bar">
-		<button class="button" onclick={() => (phase = 'setup')} aria-label="Runde abbrechen">✕</button>
+		<button class="leave" onclick={() => (phase = 'setup')} aria-label="Runde abbrechen">✕</button>
 		<ProgressBar value={index / cards.length} label="Fortschritt der Runde" />
-		<span class="muted">{index + 1}/{cards.length}</span>
+		<span class="count">{index + 1}/{cards.length}</span>
 		<StarButton
 			hard={progressOf(progress, card.entry.id).hard}
 			ontoggle={() => toggleStar(card.entry.id)}
 		/>
 	</div>
-
-	<!-- the HUD: level and XP of the whole game, this round's XP, combo, clock -->
-	<div class="hud">
-		<!-- an XP orb flies up into the bar after every answer that brought XP -->
-		{#key answers.length}
-			{#if current?.gained}
-				<span class="orb" aria-hidden="true"><Sprite name="xp" size={28} /></span>
-			{/if}
-		{/key}
-		<div class="xp"><XpBar xp={xpBefore + score.points} /></div>
-		<span class="round-xp"><Sprite name="xp" size={20} /> +{score.points} XP</span>
+	<div class="round-stats">
+		<span class="round-xp"><Sprite name="xp" size={16} /> +{score.points} XP</span>
 		{#if multiplier(score.streak) > 1}
-			<span class="combo">Verzaubert ×{multiplier(score.streak)}</span>
+			<span class="combo" title="Verzaubert: {multiplier(score.streak)}-fache XP"
+				>×{multiplier(score.streak)}</span
+			>
 		{/if}
 		{#if options.clock}
 			<ChessClock
@@ -379,7 +370,7 @@
 		<QuestionCard
 			entry={card.entry}
 			reverse={card.reverse}
-			langName={lang.name}
+			lang={unit.lang}
 			showAnswer={revealed || current !== undefined}
 			box={current ? current.before.box : progressOf(progress, card.entry.id).box}
 			newBox={current ? progressOf(progress, card.entry.id).box : undefined}
@@ -421,7 +412,7 @@
 						? '50:50'
 						: 'erster Buchstabe'}, kostet 3 XP"
 				>
-					<Sprite name="torch" size={40} />
+					<Sprite name="torch" size={32} />
 					<span>{options.mode === 'choice' ? '50:50' : 'Tipp'}</span>
 				</button>
 				<button
@@ -430,7 +421,7 @@
 					disabled={score.jokers === 0}
 					aria-label="Fernrohr: Lösung aufdecken"
 				>
-					<Sprite name="spyglass" size={40} />
+					<Sprite name="spyglass" size={32} />
 					<span>Aufdecken</span>
 				</button>
 				<span class="jokers-left">Noch {score.jokers} Joker</span>
@@ -475,47 +466,38 @@
 		grid-template-columns: auto 1fr auto auto;
 		align-items: center;
 		gap: 0.5rem;
-		margin-bottom: 0.5rem;
+		margin-top: -0.5rem;
 	}
 
-	.hud {
-		position: relative;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.4rem 0.8rem;
-		margin-bottom: var(--gap);
-		font-weight: 700;
+	.leave {
+		min-width: var(--tap);
+		min-height: var(--tap);
+		margin-left: -0.75rem;
+		border: none;
+		background: none;
+		color: var(--muted);
+		font: inherit;
+		font-size: 1.1rem;
+		cursor: pointer;
+	}
 
-		.xp {
-			flex: 1 1 100%;
-		}
+	.count {
+		color: var(--muted);
+		font-size: 0.9rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.round-stats {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		min-height: 2rem;
+		margin-bottom: 0.6rem;
+		font-size: 0.9rem;
+		font-weight: 700;
 
 		:global(.clock) {
 			margin-left: auto;
-		}
-	}
-
-	.orb {
-		position: absolute;
-		left: 50%;
-		top: 0;
-		pointer-events: none;
-		animation: orb 0.7s ease-in forwards;
-	}
-
-	@keyframes orb {
-		from {
-			translate: -50% 220px;
-			scale: 1.4;
-		}
-		80% {
-			opacity: 1;
-		}
-		to {
-			translate: -50% 10px;
-			scale: 0.6;
-			opacity: 0;
 		}
 	}
 
@@ -542,14 +524,13 @@
 		display: grid;
 		justify-items: center;
 		gap: 2px;
-		min-width: 5.5rem;
-		padding: 0.35rem 0.5rem;
+		padding: 0.3rem 0.6rem;
 		border: 2px solid #000;
 		background: rgb(0 0 0 / 0.55);
 		box-shadow: inset 0 0 0 2px #8b8b8b;
 		color: #fff;
 		font: inherit;
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		cursor: pointer;
 
 		&:hover:not(:disabled) {
@@ -564,6 +545,7 @@
 	.jokers-left {
 		margin-left: auto;
 		color: var(--muted);
-		font-size: 0.9rem;
+		font-size: 0.8rem;
+		white-space: nowrap;
 	}
 </style>

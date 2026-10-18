@@ -27,8 +27,10 @@
 		gap: 0.6rem;
 	}
 
+	/* "Noch nicht" stays on one line, also on small phones */
 	.big {
-		min-height: 3.75rem;
-		font-size: 1.15rem;
+		min-height: 3.5rem;
+		padding-inline: 0.5rem;
+		white-space: nowrap;
 	}
 </style>

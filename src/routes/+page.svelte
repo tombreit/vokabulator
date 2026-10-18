@@ -114,7 +114,7 @@
 		margin: 0;
 		color: var(--yellow);
 		font-weight: 700;
-		font-size: 1rem;
+		font-size: clamp(0.8rem, 3.6vw, 1rem);
 		text-shadow: 2px 2px 0 #3f3f15;
 		transform: rotate(-12deg);
 		animation: splash 0.45s ease-in-out infinite alternate;
@@ -146,7 +146,8 @@
 		width: 100%;
 		min-height: 4rem;
 		margin-bottom: 1.5rem;
-		font-size: 1.3rem;
+		font-size: clamp(1.05rem, 5vw, 1.3rem);
+		white-space: nowrap;
 	}
 
 	/* --- world list: like the world selection of the game -------------------------- */
