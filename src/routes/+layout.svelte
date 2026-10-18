@@ -19,8 +19,10 @@
 		document.documentElement.style.setProperty(`--${name}`, `url("${spriteDataUri(name)}")`);
 	}
 
-	// Page changes cross-fade (View Transitions API; timing in app.css).
+	// Page changes cross-fade (View Transitions API; timing in app.css). Browsers without it
+	// (e.g. Firefox ESR) simply change the page.
 	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
 		return new Promise((resolveTransition) => {
 			document.startViewTransition(async () => {
 				resolveTransition();
