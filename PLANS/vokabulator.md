@@ -15,7 +15,7 @@
 | 5 | Mediencode-Import über Proxy | ✅ (lokal; Server nach Deploy prüfen) |
 | – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ✅ deployt; Proxy liefert noch 500 (siehe Deployment) |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ✅ (lokal; Kamera-Test auf dem Handy offen) |
-| 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | 🔄 7a (Modi) ✅, 7b (Punkte & Co.) in Arbeit |
+| 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ✅ (lokal; nach Deploy live prüfen) |
 | 8 | Teilen | ⬜ |
 | 9 | Design & Polish | ⬜ |
 
@@ -324,6 +324,14 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
   `Setup`, `QuestionCard`, `Flashcards`/`Typing`/`Choice`, `Feedback`, `Result`. Die Antwortprüfung (`check-answer.js`)
   und die Auswahl-Optionen (`choices.js`) sind reine Module mit Tests. „Ich lag doch richtig“ rechnet das Leitner-Fach
   vom gespeicherten Stand vor der Antwort neu.
+- 2026-10-18 (Batch 7b):
+  - Joker „💡 Tipp“: im Tipp-Modus der erste Buchstabe, im Auswahl-Modus **50:50**. Das ist spielerisch
+    sinnvoller als der erste Buchstabe. Beide kosten 3 Punkte. „👀 Aufdecken“ zählt als nicht gewusst.
+  - Karteikarten geben Punkte für die Selbstbewertung, haben aber keine Joker, weil Aufdecken dort schon dazugehört.
+  - Richtige Antworten gehen nach 1,2 s automatisch weiter, falsche warten, bis die Lösung gelesen ist.
+  - Die Schachuhr steht während des Feedbacks.
+  - Läuft die Zeit ab, zählt das Ergebnis alle Karten der Runde. So steht nach 1 von 5 kein „Perfekt“.
+  - Rekorde und Tage in Folge liegen in `vokabulator.stats`.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -352,6 +360,7 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18: Batch 6 – `QrScanner.svelte` (Rückkamera + nativer `BarcodeDetector`, Vibration, Kamera aus beim Verlassen), Tab „📷 Scannen“ als Standard, großer Scan-Button auf der Startseite, Hinweis bei fremden QR-Codes, Tabs als 2×2-Raster. Im Chromium mit Fake-Kamera und nachgebautem `BarcodeDetector` geprüft: Scan → Vorschau → Lernen, fremder QR-Code, bekannter Code, ohne Detector, Kamera verweigert.
 - 2026-10-18: Live: Proxy läuft nach `ProxyPreserveHost Off`/`SSLProxyProtocol`. Import über den echten Server im Chromium geprüft. Der Server hat noch den Build von 20:05, Icon-Fix und Scanner fehlen dort.
 - 2026-10-18: Batch 7a – Lernmodi „⌨️ Tippen“ (tolerante Prüfung, Tippfehler, „Ich lag doch richtig“) und „🔘 Auswahl“ (4 Optionen), Modus wird gemerkt. Lernseite in Komponenten aufgeteilt.
+- 2026-10-18: Batch 7b – Punkte, Combo ×2/×3, Joker (💡 Tipp/50:50, 👀 Aufdecken), Schachuhr (1/3/5 Min, Zeitbonus), Sprüche in `feedback.js`, Ergebnis mit Rekord, bester Serie, Zeit und Tagen in Folge; Startseite zeigt 🔥 Tage und 🏆 pro Einheit. Tests für `scoring.js` und `streak.js`; im Chromium inkl. vorgespulter Uhr geprüft.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

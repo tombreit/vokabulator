@@ -1,14 +1,31 @@
-<!-- After a round: how it went, the mistakes (mark them ⭐), and what to do next. -->
+<!-- After a round: points and how it went, the mistakes (mark them ⭐), and what to do next. -->
+<script module>
+	/**
+	 * Numbers of a finished round, worked out by the page.
+	 * @typedef {object} Summary
+	 * @property {number} planned      cards in the round (when time runs out, not all were answered)
+	 * @property {number} points       including the time bonus
+	 * @property {number} timeBonus    ⏱️ points for time left (0 without clock)
+	 * @property {number} bestStreak
+	 * @property {number} durationMs
+	 * @property {boolean} timeUp      the chess clock ran out
+	 * @property {number} previousBest highscore of this unit before this round (0 = none)
+	 * @property {number} days         rounds finished on days in a row, including today
+	 */
+</script>
+
 <script>
 	import { resolve } from '$app/paths';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
+	import { phrase, verdict } from '#lib/learn/feedback.js';
 
 	/** @typedef {import('#lib/model.js').Entry} Entry */
 
 	/**
 	 * @type {{
 	 *   unitId: string,
+	 *   summary: Summary,
 	 *   answers: { entry: Entry, outcome: import('#lib/learn/check-answer.js').Outcome }[],
 	 *   isHard: (entryId: string) => boolean,
 	 *   ontogglestar: (entryId: string) => void,
@@ -16,27 +33,51 @@
 	 *   onnewround: () => void
 	 * }}
 	 */
-	let { unitId, answers, isHard, ontogglestar, onrepeat, onnewround } = $props();
+	let { unitId, summary, answers, isHard, ontogglestar, onrepeat, onnewround } = $props();
 
 	const known = $derived(answers.filter((a) => a.outcome !== 'wrong').length);
 	const mistakes = $derived(answers.filter((a) => a.outcome === 'wrong').map((a) => a.entry));
-	const share = $derived(answers.length ? known / answers.length : 0);
-	const verdict = $derived(
-		share === 1
-			? { emoji: '🏆', text: 'Perfekt!' }
-			: share >= 0.8
-				? { emoji: '🔥', text: 'Stark!' }
-				: share >= 0.5
-					? { emoji: '👍', text: 'Läuft!' }
-					: { emoji: '💪', text: 'Dranbleiben!' }
-	);
+	const share = $derived(summary.planned ? known / summary.planned : 0);
+	const headline = $derived(verdict(share));
+	const timeUpText = phrase('timeUp');
+	const isRecord = $derived(summary.points > summary.previousBest && summary.points > 0);
+	const seconds = $derived(Math.round(summary.durationMs / 1000));
+	const minutes = $derived(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
 </script>
 
 <div class="card result">
-	<p class="emoji">{verdict.emoji}</p>
-	<h1>{verdict.text}</h1>
-	<p>{known} von {answers.length} gewusst</p>
+	{#if summary.timeUp}<p class="time-up">{timeUpText}</p>{/if}
+	<p class="emoji">{headline.emoji}</p>
+	<h1>{headline.text}</h1>
+	<p class="points">{summary.points} Punkte</p>
+	{#if isRecord}
+		<p class="record">
+			🏆 {summary.previousBest
+				? `Neuer Rekord! (vorher ${summary.previousBest})`
+				: 'Dein erster Rekord!'}
+		</p>
+	{/if}
+	<p>{known} von {summary.planned} gewusst</p>
 	<ProgressBar value={share} label="Anteil gewusst" />
+
+	<dl class="facts">
+		<div>
+			<dt>⏱️ Zeit</dt>
+			<dd>{minutes}</dd>
+		</div>
+		<div>
+			<dt>🔥 Beste Serie</dt>
+			<dd>{summary.bestStreak}</dd>
+		</div>
+		{#if summary.timeBonus}<div>
+				<dt>⚡ Zeitbonus</dt>
+				<dd>+{summary.timeBonus}</dd>
+			</div>{/if}
+		<div>
+			<dt>📅 Tage in Folge</dt>
+			<dd>{summary.days}</dd>
+		</div>
+	</dl>
 </div>
 
 {#if mistakes.length > 0}
@@ -71,6 +112,47 @@
 		.emoji {
 			font-size: 4rem;
 			margin: 0;
+		}
+
+		.points {
+			font-size: 2.2rem;
+			font-weight: 800;
+			margin: 0.25rem 0;
+			color: var(--accent);
+		}
+
+		.record {
+			font-weight: 700;
+			color: var(--star);
+		}
+
+		.time-up {
+			font-weight: 700;
+			color: var(--bad);
+		}
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+		gap: 0.5rem;
+		margin: var(--gap) 0 0;
+
+		div {
+			background: var(--surface-2);
+			border-radius: calc(var(--radius) / 1.5);
+			padding: 0.5rem;
+		}
+
+		dt {
+			font-size: 0.8rem;
+			color: var(--muted);
+		}
+
+		dd {
+			margin: 0;
+			font-size: 1.2rem;
+			font-weight: 700;
 		}
 	}
 

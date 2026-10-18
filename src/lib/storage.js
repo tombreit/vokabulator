@@ -7,6 +7,7 @@
  *   vokabulator.units                Unit[]               (see model.js)
  *   vokabulator.progress.<unitId>    UnitProgress         (see learn/leitner.js)
  *   vokabulator.settings             Settings
+ *   vokabulator.stats                Stats (highscores, days in a row)
  *
  * exportBackup() / importBackup() move units + progress between devices as a JSON file.
  *
@@ -16,6 +17,7 @@
 
 /** @typedef {import('./model.js').Unit} Unit */
 /** @typedef {import('./learn/leitner.js').UnitProgress} UnitProgress */
+/** @typedef {import('./learn/streak.js').DayStreak} DayStreak */
 
 const PREFIX = 'vokabulator.';
 export const SCHEMA_VERSION = 1;
@@ -78,6 +80,9 @@ export function deleteUnit(id) {
 		loadUnits().filter((u) => u.id !== id)
 	);
 	localStorage.removeItem(`${PREFIX}progress.${id}`);
+	const stats = loadStats();
+	delete stats.highscores[id];
+	saveStats(stats);
 }
 
 // --- Learning progress -------------------------------------------------------
@@ -106,10 +111,11 @@ export function saveProgress(unitId, progress) {
  * @property {'front-back' | 'back-front' | 'mixed'} direction  front-back = Latein → Deutsch
  * @property {number} roundSize  number of words per round, 0 = all
  * @property {'cards' | 'typing' | 'choice'} mode  flash cards, type the answer, or multiple choice
+ * @property {number} clock  chess clock for a round in seconds, 0 = off
  */
 
 /** @type {Settings} */
-const DEFAULT_SETTINGS = { direction: 'front-back', roundSize: 10, mode: 'cards' };
+const DEFAULT_SETTINGS = { direction: 'front-back', roundSize: 10, mode: 'cards', clock: 0 };
 
 /** @returns {Settings} */
 export function loadSettings() {
@@ -119,6 +125,24 @@ export function loadSettings() {
 /** @param {Settings} settings */
 export function saveSettings(settings) {
 	write('settings', settings);
+}
+
+// --- Stats -------------------------------------------------------------------
+
+/**
+ * @typedef {object} Stats
+ * @property {Record<string, number>} highscores  best points of a round, by unit id
+ * @property {DayStreak} days                     rounds finished on days in a row
+ */
+
+/** @returns {Stats} */
+export function loadStats() {
+	return { highscores: {}, days: { lastDay: '', days: 0 }, ...read('stats', {}) };
+}
+
+/** @param {Stats} stats */
+export function saveStats(stats) {
+	write('stats', stats);
 }
 
 // --- Backup ------------------------------------------------------------------

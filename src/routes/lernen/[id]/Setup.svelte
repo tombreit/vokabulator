@@ -2,7 +2,7 @@
 <script module>
 	/**
 	 * The choices for a round. The page owns them (they survive "Neue Runde").
-	 * @typedef {Pick<import('#lib/storage.js').Settings, 'direction' | 'roundSize' | 'mode'> & { sections: number[], onlyHard: boolean }} Options
+	 * @typedef {Pick<import('#lib/storage.js').Settings, 'direction' | 'roundSize' | 'mode' | 'clock'> & { sections: number[], onlyHard: boolean }} Options
 	 */
 </script>
 
@@ -49,6 +49,17 @@
 			<label
 				><input type="radio" bind:group={options.roundSize} value={size} />{size || 'Alle'}</label
 			>
+		{/each}
+	</fieldset>
+
+	<fieldset class="pills">
+		<legend>⏱️ Schachuhr – Zeit für die ganze Runde</legend>
+		{#each [0, 60, 180, 300] as seconds (seconds)}
+			<label>
+				<input type="radio" bind:group={options.clock} value={seconds} />{seconds
+					? `${seconds / 60} Min`
+					: 'Aus'}
+			</label>
 		{/each}
 	</fieldset>
 

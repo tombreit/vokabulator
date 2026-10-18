@@ -4,12 +4,16 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import { canScanQr } from '#lib/components/QrScanner.svelte';
 	import { learnedShare } from '#lib/learn/leitner.js';
+	import { currentDays, localDay } from '#lib/learn/streak.js';
 	import { LANGS } from '#lib/model.js';
-	import { loadProgress, loadUnits } from '#lib/storage.js';
+	import { loadProgress, loadStats, loadUnits } from '#lib/storage.js';
 
+	const stats = loadStats();
+	const days = currentDays(stats.days, localDay());
 	const units = loadUnits().map((unit) => ({
 		...unit,
-		learned: learnedShare(unit.entries, loadProgress(unit.id))
+		learned: learnedShare(unit.entries, loadProgress(unit.id)),
+		highscore: stats.highscores[unit.id] ?? 0
 	}));
 </script>
 
@@ -19,6 +23,10 @@
 {/if}
 
 <h1>Meine Lerneinheiten</h1>
+
+{#if days > 0}
+	<p class="days">🔥 {days} {days === 1 ? 'Tag' : 'Tage in Folge'} gelernt – bleib dran!</p>
+{/if}
 
 {#if units.length === 0}
 	<p class="card">
@@ -36,6 +44,7 @@
 						<strong>{unit.title}</strong>
 						<span class="muted">
 							{unit.entries.length} Wörter · {Math.round(unit.learned * 100)} % gelernt
+							{#if unit.highscore}· 🏆 {unit.highscore}{/if}
 						</span>
 						<ProgressBar value={unit.learned} label="Anteil gelernter Wörter" />
 					</div>
@@ -50,6 +59,11 @@
 </a>
 
 <style>
+	.days {
+		margin: -0.25rem 0 var(--gap);
+		font-weight: 700;
+	}
+
 	.units {
 		list-style: none;
 		padding: 0;

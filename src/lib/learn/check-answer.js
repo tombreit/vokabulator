@@ -48,6 +48,17 @@ export function checkAnswer(given, entry, reverse, lang) {
 }
 
 /**
+ * The 💡 tip joker: the first letter of the (first) expected answer, e.g. "n…".
+ * @param {Entry} entry
+ * @param {boolean} reverse
+ * @param {Lang} lang
+ */
+export function firstLetterTip(entry, reverse, lang) {
+	const answer = (reverse ? foreignAnswers(entry, lang) : meanings(entry.back))[0] ?? '';
+	return answer ? `${answer[0]}…` : '';
+}
+
+/**
  * The accepted spellings of the foreign word.
  * @param {Entry} entry
  * @param {Lang} lang

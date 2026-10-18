@@ -7,10 +7,12 @@
 	 *   entry: import('#lib/model.js').Entry,
 	 *   reverse: boolean,
 	 *   lang: import('#lib/model.js').Lang,
+	 *   tip?: string,
 	 *   onanswer: (outcome: import('#lib/learn/check-answer.js').Outcome, given: string) => void
 	 * }}
+	 * tip: shown after the 💡 joker, e.g. "n…"
 	 */
-	let { entry, reverse, lang, onanswer } = $props();
+	let { entry, reverse, lang, tip = '', onanswer } = $props();
 
 	let given = $state('');
 
@@ -20,6 +22,10 @@
 		onanswer(checkAnswer(given, entry, reverse, lang), given.trim());
 	}
 </script>
+
+{#if tip}
+	<p class="tip">💡 Fängt an mit <strong>{tip}</strong></p>
+{/if}
 
 <form onsubmit={submit}>
 	<!-- svelte-ignore a11y_autofocus: the learner came here to type -->
@@ -41,6 +47,11 @@
 		display: grid;
 		grid-template-columns: 1fr auto;
 		gap: 0.6rem;
+	}
+
+	.tip {
+		margin: 0 0 0.6rem;
+		text-align: center;
 	}
 
 	input {

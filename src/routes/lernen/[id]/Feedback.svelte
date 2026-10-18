@@ -3,25 +3,30 @@
 	/**
 	 * @type {{
 	 *   outcome: import('#lib/learn/check-answer.js').Outcome,
+	 *   phrase: string,
+	 *   gained: number,
 	 *   given: string,
 	 *   onnext: () => void,
 	 *   onoverride?: () => void
 	 * }}
-	 * given: what the learner typed or picked; onoverride: "Ich lag doch richtig" (typing only)
+	 * phrase: from feedback.js; given: what was typed or picked;
+	 * onoverride: "Ich lag doch richtig" (typing only)
 	 */
-	let { outcome, given, onnext, onoverride } = $props();
+	let { outcome, phrase, gained, given, onnext, onoverride } = $props();
 
-	const message = $derived(
-		{
-			right: { emoji: '✅', text: 'Richtig!' },
-			typo: { emoji: '👀', text: 'Fast – nur ein Tippfehler.' },
-			wrong: { emoji: '❌', text: 'Leider falsch.' }
-		}[outcome]
-	);
+	// Right answers go on by themselves after a moment – wrong ones wait, so the solution can sink in.
+	$effect(() => {
+		if (outcome !== 'right') return;
+		const timer = setTimeout(onnext, 1200);
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <div class="card feedback {outcome}" role="status">
-	<p class="message"><span class="emoji">{message.emoji}</span> {message.text}</p>
+	<p class="message">
+		{phrase}
+		{#if gained > 0}<span class="points">+{gained}</span>{/if}
+	</p>
 	{#if outcome !== 'right' && given}
 		<p class="muted">Deine Antwort: „{given}“ – die Lösung steht oben auf der Karte.</p>
 	{/if}
@@ -56,8 +61,15 @@
 	}
 
 	.message {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.5rem;
 		font-size: 1.25rem;
 		font-weight: 700;
+	}
+
+	.points {
+		color: var(--good);
 	}
 
 	.buttons {
