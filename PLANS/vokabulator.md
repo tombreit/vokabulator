@@ -11,7 +11,7 @@
 | 1 | Lerneinheiten, Text-Import, Speicher | ✅ |
 | 2 | Karteikarten-Abfrage, Leitner, Ergebnis | ✅ |
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ✅ |
-| 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ⬜ |
+| 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ✅ |
 | 5 | Mediencode-Import über Proxy | ⬜ |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ⬜ |
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ⬜ |
@@ -167,35 +167,44 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
   Das Deploy-Skript ist bereit. → **Review-Pause.**
 
 ### Batch 4 – PDF-Parser (Datei-Upload)
-- **Zuerst ein Spike:** Liefert pdf.js 6 den echten Fontnamen (`Aptos-Bold`/`-Italic`)? Weg dahin: `page.commonObjs`
-  nach `getOperatorList()`, alternativ die `styles` aus `getTextContent`. Ergebnis kommt ins Entscheidungs-Log.
-- `pdf-items.js`: PDF-Bytes → `{ str, x, y, size, bold, italic }[]` pro Seite.
-- `pdf-lexikon.js` (rein, testbar):
-  1. Fußzeile und Leerstellen verwerfen.
-  2. Klassifizieren: Überschrift (≥ 1,2 × Grundgröße), Hochzahl (≤ 0,8 × Grundgröße) → `refs`.
-  3. Spalten an der Seitenmitte trennen, erst links, dann rechts lesen.
-  4. Zeilen nach y gruppieren. Eine Zeile, die mit fettem Text beginnt, startet einen neuen Eintrag.
-  5. Fett und kursiv vor dem ersten normalen Text → `front`/`frontInfo`, der Rest → `back`.
-  6. Die erste Überschrift ist der Titel, alle weiteren sind Abschnitte. Einträge werden per Slug dedupliziert.
-- Fixture: `26273.pdf` liegt in `tests/fixtures/` (nur privates Repo, Urheberrecht Verlag). Erwartete Werte werden geprüft:
-  Titel, die 3 Abschnitte, Stichproben wie `capere…` → `nehmen, ergreifen, fangen; erobern` ohne `6. 10. Ü1`,
-  sowie `mihi` (Dat. von egō) → `mir`.
-- `/neu`, Tab „PDF-Datei“: Datei wählen → Vorschau mit Abschnitten und Wortanzahl → speichern.
-- **Fertig wenn:** Das Beispiel-PDF wird ohne manuelle Korrektur vollständig und korrekt importiert.
+- Spike-Ergebnis: pdf.js 6.4 liefert mit `fontExtraProperties: true` den echten Fontnamen (`ABCDEE+Aptos-Bold`/`-Italic`)
+  über `page.commonObjs`. Im Browser läuft der moderne Build, in Node (Tests) der Legacy-Build.
+- `src/lib/import/pdf-items.js`: PDF-Bytes → pro Seite `{ str, x, y, size, bold, italic }[]`. pdf.js wird per lazy import geladen.
+- `src/lib/import/pdf-lexikon.js` (rein, testbar):
+  1. Fußzeile (`©`) und Leerstellen verwerfen.
+  2. Überschriften (≥ 1,2 × Grundgröße) und Hochzahlen (≤ 0,8 × Grundgröße) erkennen. Hochzahlen werden zu `refs`.
+  3. Spalten an der Seitenmitte trennen, Zeilen nach y bilden. Eine Zeile mit fettem Anfang startet einen Eintrag.
+  4. Fett → `front`, kursiv davor → `frontInfo`, ab dem ersten normalen *Wort* → `back`. Satzzeichen schalten nicht um.
+     Klammern bleiben zusammen.
+  5. Die erste Überschrift ist der Titel, alle weiteren sind Abschnitte. Eine Seite ohne Überschrift, deren Alphabet
+     neu beginnt, wird zu „… (Teil 2)“: Ihre Überschrift ist im PDF nur ein Bild.
+- Fixture `src/lib/import/fixtures/ccbuchner-26273.pdf` (nur privates Repo) mit Test daneben.
+- `/neu` mit Tabs „📄 PDF-Datei“ und „✍️ Text eintippen“. `DraftPreview.svelte`: „Speichern & loslegen 🚀“ → `/lernen/[id]`,
+  „Nur speichern“ → `/einheit/[id]`. Hinweis, wenn die Einheit schon existiert; der Lernstand bleibt erhalten.
+- **Fertig wenn:** Das Beispiel-PDF wird vollständig und korrekt importiert: 148 Wörter in 4 Abschnitten.
 
-### Batch 5 – Mediencode-Import über Proxy
-- `ccbuchner.js`: akzeptiert `40702-229` oder die volle URL. Lädt die Seite über `/proxy/ccbuchner/…`, liest den
-  PDF-Link per `DOMParser`, lädt das PDF und übergibt es an den Parser aus Batch 4.
-- Dev-Proxy in `vite.config.js` mit identischem Pfad, damit derselbe Code in Dev und Produktion läuft.
-- Verständliche Fehlermeldungen für offline, unbekannten Code und PDF ohne erkennbare Vokabeln.
-- `/neu?code=40702-229` importiert direkt (Grundlage fürs Teilen).
-- **Fertig wenn:** Code eintippen → Vorschau → Einheit gespeichert, lokal und auf dem Server.
+### Batch 5 – Mediencode-Import über den Proxy
+- `src/lib/import/ccbuchner.js`:
+  - `parseMediencode(input)`: Aus `40702-229` oder `https://(www.)ccbuchner.de/clip_code/40702-229/` wird
+    `40702-229`. Mit Unit-Tests.
+  - `importMediencode(code)`:
+    1. `fetch('/proxy/ccbuchner/clip_code/<code>/')`
+    2. `DOMParser` → `a[href$=".pdf"]` → PDF über den Proxy laden
+    3. `pdf-items.js` → `pdf-lexikon.js` → `UnitDraft` mit `id: 'ccb-<code>'`
+- Dev-Proxy in `vite.config.js` (`/proxy/ccbuchner` → `https://www.ccbuchner.de`), derselbe Pfad wie bei Apache.
+- `/neu`, Tab „Code eintippen“ + `/neu?code=…`. Gibt es `ccb-<code>` schon, geht es direkt zur Einheit.
+- Fehlermeldungen: offline, Code unbekannt, kein PDF-Link, PDF ohne Vokabeln → Hinweis auf die Fallbacks.
+- Einheitsseite: „Neu laden“ für ccbuchner-Einheiten. Der Lernstand bleibt, weil die Eintrags-IDs stabil sind.
+- **Fertig wenn:** Code eintippen → Vorschau → „Speichern & loslegen“, lokal und auf dem Server.
 
-### Batch 6 – QR-Scanner
-- `QrScanner.svelte`: `getUserMedia` (Rückkamera) + nativer `BarcodeDetector({ formats: ['qr_code'] })` im
-  `requestAnimationFrame`-Takt, Kamera beim Verlassen stoppen. Erkannte URL → Code → Import aus Batch 5.
-- Ohne Polyfill. Wo die API fehlt (z. B. Desktop-Linux beim Entwickeln), bleibt die Code-Eingabe.
-- **Fertig wenn:** Den QR-Code im Buch mit dem Handy scannen → Einheit ist da.
+### Batch 6 – QR-Scanner in der App
+- `src/lib/components/QrScanner.svelte`: Rückkamera (`getUserMedia`) + nativer `BarcodeDetector({ formats: ['qr_code'] })`
+  im `requestAnimationFrame`-Takt. Kamera beim Verlassen stoppen. Treffer → Vibration → `onscan(text)`.
+- `/neu`: Der Tab „📷 Scannen“ ist Standard. Gescannter Text → `parseMediencode` → Import wie in Batch 5.
+  Ein QR-Code, der kein Mediencode ist, bekommt eine freundliche Meldung.
+- Startseite: Primärbutton „📷 QR-Code scannen“, „＋ Neue Lerneinheit“ wird zweitrangig.
+- Ohne `BarcodeDetector` (z. B. Desktop-Linux) fehlt der Scan-Tab, Standard ist dann „Code eintippen“.
+- **Fertig wenn:** Den QR-Code im Buch in Vokabulator scannen → Vorschau → „Speichern & loslegen“ (Test auf dem Handy).
 
 ### Batch 7 – Spielmechanik
 - Modi: Karteikarte (Batch 2), **Tippen**, **Multiple Choice** (4 Optionen aus derselben Einheit).
@@ -235,12 +244,17 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18 (Batch 3): Der Service Worker cached die App-Shell von `/` (auf Apache per `DirectoryIndex 200.html`)
   und liefert sie offline für jede Route aus. Dafür braucht es absolute Asset-Pfade (`paths.relative: false`) und
   `ignoreVary` beim Cache-Lookup (Server senden `Vary: Origin`, JS-Module werden mit Origin-Header geladen).
+- 2026-10-18: **Reverse Proxy bleibt.** Geprüft: ccbuchner.de sendet weder für die Mediencode-Seite noch für das PDF
+  `Access-Control-Allow-Origin`; der Browser darf die Inhalte also nicht direkt lesen. Ohne Proxy blieben nur Umwege
+  (Teilen-Menü, Datei wählen). Mit Proxy gilt: in Vokabulator scannen → Vorschau → „Speichern & loslegen“.
+- 2026-10-18 (Batch 4): pdf.js mit `fontExtraProperties: true`, im Browser der moderne Build (braucht u. a.
+  `Uint8Array.toHex`, aktuelles Chrome hat das), in Node/Vitest der Legacy-Build. Der pdf.js-Worker (1,2 MB) liegt
+  im Offline-Cache, deshalb funktioniert der PDF-Import auch offline.
 
 ## Risiken / offene Punkte
-- pdf.js-Fontnamen: Spike in Batch 4. Fallback ist die Auswertung der Font-Ressourcen über die Operator-Liste.
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
   Für alles andere gibt es den universellen Text-Import.
-- `ccbuchner.de` leitet eventuell auf `www.` um → `ProxyPassReverse` und auf dem Server mit curl prüfen.
+- ~~`ccbuchner.de` leitet eventuell auf `www.` um~~ → geklärt: 301 auf `www.`, der Proxy geht direkt auf `www.ccbuchner.de`.
 - Kamera und Service Worker brauchen HTTPS (Let's Encrypt auf dem Server).
 
 ## Backlog / Ideen
@@ -255,6 +269,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18: Batch 1 – Datenmodell (`model.js`), `storage.js`, Text-Import mit Live-Vorschau, Einheiten-Liste und -Seite. Löschen sitzt auf der Einheitsseite (mit Rückfrage) statt auf der Startseite, damit nichts versehentlich verschwindet.
 - 2026-10-18: Batch 2 – `leitner.js` (Fächer, Rundenauswahl, Lernstand) mit Tests, `/lernen/[id]` (Setup → Karten → Ergebnis, „Nur Fehler nochmal“), ⭐ auf Lern- und Einheitsseite, Fortschrittsbalken auf Start- und Einheitsseite. Die Fächer zeigt die Wortliste vorerst als ●●○○○.
 - 2026-10-18: Batch 3 – Service Worker (offline), Manifest + Platzhalter-Icons (installierbar), Wake Lock beim Lernen, `navigator.storage.persist()`, Backup speichern/laden unter ⚙️ Einstellungen. Im Headless-Chromium geprüft: offline Start/Einheit/Lernen, Backup → frisches Profil, keine Manifest-Fehler.
+- 2026-10-18: Batch 4 – PDF-Parser (`pdf-items.js`, `pdf-lexikon.js`) mit Fixture-Tests, Tabs auf `/neu`, PDF-Import, „Speichern & loslegen“. Im Chromium geprüft: Beispiel-PDF → 148 Wörter / 4 Abschnitte → Lernrunde.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

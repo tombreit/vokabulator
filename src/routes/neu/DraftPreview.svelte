@@ -6,17 +6,19 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { buildUnit, LANGS } from '#lib/model.js';
-	import { saveUnit } from '#lib/storage.js';
+	import { getUnit, saveUnit } from '#lib/storage.js';
 
 	/** @type {{ draft: import('#lib/model.js').UnitDraft }} */
 	let { draft } = $props();
 
 	const unit = $derived(buildUnit(draft));
 	const byId = $derived(new Map(unit.entries.map((e) => [e.id, e])));
+	const replaces = $derived(getUnit(unit.id) !== undefined);
 
-	function save() {
+	/** @param {'/lernen/[id]' | '/einheit/[id]'} next  where to go after saving */
+	function save(next) {
 		saveUnit(unit);
-		goto(resolve('/einheit/[id]', { id: unit.id }));
+		goto(resolve(next, { id: unit.id }));
 	}
 </script>
 
@@ -45,9 +47,28 @@
 		</details>
 	{/each}
 
-	<button class="button primary save" onclick={save} disabled={unit.entries.length === 0}>
-		💾 Lerneinheit speichern
-	</button>
+	{#if replaces}
+		<p class="muted">
+			♻️ Diese Lerneinheit hast du schon – sie wird aktualisiert, dein Lernstand bleibt.
+		</p>
+	{/if}
+
+	<div class="buttons">
+		<button
+			class="button primary go"
+			onclick={() => save('/lernen/[id]')}
+			disabled={unit.entries.length === 0}
+		>
+			Speichern & loslegen 🚀
+		</button>
+		<button
+			class="button"
+			onclick={() => save('/einheit/[id]')}
+			disabled={unit.entries.length === 0}
+		>
+			Nur speichern
+		</button>
+	</div>
 </section>
 
 <style>
@@ -66,8 +87,14 @@
 		margin: 0 0 0.5rem;
 	}
 
-	.save {
-		width: 100%;
+	.buttons {
+		display: grid;
+		gap: 0.6rem;
 		margin-top: var(--gap);
+	}
+
+	.go {
+		min-height: 3.75rem;
+		font-size: 1.15rem;
 	}
 </style>
