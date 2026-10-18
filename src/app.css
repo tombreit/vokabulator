@@ -2,74 +2,61 @@
  * Global styles: design tokens and a few base rules.
  * Component-specific styles live in the <style> block of each .svelte file.
  *
- * Design idea "Wachstafel": Roman pupils learned on the tabula cerata – a wooden tablet
- * with dark wax, written into with a stylus. The question card is such a tablet
- * (QuestionCard.svelte); everything around it stays quiet: cool marble, ink, one
- * imperial purple for the main buttons, gold for points and stars.
+ * Design idea "Blockwelt": the app looks and plays like a block-building game.
+ * Words are ores that get upgraded from stone to diamond, points are XP, jokers are
+ * items in the hotbar. The page is dark dirt (texture from #lib/pixel/sprites.js,
+ * set by +layout.svelte as --dirt); content sits on grey stone panels (.card) with
+ * the typical bevelled edges; buttons are blocks you press in.
  *
- * Type: Marcellus (after Roman inscriptions) for Latin words and titles,
- * Lexend (made for easy reading) for everything else. Both have all macrons (ā ē ī ō ū).
+ * Text colours depend on where text sits: light with a pixel shadow on dirt, dark on
+ * stone. .card switches the tokens, so components just use var(--text) / var(--muted).
+ *
+ * Type: Pixelify Sans for everything "game", Lexend (.read) for longer texts.
+ * Both contain all macrons (ā ē ī ō ū) and umlauts. All colour pairs meet WCAG AA.
  */
 
-@import '@fontsource/marcellus';
+@import '@fontsource-variable/pixelify-sans';
 @import '@fontsource-variable/lexend';
 
 :root {
-	/* marble & ink */
-	--bg: #e9ecef;
-	--surface: #fbfcfd;
-	--surface-2: #dde2e6;
-	--text: #221a26;
-	--muted: #5d5663;
-	--line: #c9cfd5;
-	/* imperial purple: main buttons, links */
-	--accent: #6b1f5c;
+	/* on dirt */
+	--text: #ffffff;
+	--muted: #c9bfb4;
+	--line: #8b8b8b;
+	--shadow: #3f3f3f; /* the pixel text shadow */
+	--good: #55ff55;
+	--bad: #ff5555;
+	--accent-ink: #80ff20; /* XP green as text */
+	--star-ink: #ffff55; /* yellow as text */
+
+	/* the chat colours of the game, for highlights on dark ground */
+	--yellow: #ffff55;
+	--xp: #80ff20;
+	--aqua: #55ffff;
+	--enchant: #a050ff;
+
+	/* fills */
+	--accent: #3c8527; /* grass green: main actions, progress */
 	--accent-text: #ffffff;
-	--accent-ink: #6b1f5c; /* purple as text: links, points */
-	/* laurel = right, Pompeii red = wrong, gold = points and stars */
-	--good: #2f7d4f;
-	--bad: #b3262e;
-	/* as button background with white text – the same in light and dark */
-	--good-fill: #2f7d4f;
-	--bad-fill: #b3262e;
-	--star: #d9a400;
-	--star-ink: #7a5900; /* gold as text on light backgrounds */
-	/* the wax tablet – the same in light and dark */
-	--wax: #2e2219;
-	--wood: #9b6b3d;
-	--scratch: #f1d9a7;
-	--scratch-muted: #b89f74;
+	--good-fill: #3c8527;
+	--bad-fill: #a12722;
+	--star: #ffe14a;
+	--surface: #6f6f6f; /* button stone */
+	--surface-2: #2b2b2b; /* empty slots, bar tracks */
 
-	--font-ui: 'Lexend Variable', system-ui, sans-serif;
-	--font-inscription: 'Marcellus', Georgia, serif;
+	--font-pixel: 'Pixelify Sans Variable', 'Lexend Variable', system-ui, sans-serif;
+	--font-read: 'Lexend Variable', system-ui, sans-serif;
 
-	--radius: 14px;
+	--radius: 0; /* blocks have no round corners */
 	--gap: 1rem;
 	--tap: 3rem; /* minimum height of anything you tap */
 
-	color-scheme: light dark;
-	font-family: var(--font-ui);
-	font-size: 106.25%; /* 17px: a bit larger for reading on the phone */
-	line-height: 1.5;
+	color-scheme: dark;
+	font-family: var(--font-pixel);
+	font-size: 112.5%; /* 18px: pixel type needs a bit more size */
+	line-height: 1.45;
 	color: var(--text);
-	background: var(--bg);
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #1c1720;
-		--surface: #262029;
-		--surface-2: #322a36;
-		--text: #efe9f0;
-		--muted: #a99fae;
-		--line: #3d3442;
-		--accent: #8e3a7d;
-		--accent-ink: #d08bc2;
-		--good: #5fbf86;
-		--bad: #ef6a70;
-		--star: #e8b923;
-		--star-ink: #e8b923;
-	}
+	background: #241a12;
 }
 
 * {
@@ -79,91 +66,138 @@
 body {
 	margin: 0;
 	min-height: 100dvh;
+	/* dark dirt: the texture, shaded like the menu background of the game */
+	background-image: linear-gradient(rgb(0 0 0 / 0.64), rgb(0 0 0 / 0.64)), var(--dirt, none);
+	background-size:
+		auto,
+		64px 64px;
+	image-rendering: pixelated;
+	text-shadow: 2px 2px 0 var(--shadow);
 }
 
 h1,
 h2,
 h3 {
-	font-family: var(--font-inscription);
-	font-weight: 400;
+	font-weight: 700;
 	line-height: 1.15;
 	margin-block: 0 0.5em;
 }
 
 h1 {
-	font-size: 2rem;
+	font-size: 1.9rem;
 }
 
 h2 {
-	font-size: 1.35rem;
+	font-size: 1.3rem;
 }
 
 a {
-	color: var(--accent-ink);
+	color: var(--aqua);
 }
 
 :focus-visible {
-	outline: 3px solid var(--star);
+	outline: 3px solid var(--yellow);
 	outline-offset: 2px;
 }
 
-/* Buttons: <button class="button"> or <a class="button"> */
+/* longer texts read better in a normal typeface */
+.read {
+	font-family: var(--font-read);
+}
+
+/* A stone panel: grey with a light top-left and dark bottom-right edge. */
+.card {
+	--text: #3f3f3f;
+	--muted: #4a4a4a;
+	--line: #8b8b8b;
+	--good: #1d5c12;
+	--bad: #8b1a14;
+	--accent-ink: #1d5c12;
+	--star-ink: #6b4f00;
+
+	padding: var(--gap);
+	border: 2px solid #000;
+	background: #c6c6c6;
+	box-shadow:
+		inset 2px 2px 0 #ffffff,
+		inset -2px -2px 0 #555555;
+	color: var(--text);
+	text-shadow: none;
+
+	a:not(.button) {
+		color: #173f99;
+	}
+}
+
+/* A block button: press it and the edges swap. */
 .button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.4em;
+	gap: 0.5em;
 	min-height: var(--tap);
-	padding: 0.5rem 1.1rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius);
+	padding: 0.45rem 1rem;
+	border: 2px solid #000;
+	border-radius: 0;
 	background: var(--surface);
-	color: var(--text);
+	box-shadow:
+		inset 2px 2px 0 #aaaaaa,
+		inset -2px -3px 0 #4c4c4c;
+	color: #ffffff;
 	font: inherit;
+	font-family: var(--font-pixel);
 	font-weight: 600;
 	text-decoration: none;
+	text-shadow: 2px 2px 0 #3f3f3f;
 	cursor: pointer;
-	transition: transform 0.08s ease-out;
 
+	&:hover:not(:disabled) {
+		border-color: #ffffff;
+	}
 	&:active:not(:disabled) {
-		transform: scale(0.97);
+		box-shadow:
+			inset -2px -2px 0 #aaaaaa,
+			inset 2px 3px 0 #4c4c4c;
+		transform: translateY(1px);
 	}
 	&.primary {
 		background: var(--accent);
-		border-color: var(--accent);
-		color: var(--accent-text);
+		box-shadow:
+			inset 2px 2px 0 #6fbf4a,
+			inset -2px -3px 0 #275a19;
 	}
 	&.danger {
-		color: var(--bad);
+		background: var(--bad-fill);
+		box-shadow:
+			inset 2px 2px 0 #d65a4f,
+			inset -2px -3px 0 #6a1813;
 	}
 	&:disabled {
-		opacity: 0.5;
+		background: #2c2c2c;
+		box-shadow: none;
+		color: #a0a0a0;
+		text-shadow: none;
 		cursor: not-allowed;
 	}
-}
-
-.card {
-	background: var(--surface);
-	border: 1px solid var(--line);
-	border-radius: var(--radius);
-	padding: var(--gap);
 }
 
 .muted {
 	color: var(--muted);
 }
 
+/* Text fields like the game's: black with a grey frame */
 input,
 select,
 textarea {
+	width: 100%;
+	padding: 0.55rem 0.7rem;
+	border: 2px solid #a0a0a0;
+	border-radius: 0;
+	background: #000000;
+	color: #ffffff;
 	font: inherit;
 	font-weight: 400; /* fields sit inside bold <label>s */
-	color: inherit;
-	background: var(--surface);
-	border: 1px solid var(--line);
-	border-radius: 10px;
-	padding: 0.6rem 0.75rem;
-	width: 100%;
+	text-shadow: none;
 }
 
 label {

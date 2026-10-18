@@ -34,7 +34,7 @@
 	},
 	"dependencies": {
 		"@fontsource-variable/lexend": "^5.3.0",
-		"@fontsource/marcellus": "5.3.0",
+		"@fontsource-variable/pixelify-sans": "5.3.0",
 		"pdfjs-dist": "6.4.299"
 	}
 }

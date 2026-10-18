@@ -2,6 +2,9 @@
 	import '../app.css';
 	import { onNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import Sprite from '#lib/components/Sprite.svelte';
+	import { spriteDataUri } from '#lib/pixel/sprites.js';
 	import { migrate } from '#lib/storage.js';
 
 	/** @type {{children: import('svelte').Snippet}} */
@@ -12,6 +15,11 @@
 	// Chrome grants this silently, e.g. once the app is installed.
 	navigator.storage.persist();
 
+	// The pixel textures used by app.css (dirt background, grass edge, stone logo).
+	for (const name of ['dirt', 'grass', 'stone']) {
+		document.documentElement.style.setProperty(`--${name}`, `url("${spriteDataUri(name)}")`);
+	}
+
 	// Page changes cross-fade (View Transitions API; timing in app.css).
 	onNavigate((navigation) => {
 		return new Promise((resolveTransition) => {
@@ -21,12 +29,23 @@
 			});
 		});
 	});
+
+	/** the start page shows the big logo itself */
+	const onStartPage = $derived(page.url.pathname === resolve('/'));
 </script>
 
+<div class="grass" aria-hidden="true"></div>
+
 <header>
-	<!-- "VOKABVLATOR": Roman inscriptions write U as V -->
-	<a class="wordmark" href={resolve('/')} aria-label="Vokabulator – Startseite">VOKABVLATOR</a>
-	<a class="settings" href={resolve('/einstellungen')} aria-label="Einstellungen">⚙️</a>
+	{#if onStartPage}
+		<span></span>
+	{:else}
+		<!-- "VOKABVLATOR": Roman inscriptions write U as V -->
+		<a class="wordmark" href={resolve('/')} aria-label="Vokabulator – Startseite">VOKABVLATOR</a>
+	{/if}
+	<a class="settings" href={resolve('/einstellungen')} aria-label="Einstellungen">
+		<Sprite name="chest" size={32} />
+	</a>
 </header>
 
 <main>
@@ -34,13 +53,22 @@
 </main>
 
 <style>
+	/* the edge of the world: a strip of grass along the top */
+	.grass {
+		height: 20px;
+		background-image: var(--grass);
+		background-size: 64px 64px;
+		image-rendering: pixelated;
+		border-bottom: 2px solid #000;
+	}
+
 	header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		max-width: 40rem;
 		margin-inline: auto;
-		padding: 0.9rem 1rem 0.6rem;
+		padding: 0.5rem 1rem 0.25rem;
 
 		a {
 			color: inherit;
@@ -49,9 +77,9 @@
 	}
 
 	.wordmark {
-		font-family: var(--font-inscription);
-		font-size: 1.2rem;
-		letter-spacing: 0.14em;
+		font-size: 1.25rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
 	}
 
 	.settings {
@@ -59,7 +87,6 @@
 		place-items: center;
 		min-width: var(--tap);
 		min-height: var(--tap);
-		font-size: 1.3rem;
 	}
 
 	main {
