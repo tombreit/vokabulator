@@ -3,7 +3,7 @@
 Vokabeltrainer fürs Smartphone: QR-Code im Schulbuch scannen, Vokabeln landen offline auf dem Handy,
 dann wird gelernt – mit Karteikarten, Punkten und Emojis.
 
-Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (living document).
+Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (living document).
 
 ## Wie die App aufgebaut ist
 

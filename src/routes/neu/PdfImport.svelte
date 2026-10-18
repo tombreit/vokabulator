@@ -2,11 +2,9 @@
 <script>
 	import { loadPdfjs, readPdf } from '#lib/import/pdf-items.js';
 	import { parseLexikon } from '#lib/import/pdf-lexikon.js';
-	import { LANGS, slugify } from '#lib/model.js';
+	import { slugify } from '#lib/model.js';
 	import DraftPreview from './DraftPreview.svelte';
 
-	/** @type {import('#lib/model.js').Lang} */
-	let lang = $state('la');
 	/** @type {{ parsed: import('#lib/model.js').ParsedUnit, fileName: string } | undefined} */
 	let result = $state();
 	let busy = $state(false);
@@ -37,15 +35,6 @@
 </script>
 
 <div class="card form">
-	<label>
-		Sprache
-		<select bind:value={lang}>
-			{#each Object.entries(LANGS) as [code, { name, flag }] (code)}
-				<option value={code}>{flag} {name}</option>
-			{/each}
-		</select>
-	</label>
-
 	<label class="button primary pick">
 		{busy ? '⏳ Lese PDF …' : '📄 PDF auswählen'}
 		<input type="file" accept="application/pdf,.pdf" onchange={choose} disabled={busy} />
@@ -64,7 +53,7 @@
 	<DraftPreview
 		draft={{
 			id: `pdf-${slugify(result.parsed.title)}`,
-			lang,
+			lang: 'la',
 			source: { type: 'pdf-file', name: result.fileName },
 			parsed: result.parsed
 		}}

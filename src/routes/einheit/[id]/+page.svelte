@@ -25,6 +25,12 @@
 		saveProgress(unit.id, progress);
 	}
 
+	/** For units from a Mediencode: load the vocabulary again (progress stays, entry ids are stable). */
+	const reloadHref =
+		unit.source.type === 'ccbuchner'
+			? `${resolve('/neu')}?${new URLSearchParams({ code: unit.source.code, neu: '1' })}`
+			: undefined;
+
 	function remove() {
 		if (!confirm(`„${unit.title}“ mit allem Lernfortschritt löschen?`)) return;
 		deleteUnit(unit.id);
@@ -68,9 +74,20 @@
 	</section>
 {/each}
 
-<button class="button danger" onclick={remove}>🗑️ Lerneinheit löschen</button>
+<div class="actions">
+	{#if reloadHref}
+		<a class="button" href={reloadHref}>🔄 Neu laden</a>
+	{/if}
+	<button class="button danger" onclick={remove}>🗑️ Lerneinheit löschen</button>
+</div>
 
 <style>
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+
 	.summary {
 		display: grid;
 		gap: 0.6rem;

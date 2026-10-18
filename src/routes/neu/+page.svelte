@@ -2,17 +2,25 @@
   Create a new learning unit.
   Each import method is a component in this folder. All of them end in
   DraftPreview.svelte, which shows what was recognised and saves the unit.
+
+  /neu?code=40702-229       → "Code" tab, starts loading right away
+  /neu?code=40702-229&neu=1 → load again even if the unit already exists ("Neu laden")
 -->
 <script>
+	import { page } from '$app/state';
+	import CodeImport from './CodeImport.svelte';
 	import PdfImport from './PdfImport.svelte';
 	import TextImport from './TextImport.svelte';
 
+	const initialCode = page.url.searchParams.get('code') ?? '';
+	const reload = page.url.searchParams.has('neu');
+
 	const methods = [
-		{ id: 'pdf', label: '📄 PDF-Datei', component: PdfImport },
-		{ id: 'text', label: '✍️ Text eintippen', component: TextImport }
+		{ id: 'code', label: '🔢 Code' },
+		{ id: 'pdf', label: '📄 PDF-Datei' },
+		{ id: 'text', label: '✍️ Text eintippen' }
 	];
 	let activeId = $state(methods[0].id);
-	const active = $derived(methods.find((m) => m.id === activeId) ?? methods[0]);
 </script>
 
 <h1>Neue Lerneinheit</h1>
@@ -29,7 +37,13 @@
 	{/each}
 </div>
 
-<active.component />
+{#if activeId === 'code'}
+	<CodeImport {initialCode} {reload} />
+{:else if activeId === 'pdf'}
+	<PdfImport />
+{:else}
+	<TextImport />
+{/if}
 
 <style>
 	.tabs {

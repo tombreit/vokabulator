@@ -1,14 +1,11 @@
 <!-- Import method "Text einfügen": type or paste one word per line. -->
 <script>
 	import { parseText } from '#lib/import/text-parser.js';
-	import { LANGS } from '#lib/model.js';
 	import DraftPreview from './DraftPreview.svelte';
 
 	const id = `txt-${crypto.randomUUID()}`;
 
 	let title = $state('');
-	/** @type {import('#lib/model.js').Lang} */
-	let lang = $state('la');
 	let text = $state('');
 
 	const result = $derived(parseText(text, title.trim() || 'Meine Vokabeln'));
@@ -18,15 +15,6 @@
 	<label>
 		Titel
 		<input bind:value={title} placeholder="z. B. Lektion 12" />
-	</label>
-
-	<label>
-		Sprache
-		<select bind:value={lang}>
-			{#each Object.entries(LANGS) as [code, { name, flag }] (code)}
-				<option value={code}>{flag} {name}</option>
-			{/each}
-		</select>
 	</label>
 
 	<label>
@@ -54,7 +42,7 @@
 {/if}
 
 {#if result.parsed.sections.length > 0}
-	<DraftPreview draft={{ id, lang, source: { type: 'text' }, parsed: result.parsed }} />
+	<DraftPreview draft={{ id, lang: 'la', source: { type: 'text' }, parsed: result.parsed }} />
 {/if}
 
 <style>

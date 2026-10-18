@@ -12,7 +12,7 @@
 | 2 | Karteikarten-Abfrage, Leitner, Ergebnis | ✅ |
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ✅ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ✅ |
-| 5 | Mediencode-Import über Proxy | ⬜ |
+| 5 | Mediencode-Import über Proxy | ✅ (lokal; Server nach Deploy prüfen) |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ⬜ |
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ⬜ |
 | 8 | Teilen | ⬜ |
@@ -26,7 +26,7 @@ Vokabulator soll sie per Scan holen, als Lerneinheit offline auf dem Smartphone 
 Leitner-Prinzip wie bei AnkiDroid, „schwer“-Markierung, Punkte, Emojis und Feedback in Jugendsprache.
 
 **Annahmen:** Zielgerät ist aktuelles Chrome auf Android. Es gibt keine Abwärtskompatibilität und keine Polyfills,
-wir nutzen nur moderne Web-APIs. Gehostet wird auf dem eigenen Root-Server mit **Apache**, eigene Subdomain, HTTPS.
+wir nutzen nur moderne Web-APIs. Gehostet wird auf dem eigenen Root-Server mit **Apache**, eigene Subdomain, HTTPS: https://vokabulator.thms.de/
 
 ## Erkenntnisse aus der Analyse
 
@@ -260,6 +260,10 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
   `ProxyAddHeaders` dürfen nur in den VHost. Der Service Worker überspringt Dotfiles (`.htaccess`), weil Apache sie
   nicht ausliefert. Lokal gegen Apache 2.4.69 getestet: Proxy, 403 für alles andere, SPA-Fallback, Cache- und
   MIME-Header, offline, PDF-Import.
+- 2026-10-18 (Batch 5): Den PDF-Link auf der Mediencode-Seite findet ein einfaches Muster (`href="….pdf"`) statt
+  `DOMParser`. Das reicht für die kleine Seite und ist ohne Browser testbar. `importMediencode` bekommt `fetch` und
+  pdf.js als austauschbare Abhängigkeiten, deshalb sind die Fehlerfälle per Unit-Test geprüft. Die Sprachauswahl sitzt
+  jetzt in der gemeinsamen Vorschau (`DraftPreview.svelte`), Standard ist Latein. Beim Scannen muss also niemand vorher etwas wählen.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -282,6 +286,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18: Batch 4 – PDF-Parser (`pdf-items.js`, `pdf-lexikon.js`) mit Fixture-Tests, Tabs auf `/neu`, PDF-Import, „Speichern & loslegen“. Im Chromium geprüft: Beispiel-PDF → 148 Wörter / 4 Abschnitte → Lernrunde.
 - 2026-10-18: Apache-Setup umgebaut: `deploy/apache-vhost.conf` (minimal) + `static/.htaccess` (App-Regeln, wird mitdeployt).
 - 2026-10-18: `pnpm check:htaccess` (`deploy/check-htaccess.mjs`): Wegwerf-Apache prüft `build/.htaccess` vor jedem Deploy; Teil von `deploy/deploy.sh`.
+- 2026-10-18: Batch 5 – `ccbuchner.js` (Mediencode erkennen, Seite + PDF über `/proxy/ccbuchner/…`), Dev-/Preview-Proxy, Tab „🔢 Code“ (Standard), `/neu?code=…`, bekannte Codes öffnen direkt die Einheit, „🔄 Neu laden“ auf der Einheitsseite. Im Chromium über den Dev-Proxy mit echtem ccbuchner.de geprüft: Import, Wiederöffnen, Neu laden, ungültige Eingabe, unbekannter Code, geteilter Link, offline.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

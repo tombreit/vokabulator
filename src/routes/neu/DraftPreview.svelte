@@ -3,6 +3,7 @@
   Used by every import method on the /neu page.
 -->
 <script>
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { buildUnit, LANGS } from '#lib/model.js';
@@ -11,7 +12,10 @@
 	/** @type {{ draft: import('#lib/model.js').UnitDraft }} */
 	let { draft } = $props();
 
-	const unit = $derived(buildUnit(draft));
+	// The learner can correct the language; it is kept while the draft changes (e.g. while typing).
+	let lang = $state(untrack(() => draft.lang));
+
+	const unit = $derived(buildUnit({ ...draft, lang }));
 	const byId = $derived(new Map(unit.entries.map((e) => [e.id, e])));
 	const replaces = $derived(getUnit(unit.id) !== undefined);
 
@@ -28,6 +32,15 @@
 		{unit.entries.length} Wörter in {unit.sections.length}
 		{unit.sections.length === 1 ? 'Abschnitt' : 'Abschnitten'}
 	</p>
+
+	<label class="lang">
+		Sprache
+		<select bind:value={lang}>
+			{#each Object.entries(LANGS) as [code, { name, flag }] (code)}
+				<option value={code}>{flag} {name}</option>
+			{/each}
+		</select>
+	</label>
 
 	{#each unit.sections as section, i (i)}
 		<details>
@@ -74,6 +87,13 @@
 <style>
 	.preview {
 		margin-top: var(--gap);
+	}
+
+	.lang {
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.5rem;
 	}
 
 	summary {
