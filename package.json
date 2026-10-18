@@ -13,8 +13,7 @@
 		"lint": "prettier --check .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run",
-		"check:htaccess": "node deploy/check-htaccess.mjs"
+		"test": "npm run test:unit -- --run"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^4.0.0",

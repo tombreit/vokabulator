@@ -13,6 +13,7 @@
 | 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ✅ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ✅ |
 | 5 | Mediencode-Import über Proxy | ✅ (lokal; Server nach Deploy prüfen) |
+| – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ⬜ |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ⬜ |
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ⬜ |
 | 8 | Teilen | ⬜ |
@@ -202,6 +203,46 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - Einheitsseite: „Neu laden“ für ccbuchner-Einheiten. Der Lernstand bleibt, weil die Eintrags-IDs stabil sind.
 - **Fertig wenn:** Code eintippen → Vorschau → „Speichern & loslegen“, lokal und auf dem Server.
 
+### Deployment (durch dich) – jetzt, vor Batch 6
+
+Ziel: Der Stand bis Batch 5 läuft auf https://vokabulator.thms.de/. So lässt sich der Scanner in Batch 6 direkt
+auf dem Handy testen, denn Kamera und Offline-Modus brauchen HTTPS.
+
+**1. Server prüfen (einmalig).** Vorlage: `deploy/apache-vhost.conf`. Im VHost für `vokabulator.thms.de` muss stehen:
+- `AllowOverride All` im `<Directory>` des DocumentRoot, sonst ignoriert Apache die `.htaccess` der App
+- `SSLProxyEngine on`, damit der Proxy ccbuchner.de über HTTPS erreicht
+- `ProxyAddHeaders Off`, damit keine IP-Adressen an den Verlag gehen
+- Module: `a2enmod rewrite proxy proxy_http headers`, danach `apachectl configtest && systemctl reload apache2`
+- Für rsync: SSH-Zugang mit Schreibrecht auf den DocumentRoot
+
+**2. Deployen (lokal, im Projektordner).**
+```sh
+export VOKABULATOR_TARGET=user@host:/var/www/vokabulator   # dein SSH-Ziel und DocumentRoot
+./deploy/deploy.sh --dry-run   # prüft, testet, baut und zeigt nur, was kopiert würde
+./deploy/deploy.sh             # dasselbe, kopiert dann wirklich (rsync --delete, inkl. .htaccess)
+```
+
+**3. Prüfen.**
+```sh
+curl -sI https://vokabulator.thms.de/                                     | head -1  # 200 – App
+curl -sI https://vokabulator.thms.de/einheit/test                         | head -1  # 200 – App-Routen
+curl -sI https://vokabulator.thms.de/proxy/ccbuchner/clip_code/40702-229/ | head -1  # 200 – Proxy geht
+curl -sI https://vokabulator.thms.de/proxy/ccbuchner/agb/c-856            | head -1  # 403 – nur erlaubte Pfade
+```
+
+**4. Auf dem Handy (Chrome).**
+1. https://vokabulator.thms.de/ öffnen und über das Menü „App installieren“ wählen.
+2. ＋ Neue Lerneinheit → Code `40702-229` → „Speichern & loslegen 🚀“.
+3. Flugmodus an, die App vom Startbildschirm öffnen und eine Runde lernen.
+
+**Wenn etwas hakt:** Zuerst ins Error-Log schauen: `tail -n 20 /var/log/apache2/error.log`.
+- 500 auf allen Seiten: Ein Modul fehlt (meist `rewrite` oder `headers`), oder `.htaccess` ist nicht erlaubt.
+  Die Meldung im Log nennt die Zeile.
+- 404 auf `/einheit/test`: `AllowOverride` fehlt, die `.htaccess` wird also nicht gelesen.
+- 500/502 nur bei `/proxy/…`: `SSLProxyEngine on` oder `proxy_http` fehlt.
+
+Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch 6 weiter.
+
 ### Batch 6 – QR-Scanner in der App
 - `src/lib/components/QrScanner.svelte`: Rückkamera (`getUserMedia`) + nativer `BarcodeDetector({ formats: ['qr_code'] })`
   im `requestAnimationFrame`-Takt. Kamera beim Verlassen stoppen. Treffer → Vibration → `onscan(text)`.
@@ -287,6 +328,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18: Apache-Setup umgebaut: `deploy/apache-vhost.conf` (minimal) + `static/.htaccess` (App-Regeln, wird mitdeployt).
 - 2026-10-18: `pnpm check:htaccess` (`deploy/check-htaccess.mjs`): Wegwerf-Apache prüft `build/.htaccess` vor jedem Deploy; Teil von `deploy/deploy.sh`.
 - 2026-10-18: Batch 5 – `ccbuchner.js` (Mediencode erkennen, Seite + PDF über `/proxy/ccbuchner/…`), Dev-/Preview-Proxy, Tab „🔢 Code“ (Standard), `/neu?code=…`, bekannte Codes öffnen direkt die Einheit, „🔄 Neu laden“ auf der Einheitsseite. Im Chromium über den Dev-Proxy mit echtem ccbuchner.de geprüft: Import, Wiederöffnen, Neu laden, ungültige Eingabe, unbekannter Code, geteilter Link, offline.
+- 2026-10-18: `.htaccess`-Check auf deinen Wunsch wieder entfernt. Der Server ist eingerichtet, geprüft wird nach dem Deploy (Abschnitt „Deployment“). Deployment-Anleitung vor Batch 6 ergänzt.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
@@ -295,6 +337,6 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
   `pnpm preview` → DevTools → Application: Service Worker aktiv, im Offline-Modus weiter nutzbar.
 - Handy: per `chrome://inspect` Port-Forwarding auf `localhost:5173` oder nach dem Deploy auf der Subdomain:
   installieren, Flugmodus, eine Runde lernen.
-- Lokal gegen echten Apache: `pnpm check:htaccess` (läuft automatisch beim Deploy).
+- Server: nach jedem Deploy die Prüfungen aus „Deployment (durch dich)“, Schritt 3.
 - Server (durch dich): `apachectl configtest`, danach `curl -I https://<domain>/proxy/ccbuchner/clip_code/40702-229/` → 200,
   ein nicht erlaubter Pfad → 404.
