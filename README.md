@@ -46,5 +46,9 @@ Danach für jede neue Version:
 ```sh
 export VOKABULATOR_TARGET=user@server:/var/www/vokabulator
 ./deploy/deploy.sh --dry-run   # zeigt nur, was kopiert würde
-./deploy/deploy.sh             # prüft, testet, baut und kopiert per rsync
+./deploy/deploy.sh             # prüft, testet, baut, prüft .htaccess und kopiert per rsync
 ```
+
+`pnpm check:htaccess` startet kurz einen lokalen Apache mit denselben Einstellungen wie der VHost und fragt ein paar
+URLs ab. Ein Fehler in der `.htaccess` fällt so vor dem Hochladen auf, nicht erst als 500-Fehler auf dem Server.
+Dafür muss Apache lokal installiert sein (`apt install apache2`, er muss nicht als Dienst laufen).

@@ -15,6 +15,7 @@ cd "$(dirname "$0")/.."
 pnpm check
 pnpm test
 pnpm build
+pnpm check:htaccess   # a broken .htaccess would take the whole site down
 
 # --delete removes files of old builds on the server; build/ is the complete app,
 # including .htaccess with the app's Apache rules (from static/.htaccess).
