@@ -44,7 +44,11 @@
 			}
 			if (stopped || !video) return stopCamera();
 			video.srcObject = stream;
-			await video.play();
+			try {
+				await video.play();
+			} catch {
+				return stopCamera(); // the learner left the page while the camera was starting
+			}
 			scan(new BarcodeDetector({ formats: ['qr_code'] }));
 		}
 

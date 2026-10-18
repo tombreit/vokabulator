@@ -167,6 +167,9 @@
 		progress[entry.id] = recordAnswer(before, outcome !== 'wrong');
 		saveProgress(unit.id, progress);
 
+		// a short buzz for right, a double one for wrong (Android; ignored elsewhere)
+		navigator.vibrate(outcome === 'wrong' ? [60, 50, 60] : 25);
+
 		const scoreBefore = score;
 		const result = scoreAnswer(score, outcome, { tip: tipUsed });
 		score = result.score;

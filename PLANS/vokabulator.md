@@ -16,8 +16,8 @@
 | – | **Deployment auf https://vokabulator.thms.de/ (durch dich)** | ✅ live: Proxy, Offline, Scanner-Ablauf, Spiel geprüft |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ✅ (lokal; Kamera-Test auf dem Handy offen) |
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ✅ (live geprüft) |
-| 8 | Teilen | ✅ (lokal; nach Deploy live prüfen) |
-| 9 | Design & Polish | ⬜ |
+| 8 | Teilen | ✅ (live geprüft) |
+| 9 | Design & Polish | ✅ (lokal; nach Deploy live prüfen) |
 
 ## Kontext
 
@@ -281,10 +281,34 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - **Fertig wenn:** Ein Link vom Handy an ein zweites Gerät führt dort direkt zum Import bzw. zur Challenge.
 
 ### Batch 9 – Design & Polish
-- Eigene visuelle Identität (mit der Skill `frontend-design`): mobile-first, große Daumen-Buttons unten, Dark Mode.
-- Animationen: Karten-Flip (3D-CSS), View Transitions zwischen Seiten, Konfetti auf der Ergebnisseite (eigenes kleines Canvas).
-- Vibration bei richtig/falsch, optionale Sounds (standardmäßig aus), Fächer als 🥚🐣🐥🐔🦅, App-Icon.
-- Barrierearmut: Kontraste, Fokus, `prefers-reduced-motion`.
+**Idee „Wachstafel“:** Römische Schüler lernten auf der *tabula cerata*, einer Holztafel mit dunklem Wachs, in das sie
+mit dem Griffel schrieben. Die Fragekarte ist so eine Tafel (`QuestionCard.svelte`). Die Lösung wird von links nach
+rechts „eingeritzt“. Der Scan-Button auf der Startseite ist eine kleine Tafel. Alles andere bleibt ruhig.
+
+| Token | Wert | Rolle |
+|---|---|---|
+| Marmor | `#E9ECEF` (dunkel `#1C1720`) | Hintergrund – bewusst kühl statt Creme |
+| Tinte | `#221A26` (dunkel `#EFE9F0`) | Text |
+| Purpur | `#6B1F5C` (dunkel `#8E3A7D`, als Text `#D08BC2`) | Hauptbuttons, Links, Punkte |
+| Gold | `#D9A400` (als Text hell `#7A5900`) | Punkte, Sterne, Fokusrahmen |
+| Lorbeer / Pompeji-Rot | `#2F7D4F` / `#B3262E` | richtig / falsch |
+| Wachs / Holz / Ritzung | `#2E2219` / `#9B6B3D` / `#F1D9A7` | die Tafel, hell und dunkel gleich |
+
+- **Schriften:** **Marcellus** (nach römischen Inschriften) für lateinische Wörter und Überschriften, **Lexend**
+  (für flüssiges Lesen entwickelt) für alles andere. So zeigt schon die Schrift, welche Sprache gefragt ist.
+  Beide sind lokal eingebunden, also offline verfügbar, und enthalten alle Makronen.
+- **Schriftzug „VOKABVLATOR“:** U als V wie auf römischen Inschriften.
+- **Fächer:** 🥚🐣🐥🐔🦅, der Adler als Feldzeichen der Legion. Die Einheitsseite zeigt, wie viele Wörter in welchem Fach liegen.
+- **Bewegung nur als Antwort auf eine Aktion:**
+  - Einritzen der Lösung
+  - Konfetti bei Rekord oder perfekter Runde (`Confetti.svelte`, eigenes Canvas)
+  - sanfter Seitenübergang (View Transitions)
+  - Vibration: kurz bei richtig, doppelt bei falsch
+
+  Bei „Bewegung reduzieren“ entfällt alles davon.
+- **Barrierearmut:** Alle Farbpaare erfüllen WCAG AA, auch im dunklen Modus. Fokus ist als goldener Rahmen sichtbar,
+  Tippflächen sind mindestens 48 px groß.
+- **Bewusst vermieden:** Labels in Großbuchstaben, Meta-Zeilen mit „·“-Trennern, „→“ an Buttons, Verläufe als Deko.
 
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
@@ -339,6 +363,16 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
     Komponenten-Props weitergereicht.
   - Geteilte Text- und PDF-Einheiten behalten ihre ID. Ein erneutes Öffnen aktualisiert dann statt zu verdoppeln.
   - Teilen nutzt `navigator.share` (Android) und sonst die Zwischenablage.
+- 2026-10-18 (Batch 9):
+  - **Atkinson Hyperlegible Next verworfen**, weil die Schrift kein `ō` enthält. Jedes „capiō“ wäre mit einem
+    Ersatzzeichen gesetzt worden. Lexend deckt alle Makronen ab.
+  - **„Einritzen“ statt 3D-Karten-Flip**, weil das zur Wachstafel passt und zeigt, was sich ändert: Die Lösung
+    erscheint.
+  - **Sounds weggelassen.** Es gibt genug Rückmeldung, und auf dem Handy in der Schule nervt Ton eher.
+  - **Eigene Flächenfarben** `--good-fill`/`--bad-fill` für Bewertungs-Buttons und `--accent-ink`/`--star-ink`
+    für farbigen Text. So bleibt der Kontrast im dunklen Modus erhalten.
+  - **Fehler behoben:** Verlässt man den Scanner, während die Kamera anläuft, wurde ein unbehandelter Fehler
+    geworfen (`video.play()` abgebrochen).
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -370,6 +404,8 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18: Batch 7b – Punkte, Combo ×2/×3, Joker (💡 Tipp/50:50, 👀 Aufdecken), Schachuhr (1/3/5 Min, Zeitbonus), Sprüche in `feedback.js`, Ergebnis mit Rekord, bester Serie, Zeit und Tagen in Folge; Startseite zeigt 🔥 Tage und 🏆 pro Einheit. Tests für `scoring.js` und `streak.js`; im Chromium inkl. vorgespulter Uhr geprüft.
 - 2026-10-18: Live-Prüfung des Builds von 20:54: alle Dateien für den Offline-Cache laden, Offline-Modus, Backup, Scanner-Ablauf (Fake-Kamera), Spielmechanik und Proxy grün.
 - 2026-10-18: Batch 8 – `share.js` (Links: Mediencode bzw. komprimierte Wörter nach `#d=`, Challenge-Parameter) mit Tests, `ShareButton.svelte`, „📤 Teilen“ auf der Einheitsseite, „📤 Ergebnis teilen“ als Challenge, Challenge-Banner auf `/neu` und Lernseite, Vergleich im Ergebnis. Im Chromium mit zwei Profilen geprüft.
+- 2026-10-18: Live: Teilen und Challenges gegen den echten Server geprüft.
+- 2026-10-18: Batch 9 – Design „Wachstafel“: Tokens, Marcellus + Lexend, Tafel mit Einritz-Animation, Scan-Tafel auf der Startseite, Fächer 🥚🐣🐥🐔🦅 mit Übersicht, Konfetti, Vibration, Seitenübergänge, neues App-Icon. Kontraste nach WCAG AA nachgerechnet, Screenshots hell/dunkel gesichtet, alle Browser-Abläufe erneut grün, Schriften offline aus dem Cache.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

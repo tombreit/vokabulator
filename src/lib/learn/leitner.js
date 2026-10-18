@@ -28,6 +28,8 @@
 export const BOX_COUNT = 5;
 /** From this box on a word counts as learned. */
 export const LEARNED_BOX = 4;
+/** How the boxes are shown: from egg to eagle – the aquila, standard of the Roman legion. */
+export const BOX_EMOJI = ['🥚', '🐣', '🐥', '🐔', '🦅'];
 
 /** @returns {EntryProgress} */
 export function newProgress() {

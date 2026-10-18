@@ -1,5 +1,6 @@
 <script>
 	import '../app.css';
+	import { onNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { migrate } from '#lib/storage.js';
 
@@ -10,11 +11,22 @@
 	// Ask the browser not to clear our localStorage when space gets low.
 	// Chrome grants this silently, e.g. once the app is installed.
 	navigator.storage.persist();
+
+	// Page changes cross-fade (View Transitions API; timing in app.css).
+	onNavigate((navigation) => {
+		return new Promise((resolveTransition) => {
+			document.startViewTransition(async () => {
+				resolveTransition();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <header>
-	<a href={resolve('/')}>Vokabulator 🧠</a>
-	<a href={resolve('/einstellungen')} aria-label="Einstellungen">⚙️</a>
+	<!-- "VOKABVLATOR": Roman inscriptions write U as V -->
+	<a class="wordmark" href={resolve('/')} aria-label="Vokabulator – Startseite">VOKABVLATOR</a>
+	<a class="settings" href={resolve('/einstellungen')} aria-label="Einstellungen">⚙️</a>
 </header>
 
 <main>
@@ -28,14 +40,26 @@
 		align-items: center;
 		max-width: 40rem;
 		margin-inline: auto;
-		padding: 0.75rem 1rem;
-		font-weight: 800;
-		font-size: 1.15rem;
+		padding: 0.9rem 1rem 0.6rem;
 
 		a {
 			color: inherit;
 			text-decoration: none;
 		}
+	}
+
+	.wordmark {
+		font-family: var(--font-inscription);
+		font-size: 1.2rem;
+		letter-spacing: 0.14em;
+	}
+
+	.settings {
+		display: grid;
+		place-items: center;
+		min-width: var(--tap);
+		min-height: var(--tap);
+		font-size: 1.3rem;
 	}
 
 	main {

@@ -35,7 +35,7 @@
 			<button class="button" onclick={onoverride}>🙋 Ich lag doch richtig</button>
 		{/if}
 		<!-- svelte-ignore a11y_autofocus: Enter / tap goes on to the next card -->
-		<button class="button primary next" onclick={onnext} autofocus>Weiter →</button>
+		<button class="button primary next" onclick={onnext} autofocus>Weiter</button>
 	</div>
 </div>
 

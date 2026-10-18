@@ -16,6 +16,7 @@
 
 <script>
 	import { resolve } from '$app/paths';
+	import Confetti from '#lib/components/Confetti.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import StarButton from '#lib/components/StarButton.svelte';
@@ -48,6 +49,10 @@
 	const seconds = $derived(Math.round(summary.durationMs / 1000));
 	const minutes = $derived(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
 </script>
+
+{#if isRecord || knownShare === 1}
+	<Confetti />
+{/if}
 
 <div class="card result">
 	{#if summary.timeUp}<p class="time-up">{timeUpText}</p>{/if}
@@ -113,7 +118,7 @@
 	{/if}
 	<button class="button big" onclick={onnewround}>Neue Runde</button>
 	{#if summary.points > 0}
-		<ShareButton label="📤 Ergebnis teilen – schafft's ein Freund?" {...share} />
+		<ShareButton label="📤 Ergebnis teilen" {...share} />
 	{/if}
 	<a class="button" href={resolve('/einheit/[id]', { id: unitId })}>Zur Lerneinheit</a>
 </div>
@@ -132,12 +137,12 @@
 			font-size: 2.2rem;
 			font-weight: 800;
 			margin: 0.25rem 0;
-			color: var(--accent);
+			color: var(--accent-ink);
 		}
 
 		.record {
 			font-weight: 700;
-			color: var(--star);
+			color: var(--star-ink);
 		}
 
 		.challenge {

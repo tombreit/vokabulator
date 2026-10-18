@@ -1,42 +1,74 @@
 /*
- * Global styles: design tokens (colors, spacing) and a few base rules.
+ * Global styles: design tokens and a few base rules.
  * Component-specific styles live in the <style> block of each .svelte file.
- * The real visual design comes in batch 9 – this is a clean, readable base.
+ *
+ * Design idea "Wachstafel": Roman pupils learned on the tabula cerata – a wooden tablet
+ * with dark wax, written into with a stylus. The question card is such a tablet
+ * (QuestionCard.svelte); everything around it stays quiet: cool marble, ink, one
+ * imperial purple for the main buttons, gold for points and stars.
+ *
+ * Type: Marcellus (after Roman inscriptions) for Latin words and titles,
+ * Lexend (made for easy reading) for everything else. Both have all macrons (ā ē ī ō ū).
  */
 
+@import '@fontsource/marcellus';
+@import '@fontsource-variable/lexend';
+
 :root {
-	--bg: #f5f3ff;
-	--surface: #ffffff;
-	--surface-2: #ece8ff;
-	--text: #1d1b2f;
-	--muted: #6b6880;
-	--line: #dcd7f0;
-	--accent: #6a4cff;
+	/* marble & ink */
+	--bg: #e9ecef;
+	--surface: #fbfcfd;
+	--surface-2: #dde2e6;
+	--text: #221a26;
+	--muted: #5d5663;
+	--line: #c9cfd5;
+	/* imperial purple: main buttons, links */
+	--accent: #6b1f5c;
 	--accent-text: #ffffff;
-	--good: #16a34a;
-	--bad: #e5484d;
-	--star: #f5a524;
+	--accent-ink: #6b1f5c; /* purple as text: links, points */
+	/* laurel = right, Pompeii red = wrong, gold = points and stars */
+	--good: #2f7d4f;
+	--bad: #b3262e;
+	/* as button background with white text – the same in light and dark */
+	--good-fill: #2f7d4f;
+	--bad-fill: #b3262e;
+	--star: #d9a400;
+	--star-ink: #7a5900; /* gold as text on light backgrounds */
+	/* the wax tablet – the same in light and dark */
+	--wax: #2e2219;
+	--wood: #9b6b3d;
+	--scratch: #f1d9a7;
+	--scratch-muted: #b89f74;
+
+	--font-ui: 'Lexend Variable', system-ui, sans-serif;
+	--font-inscription: 'Marcellus', Georgia, serif;
 
 	--radius: 14px;
 	--gap: 1rem;
 	--tap: 3rem; /* minimum height of anything you tap */
 
 	color-scheme: light dark;
-	font-family: system-ui, sans-serif;
-	line-height: 1.45;
+	font-family: var(--font-ui);
+	font-size: 106.25%; /* 17px: a bit larger for reading on the phone */
+	line-height: 1.5;
 	color: var(--text);
 	background: var(--bg);
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		--bg: #141220;
-		--surface: #1f1c30;
-		--surface-2: #2a2640;
-		--text: #f1eefc;
-		--muted: #a29dbb;
-		--line: #3a3552;
-		--accent: #8b73ff;
+		--bg: #1c1720;
+		--surface: #262029;
+		--surface-2: #322a36;
+		--text: #efe9f0;
+		--muted: #a99fae;
+		--line: #3d3442;
+		--accent: #8e3a7d;
+		--accent-ink: #d08bc2;
+		--good: #5fbf86;
+		--bad: #ef6a70;
+		--star: #e8b923;
+		--star-ink: #e8b923;
 	}
 }
 
@@ -52,12 +84,27 @@ body {
 h1,
 h2,
 h3 {
-	line-height: 1.2;
+	font-family: var(--font-inscription);
+	font-weight: 400;
+	line-height: 1.15;
 	margin-block: 0 0.5em;
 }
 
+h1 {
+	font-size: 2rem;
+}
+
+h2 {
+	font-size: 1.35rem;
+}
+
 a {
-	color: var(--accent);
+	color: var(--accent-ink);
+}
+
+:focus-visible {
+	outline: 3px solid var(--star);
+	outline-offset: 2px;
 }
 
 /* Buttons: <button class="button"> or <a class="button"> */
@@ -76,7 +123,11 @@ a {
 	font-weight: 600;
 	text-decoration: none;
 	cursor: pointer;
+	transition: transform 0.08s ease-out;
 
+	&:active:not(:disabled) {
+		transform: scale(0.97);
+	}
 	&.primary {
 		background: var(--accent);
 		border-color: var(--accent);
@@ -110,7 +161,7 @@ textarea {
 	color: inherit;
 	background: var(--surface);
 	border: 1px solid var(--line);
-	border-radius: calc(var(--radius) / 2);
+	border-radius: 10px;
 	padding: 0.6rem 0.75rem;
 	width: 100%;
 }
@@ -119,4 +170,20 @@ label {
 	display: grid;
 	gap: 0.3rem;
 	font-weight: 600;
+}
+
+/* Page changes cross-fade (see +layout.svelte); calm for people who asked for less motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 0.18s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+		transition: none !important;
+	}
 }

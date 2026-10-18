@@ -14,8 +14,8 @@
 	{#if !revealed}
 		<button class="button primary big" onclick={onreveal}>Aufdecken 👀</button>
 	{:else}
-		<button class="button big bad" onclick={() => onanswer('wrong')}>Nicht gewusst ❌</button>
-		<button class="button big good" onclick={() => onanswer('right')}>Gewusst ✅</button>
+		<button class="button big bad" onclick={() => onanswer('wrong')}>❌ Noch nicht</button>
+		<button class="button big good" onclick={() => onanswer('right')}>✅ Gewusst</button>
 	{/if}
 </div>
 
@@ -33,14 +33,14 @@
 	}
 
 	.good {
-		background: var(--good);
-		border-color: var(--good);
+		background: var(--good-fill);
+		border-color: var(--good-fill);
 		color: white;
 	}
 
 	.bad {
-		background: var(--bad);
-		border-color: var(--bad);
+		background: var(--bad-fill);
+		border-color: var(--bad-fill);
 		color: white;
 	}
 </style>
