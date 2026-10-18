@@ -1,6 +1,5 @@
 <script>
 	import '../app.css';
-	import favicon from '#lib/assets/favicon.svg';
 	import { resolve } from '$app/paths';
 	import { migrate } from '#lib/storage.js';
 
@@ -8,14 +7,14 @@
 	let { children } = $props();
 
 	migrate();
+	// Ask the browser not to clear our localStorage when space gets low.
+	// Chrome grants this silently, e.g. once the app is installed.
+	navigator.storage.persist();
 </script>
-
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
 
 <header>
 	<a href={resolve('/')}>Vokabulator 🧠</a>
+	<a href={resolve('/einstellungen')} aria-label="Einstellungen">⚙️</a>
 </header>
 
 <main>
@@ -24,6 +23,11 @@
 
 <style>
 	header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		max-width: 40rem;
+		margin-inline: auto;
 		padding: 0.75rem 1rem;
 		font-weight: 800;
 		font-size: 1.15rem;

@@ -12,7 +12,10 @@ export default defineConfig({
 			},
 			// Single-page app: every route is rendered in the browser (see src/routes/+layout.js).
 			// The server answers unknown paths with 200.html (see deploy/apache-vokabulator.conf).
-			adapter: adapter({ fallback: '200.html' })
+			adapter: adapter({ fallback: '200.html' }),
+			// Absolute asset URLs (/_app/…): the service worker serves the same cached
+			// app shell for every route, so its links must not depend on the page URL.
+			paths: { relative: false }
 		})
 	],
 	test: {

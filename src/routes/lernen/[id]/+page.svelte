@@ -13,6 +13,7 @@
 	import { pickRound, progressOf, recordAnswer, toggleHard } from '#lib/learn/leitner.js';
 	import { LANGS } from '#lib/model.js';
 	import { loadProgress, loadSettings, saveProgress, saveSettings } from '#lib/storage.js';
+	import { keepScreenOn } from '#lib/wake-lock.js';
 
 	/** @typedef {import('#lib/model.js').Entry} Entry */
 	/** A question. `reverse` = ask the German side, answer the foreign one.
@@ -54,6 +55,9 @@
 	let answers = $state([]);
 
 	const card = $derived(cards[index]);
+
+	// No dimming display while thinking about an answer.
+	$effect(() => (phase === 'question' ? keepScreenOn() : undefined));
 
 	/**
 	 * @param {Entry[]} entries  words to choose from

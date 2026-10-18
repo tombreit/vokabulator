@@ -10,7 +10,7 @@
 | 0 | Fundament (Repo, SvelteKit, Apache, Deploy) | ✅ |
 | 1 | Lerneinheiten, Text-Import, Speicher | ✅ |
 | 2 | Karteikarten-Abfrage, Leitner, Ergebnis | ✅ |
-| 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ⬜ |
+| 3 | Offline/PWA, Backup → **1. nutzbare Version, Review-Pause** | ✅ |
 | 4 | PDF-Parser (C.C.Buchner-Lexikon, Datei-Upload) | ⬜ |
 | 5 | Mediencode-Import über Proxy | ⬜ |
 | 6 | QR-Scanner (nativer `BarcodeDetector`) | ⬜ |
@@ -134,7 +134,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - `git init`, `.gitignore`. Plan nach `PLANS/vokabulator.md`.
 - `npx sv create` (SvelteKit 3, JS + JSDoc, Vitest), danach SPA-Setup: adapter-static mit Fallback und `ssr = false`.
 - `deploy/apache-vokabulator.conf`:
-  - `FallbackResource /200.html`
+  - `DirectoryIndex 200.html` + `FallbackResource /200.html`
   - `ProxyPassMatch` nur für `^/proxy/ccbuchner/(clip_code/\d+-\d+/?|_files_media/mediathek/downloads/\d+\.pdf)$`, mit `SSLProxyEngine on` und `ProxyPassReverse`
   - Cache-Header: `/_app/immutable/` langlebig, `service-worker.js`/`index.html` mit no-cache
   - Benötigte Module notieren: proxy, proxy_http, ssl, headers
@@ -232,6 +232,9 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18 (Batch 0): SPA-Fallback heißt `200.html` statt `index.html` – Empfehlung der Kit-3-Doku, weil
   `index.html` mit Prerendering kollidieren kann. TypeScript (für svelte-check) bleibt auf 6.x, weil Kit 3 TS 6 voraussetzt.
   Kit 3 importiert eigene Module über `#lib/…` (package.json `imports`) statt `$lib`.
+- 2026-10-18 (Batch 3): Der Service Worker cached die App-Shell von `/` (auf Apache per `DirectoryIndex 200.html`)
+  und liefert sie offline für jede Route aus. Dafür braucht es absolute Asset-Pfade (`paths.relative: false`) und
+  `ignoreVary` beim Cache-Lookup (Server senden `Vary: Origin`, JS-Module werden mit Origin-Header geladen).
 
 ## Risiken / offene Punkte
 - pdf.js-Fontnamen: Spike in Batch 4. Fallback ist die Auswertung der Font-Ressourcen über die Operator-Liste.
@@ -244,12 +247,14 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - Web Share Target: aus dem Chrome-PDF-Viewer „Teilen → Vokabulator“.
 - CSV-Export für Anki. Weitere Verlage (Klett/Cornelsen) als eigene Import-Adapter.
 - Tonausgabe per `speechSynthesis` (Englisch/Spanisch).
+- Browser-Smoke-Tests (Playwright, wie bisher lokal genutzt) ins Repo übernehmen.
 
 ## Changelog
 - 2026-10-18: Plan erstellt.
 - 2026-10-18: Batch 0 – Gerüst (`sv create`, SvelteKit 3.1, Vitest 5), SPA-Config, Apache-Config, Deploy-Skript, README.
 - 2026-10-18: Batch 1 – Datenmodell (`model.js`), `storage.js`, Text-Import mit Live-Vorschau, Einheiten-Liste und -Seite. Löschen sitzt auf der Einheitsseite (mit Rückfrage) statt auf der Startseite, damit nichts versehentlich verschwindet.
 - 2026-10-18: Batch 2 – `leitner.js` (Fächer, Rundenauswahl, Lernstand) mit Tests, `/lernen/[id]` (Setup → Karten → Ergebnis, „Nur Fehler nochmal“), ⭐ auf Lern- und Einheitsseite, Fortschrittsbalken auf Start- und Einheitsseite. Die Fächer zeigt die Wortliste vorerst als ●●○○○.
+- 2026-10-18: Batch 3 – Service Worker (offline), Manifest + Platzhalter-Icons (installierbar), Wake Lock beim Lernen, `navigator.storage.persist()`, Backup speichern/laden unter ⚙️ Einstellungen. Im Headless-Chromium geprüft: offline Start/Einheit/Lernen, Backup → frisches Profil, keine Manifest-Fehler.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,

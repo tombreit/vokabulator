@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+	<!-- Placeholder maskable app icon (two flash cards, a "V" and a star); the real one comes in batch 9. -->
+	<rect width="512" height="512" fill="#6a4cff"/>
+	<g id="art" transform="translate(51.2 51.2) scale(0.8)">
+		<rect x="160" y="110" width="230" height="290" rx="34" fill="#b9acff" transform="rotate(10 275 255)"/>
+		<g transform="rotate(-6 237 270)">
+			<rect x="112" y="125" width="250" height="300" rx="36" fill="#ffffff"/>
+			<polygon points="160,195 208,195 237,300 266,195 314,195 262,360 212,360" fill="#6a4cff"/>
+		</g>
+		<polygon points="392.0,56.0 407.3,97.0 451.0,98.8 416.7,126.0 428.4,168.2 392.0,144.0 355.6,168.2 367.3,126.0 333.0,98.8 376.7,97.0" fill="#f5a524"/>
+	</g>
+</svg>
