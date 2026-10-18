@@ -20,7 +20,8 @@
 | 9 | Design & Polish („Wachstafel“) | ✅ live, ersetzt durch Batch 10 |
 | 10 | „Blockwelt“: Minecraft-Stil mit Erzen, XP/Level, Fortschritten | ✅ live geprüft |
 | 11 | QR-Scanner auf allen Geräten (ZXing-Fallback) | ✅ live geprüft |
-| 12 | Schneller & klarer: Import ohne Umwege, Navigation, Karte im Fokus | ✅ lokal geprüft – Deploy durch dich |
+| 12 | Schneller & klarer: Import ohne Umwege, Navigation, Karte im Fokus | ✅ live, von dir getestet (Fehler → 13a) |
+| 13 | Klarer benannt: Header, Wording, Stufen statt Erze, Amboss, Zeit pro Vokabel, 280 px | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -104,7 +105,7 @@ src/lib/learn/scoring.js        Punkte, Combo, Joker-Kosten           (+ Test)
 src/lib/learn/feedback.js       Sprüche & Emojis – reine Daten, frei editierbar
 src/lib/share.js                Teilen-Links bauen/lesen
 src/lib/toasts.svelte.js        Einblendungen oben rechts (showToast), überleben einen Seitenwechsel
-src/lib/components/             ProgressBar, ChessClock, QrScanner, NavBar (Hotbar unten), Toasts, …
+src/lib/components/             ProgressBar, WordTimer, HardButton (Amboss), QrScanner, NavBar (Hotbar unten), Toasts, …
 src/routes/+layout.js           ssr = false
 src/routes/+layout.svelte       Graskante, NavBar, Toasts
 src/routes/+page.svelte         „Meine Welten“
@@ -382,6 +383,43 @@ eine Navigation („ich weiß nie so recht, wo ich eigentlich bin“). Der PDF-U
   Grammatik („m“, „Adv.“) steht leise unter dem Wort statt in einem Kasten.
 - Buttons bleiben bis 320 px einzeilig. Die Import-Tabs haben keine Emojis mehr, Joker-Slots und Tippfeld sind schmaler.
 
+### Batch 13 – Klarer benannt
+Rückmeldung nach Batch 12: Der Name „Vokabulator“ soll oben stehen. Das Wording ist zu Minecraft-lastig
+(„Meine Welten“): Das Design soll Minecraft sein, die Inhalte nach ihrem Zweck benannt.
+- Nach „Noch nicht“/„Gewusst“ ging es in Firefox nicht weiter (`navigator.vibrate is not a function`).
+- Die Schachuhr soll pro Vokabel laufen, mit dezentem Balken.
+- Der Stern für „schwer“ wird als „Favorit“ verstanden.
+- Manche Elemente sind zu breit.
+- Die Erze sind schwer auseinanderzuhalten.
+
+**13a – Fehler:** `navigator.vibrate` gibt es in Firefox (seit 129) und auf dem iPhone nicht; der Aufruf brach
+`answer()` ab. Jetzt `navigator.vibrate?.()`. Seitenübergänge laufen auch ohne View Transitions (Firefox ESR).
+
+**13b – Header und Wording**
+- Der Schriftzug „Vokabulator“ in Stein steht auf jeder Seite (`+layout.svelte`), auf der Startseite groß mit
+  Splash-Text. Jede Seite hat eine Überschrift, die sagt, wo man ist („Meine Lektionen“, „Neue Lektion“, …).
+- Welt → **Lektion**, „Tage überlebt“ → **„Tage in Folge“**, „Verzaubert“ → **„Serie“**, „Abgebaut“ → **„Aufgestiegen“**.
+  Die Erfolge heißen nach dem, was man tut („Die erste sitzt“, „Fehlerfrei“, „Lektion gemeistert“).
+  Insider-Sprüche („In Lava gefallen“, „Ssssss…“) sind raus.
+
+**13c – Stufen statt Erze, Amboss statt Stern**
+- Die Leitner-Fächer heißen **Stufe 1–5** (`STAGES` in `leitner.js`). Gezeichnet sind sie als klar verschiedene
+  Gegenstände: Stein, Kohle, Eisenbarren, Goldbarren, Diamant. Vorher waren es fünf fast gleiche Erzblöcke.
+  Die Karte zeigt „↑ Stufe 3“ oder „↓ Stufe 1“.
+- **Amboss** = schwer (`HardButton.svelte`), nicht markiert nur blass. Die Lektionsseite erklärt ihn.
+
+**13d – Zeit pro Vokabel**
+- Statt einer Rundenuhr gibt es 5, 10 oder 20 Sekunden pro Vokabel (`CLOCK_SECONDS` in `storage.js`).
+  Ein dünner Balken unten in der Karte läuft ab (`WordTimer.svelte`), im letzten Drittel rot.
+- Läuft die Zeit ab, zählt die Vokabel als nicht gewusst, und die Lösung erscheint (bei Karteikarten 2,5 s lang).
+  Bei Karteikarten stoppt die Zeit beim Aufdecken.
+- Tempo-Bonus bis +5 XP pro richtiger Antwort (`speedBonus`). Der Erfolg „Blitzschnell“: eine Runde ab 10 Vokabeln,
+  ohne dass die Zeit abläuft.
+
+**13e – Nichts zu breit:** Stufen-Slots, Wortliste, Optionsknöpfe, Navigation und Start-Status schrumpfen mit dem
+Bildschirm. Ein Browser-Skript meldet jedes Element, das über seine Karte oder den Bildschirm ragt. Es findet bei
+280, 320 und 390 px auf keiner Seite mehr etwas.
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -475,6 +513,14 @@ eine Navigation („ich weiß nie so recht, wo ich eigentlich bin“). Der PDF-U
   - **Navigation unten statt oben**, weil sie mit dem Daumen erreichbar ist und an die Hotbar erinnert.
     In der Runde ausgeblendet, damit nichts von der Vokabel ablenkt.
 
+- 2026-10-18 (Batch 13):
+  - **Minecraft nur im Design, nicht im Inhalt.** Gegenstände, Schrift, Panels und Hotbar bleiben. Texte sagen,
+    was passiert („Stufe 3“, „Lektion“, „Tage in Folge“). Die Gegenstände erklären sich über den Text daneben.
+  - **Fünf Stufen bleiben** (Leitner), aber als fünf verschiedene Formen statt fünf gleich aussehender Blöcke.
+  - **Amboss für „schwer“:** „schwer wie ein Amboss“ ist eindeutig und passt zum Design; der Stern hieß „Favorit“.
+  - **Zeit pro Vokabel statt pro Runde.** Alte Rundenzeiten (60/180/300 s) aus Einstellungen und Challenge-Links
+    werden zu „Aus“, damit niemand unerwartet unter Zeitdruck gerät.
+
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
   Für alles andere gibt es den universellen Text-Import.
@@ -526,6 +572,13 @@ eine Navigation („ich weiß nie so recht, wo ich eigentlich bin“). Der PDF-U
   - bekannter Code, Neu laden, Link vom Freund, kaputter Link
   - alle Bereiche über die Leiste, Leiste in der Runde weg, kein seitliches Scrollen
   - drei Lernmodi, Erz-Aufwertung, Level-Up, Erfolge, Teilen/Challenge
+- 2026-10-18: Von dir live getestet: In Firefox blieb die Runde nach der ersten Antwort stehen (`navigator.vibrate`).
+- 2026-10-18: Batch 13 – Klarer benannt. 13a Fehler behoben, 13b Header und Wording, 13c Stufen und Amboss,
+  13d Zeit pro Vokabel, 13e nichts zu breit. Im Chromium geprüft:
+  - ohne `vibrate` und View Transitions (wie Firefox/iPhone): alle drei Modi laufen durch
+  - Zeit pro Vokabel: Balken, Zeit um, Stopp beim Aufdecken, Tempo-Bonus, alte Einstellung → Aus
+  - Import, Navigation, ganze Runde mit Stufen und Erfolgen, Teilen/Challenge (alter `clock=60` → Aus), offline
+  - kein Element zu breit bei 280, 320 und 390 px
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
