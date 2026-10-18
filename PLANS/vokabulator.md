@@ -212,6 +212,7 @@ auf dem Handy testen, denn Kamera und Offline-Modus brauchen HTTPS.
 - `AllowOverride All` im `<Directory>` des DocumentRoot, sonst ignoriert Apache die `.htaccess` der App
 - `SSLProxyEngine on`, damit der Proxy ccbuchner.de über HTTPS erreicht
 - `ProxyAddHeaders Off`, damit keine IP-Adressen an den Verlag gehen
+- `ProxyPreserveHost Off` und `SSLProxyProtocol -all +TLSv1.2 +TLSv1.3`, weil ccbuchner.de nur mit SNI `www.ccbuchner.de` und nur TLS 1.2 antwortet
 - Module: `a2enmod rewrite proxy proxy_http headers`, danach `apachectl configtest && systemctl reload apache2`
 - Für rsync: SSH-Zugang mit Schreibrecht auf den DocumentRoot
 
@@ -242,6 +243,8 @@ curl -sI https://vokabulator.thms.de/proxy/ccbuchner/agb/c-856            | head
 - 500/502 nur bei `/proxy/…`: `SSLProxyEngine on` oder `proxy_http` fehlt. Im Error-Log steht dann:
   - `AH01961: SSL Proxy requests for this server not enabled` → `SSLProxyEngine on` in den `*:443`-VHost
   - `AH01144: No protocol handler was valid` → `a2enmod proxy_http && systemctl restart apache2`
+  - `AH00898: Error during SSL Handshake with remote server` → `ProxyPreserveHost Off` und
+    `SSLProxyProtocol -all +TLSv1.2 +TLSv1.3` in den VHost (falsche SNI bzw. nur TLS 1.3 erlaubt)
 
 Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch 6 weiter.
 
@@ -314,6 +317,9 @@ Danach gibst du mir Bescheid. Ich prüfe den Host von außen und mache mit Batch
 - 2026-10-18 (Batch 6): Die Logik „Code schon importiert → Einheit öffnen“ sitzt in `MediencodeLoader.svelte`, Scanner
   und Code-Tab teilen sie sich. `canScanQr` (in `QrScanner.svelte`) entscheidet, ob es den Scan-Tab und den großen
   Scan-Button gibt. Ohne `BarcodeDetector` ist „Code“ der Standard. Typen für `BarcodeDetector` stehen in `src/ambient.d.ts`.
+- 2026-10-18 (Live-Test): Der Proxy scheiterte mit `AH00898` (TLS-Handshake). Mit `openssl s_client` geprüft: ccbuchner.de
+  antwortet nur mit SNI `www.ccbuchner.de` und nur über TLS 1.2. Die VHost-Vorlage setzt deshalb ausdrücklich
+  `ProxyPreserveHost Off` und `SSLProxyProtocol -all +TLSv1.2 +TLSv1.3`. Beides ist in `.htaccess` nicht erlaubt.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
