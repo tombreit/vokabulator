@@ -8,7 +8,7 @@
  * - install:  put all files of this build (JS, CSS, static/) plus the app shell
  *             into a cache named after the build version.
  *             The app shell is the HTML page every route starts with; we fetch it
- *             from the root URL (on Apache that is 200.html, see DirectoryIndex).
+ *             from the root URL (on Apache that is 200.html, see static/.htaccess).
  * - activate: delete the caches of older versions.
  * - fetch:    app files            → from the cache (they never change within a version)
  *             page navigations     → network first; offline: the cached app shell
@@ -26,7 +26,12 @@ const CACHE = `vokabulator-${version}`;
 const url = (path) => new URL(path, self.registration.scope).href;
 
 const SHELL = self.registration.scope;
-const APP_FILES = new Set([...immutable, ...assets].map((file) => url(file.path)));
+const APP_FILES = new Set(
+	[...immutable, ...assets]
+		// dotfiles like .htaccess are server configuration – Apache refuses to serve them
+		.filter((file) => !file.path.split('/').at(-1)?.startsWith('.'))
+		.map((file) => url(file.path))
+);
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(

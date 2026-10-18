@@ -11,8 +11,9 @@ Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (
 - **Daten liegen im `localStorage`** des Handys (siehe `src/lib/storage.js`). Es gibt keinen Server und keine Accounts.
 - **Fachlogik** steckt in kleinen Modulen unter `src/lib/`, jeweils mit Test daneben (`*.test.js`).
   **Seiten** liegen unter `src/routes/` (`+page.svelte` = eine Seite).
-- **Einziger serverseitiger Baustein:** ein eng begrenzter Apache-Proxy zu ccbuchner.de, nötig wegen CORS
-  (`deploy/apache-vokabulator.conf`).
+- **Einziger serverseitiger Baustein:** ein eng begrenzter Proxy zu ccbuchner.de, nötig wegen CORS.
+  Die Regeln stehen mit allen anderen App-Regeln in [`static/.htaccess`](static/.htaccess) und werden mit jedem
+  Deploy übertragen. Im VHost auf dem Server steht nur das Nötigste ([`deploy/apache-vhost.conf`](deploy/apache-vhost.conf)).
 
 ## Entwickeln
 
@@ -37,7 +38,8 @@ Kamera und Service Worker brauchen einen „sicheren Kontext“, also HTTPS oder
 
 ## Deployen
 
-Einmalig auf dem Server: Apache-Konfiguration einrichten (Anleitung im Kopf von `deploy/apache-vokabulator.conf`).
+Einmalig auf dem Server: den minimalen VHost einrichten (Anleitung im Kopf von `deploy/apache-vhost.conf`).
+Alles Weitere, also Proxy, SPA-Fallback und Cache-Header, kommt mit der `.htaccess` bei jedem Deploy.
 
 Danach für jede neue Version:
 

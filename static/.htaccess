@@ -1,0 +1,48 @@
+# Vokabulator – app-specific Apache rules (Apache 2.4)
+#
+# This file lives in static/, ends up in build/ and is copied to the server with
+# every deploy (deploy/deploy.sh) – changes here need no access to the server.
+# The virtual host only provides the basics: domain, TLS, DocumentRoot,
+# "AllowOverride All" and SSLProxyEngine (see deploy/apache-vhost.conf).
+#
+# Required Apache modules: rewrite, proxy, proxy_http, headers, mime
+# (deliberately no <IfModule>: a missing module should fail loudly, not silently)
+
+Options -Indexes +SymLinksIfOwnerMatch
+
+# File types Apache might not know. pdf.js loads its worker as a JavaScript
+# module (.mjs) – browsers refuse modules served with a wrong type.
+AddType text/javascript .mjs
+AddType application/manifest+json .webmanifest
+
+RewriteEngine On
+
+# --- 1. Proxy to C.C.Buchner ---------------------------------------------------
+# Browsers may not read ccbuchner.de directly (it sends no CORS headers), so the
+# app asks this server instead. Only two URL patterns, only GET/HEAD:
+#   /proxy/ccbuchner/clip_code/40702-229/                      → Mediencode page
+#   /proxy/ccbuchner/_files_media/mediathek/downloads/26273.pdf → vocabulary PDF
+# Everything else under /proxy/ is forbidden – this is not an open proxy.
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteRule ^proxy/ccbuchner/(clip_code/[0-9]+-[0-9]+/?)$ https://www.ccbuchner.de/$1 [P,L]
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteRule ^proxy/ccbuchner/(_files_media/mediathek/downloads/[0-9]+\.pdf)$ https://www.ccbuchner.de/$1 [P,L]
+RewriteRule ^proxy/ - [F]
+
+# --- 2. Single-page app --------------------------------------------------------
+# Every path that is not a file gets the app shell (200.html); the app then shows
+# the right page itself. Missing build files (/_app/…) stay a 404, not HTML.
+RewriteRule ^200\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !^/_app/
+RewriteRule ^ /200.html [L]
+
+# --- 3. Caching ----------------------------------------------------------------
+# Build files have a hash in their name and never change → cache for a year.
+<If "%{REQUEST_URI} =~ m#^/_app/immutable/#">
+	Header set Cache-Control "public, max-age=31536000, immutable"
+</If>
+# Entry points must always be revalidated, otherwise updates would not arrive.
+<FilesMatch "^(200\.html|service-worker\.js|manifest\.webmanifest)$">
+	Header set Cache-Control "no-cache"
+</FilesMatch>

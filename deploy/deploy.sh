@@ -16,5 +16,6 @@ pnpm check
 pnpm test
 pnpm build
 
-# --delete removes files of old builds on the server; build/ is the complete app.
+# --delete removes files of old builds on the server; build/ is the complete app,
+# including .htaccess with the app's Apache rules (from static/.htaccess).
 rsync -avz --delete "$@" build/ "${VOKABULATOR_TARGET%/}/"

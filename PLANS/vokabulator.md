@@ -44,7 +44,7 @@ Lexika zum Kapitel **Die nd-Formen**“. Der einzige PDF-Link ist `/_files_media
 - Insgesamt sind es etwa 130 verschiedene Wörter. → **Lerneinheit = ein QR-Code/PDF, Abschnitte sind auswählbare Teilmengen.**
 
 **CORS:** Der Browser darf `ccbuchner.de` nicht direkt abrufen. Das ist der **einzige serverseitige Baustein**: ein
-kleiner Apache-Reverse-Proxy, der nur die zwei URL-Muster weiterreicht (Mediencode-Seite und Download-PDF).
+kleiner Apache-Reverse-Proxy (Regeln in `static/.htaccess`), der nur die zwei URL-Muster weiterreicht (Mediencode-Seite und Download-PDF).
 Das ist kein offener Proxy, und PDFs werden nicht auf unserem Server gespeichert.
 
 ## Stack und Begründung
@@ -82,7 +82,8 @@ Text einfügen / PDF-Datei wählen ─────────────┘ (g
 PLANS/vokabulator.md            living document (dieser Plan)
 README.md                       Entwickeln, Testen, Deployen in 5 Minuten
 vite.config.js                  Kit-3-Config, adapter-static, Dev-Proxy /proxy/ccbuchner
-deploy/apache-vokabulator.conf  VirtualHost: static + SPA-Fallback + eng begrenzter Proxy + Cache-Header
+deploy/apache-vhost.conf        minimaler VirtualHost (Domain, TLS via mod_md, DocumentRoot, AllowOverride, SSLProxyEngine)
+static/.htaccess                alle App-Regeln: eng begrenzter Proxy, SPA-Fallback, Cache-Header, MIME-Typen
 deploy/deploy.sh                pnpm build && rsync --delete build/ $VOKABULATOR_TARGET
 static/                         manifest.webmanifest, Icons
 src/app.css                     Design-Tokens, Basis-Styles
@@ -133,11 +134,15 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 ### Batch 0 – Fundament
 - `git init`, `.gitignore`. Plan nach `PLANS/vokabulator.md`.
 - `npx sv create` (SvelteKit 3, JS + JSDoc, Vitest), danach SPA-Setup: adapter-static mit Fallback und `ssr = false`.
-- `deploy/apache-vokabulator.conf`:
-  - `DirectoryIndex 200.html` + `FallbackResource /200.html`
-  - `ProxyPassMatch` nur für `^/proxy/ccbuchner/(clip_code/\d+-\d+/?|_files_media/mediathek/downloads/\d+\.pdf)$`, mit `SSLProxyEngine on` und `ProxyPassReverse`
-  - Cache-Header: `/_app/immutable/` langlebig, `service-worker.js`/`index.html` mit no-cache
-  - Benötigte Module notieren: proxy, proxy_http, ssl, headers
+- Apache, aufgeteilt (seit 2026-10-18):
+  - `deploy/apache-vhost.conf`: nur das, was nicht in `.htaccess` darf. Das sind Domain, TLS (mod_md), DocumentRoot,
+    `AllowOverride All`, `SSLProxyEngine on` und `ProxyAddHeaders Off`.
+  - `static/.htaccess`, wird mit jedem Deploy übertragen:
+    - Proxy per `RewriteRule … [P]`, nur die zwei URL-Muster, nur GET/HEAD, sonst 403
+    - SPA-Fallback auf `200.html` (fehlende `/_app/`-Dateien bleiben 404)
+    - Cache-Header
+    - MIME-Typen für `.mjs` und `.webmanifest`
+  - Module: md, ssl, rewrite, proxy, proxy_http, headers
 - `deploy/deploy.sh` mit `rsync -avz --delete`, Ziel über Umgebungsvariable. Den Deploy führst du selbst aus.
 - README: Setup, Dev-Server, Handy-Test via `chrome://inspect` mit Port-Forwarding (localhost gilt als sicherer Kontext).
 - **Fertig wenn:** `pnpm dev` zeigt eine Startseite, `pnpm build` erzeugt `build/`, `rsync -n` (Dry-Run) läuft durch.
@@ -241,7 +246,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18 (Batch 0): SPA-Fallback heißt `200.html` statt `index.html` – Empfehlung der Kit-3-Doku, weil
   `index.html` mit Prerendering kollidieren kann. TypeScript (für svelte-check) bleibt auf 6.x, weil Kit 3 TS 6 voraussetzt.
   Kit 3 importiert eigene Module über `#lib/…` (package.json `imports`) statt `$lib`.
-- 2026-10-18 (Batch 3): Der Service Worker cached die App-Shell von `/` (auf Apache per `DirectoryIndex 200.html`)
+- 2026-10-18 (Batch 3): Der Service Worker cached die App-Shell von `/` (auf Apache per Rewrite auf `200.html`)
   und liefert sie offline für jede Route aus. Dafür braucht es absolute Asset-Pfade (`paths.relative: false`) und
   `ignoreVary` beim Cache-Lookup (Server senden `Vary: Origin`, JS-Module werden mit Origin-Header geladen).
 - 2026-10-18: **Reverse Proxy bleibt.** Geprüft: ccbuchner.de sendet weder für die Mediencode-Seite noch für das PDF
@@ -250,6 +255,11 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18 (Batch 4): pdf.js mit `fontExtraProperties: true`, im Browser der moderne Build (braucht u. a.
   `Uint8Array.toHex`, aktuelles Chrome hat das), in Node/Vitest der Legacy-Build. Der pdf.js-Worker (1,2 MB) liegt
   im Offline-Cache, deshalb funktioniert der PDF-Import auch offline.
+- 2026-10-18: **App-Regeln in `.htaccess`, VHost minimal.** So lassen sich neue Anforderungen ohne Serverzugriff
+  umsetzen. `ProxyPass` ist in `.htaccess` nicht erlaubt, deshalb `RewriteRule … [P]`. `SSLProxyEngine` und
+  `ProxyAddHeaders` dürfen nur in den VHost. Der Service Worker überspringt Dotfiles (`.htaccess`), weil Apache sie
+  nicht ausliefert. Lokal gegen Apache 2.4.69 getestet: Proxy, 403 für alles andere, SPA-Fallback, Cache- und
+  MIME-Header, offline, PDF-Import.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -270,6 +280,7 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
 - 2026-10-18: Batch 2 – `leitner.js` (Fächer, Rundenauswahl, Lernstand) mit Tests, `/lernen/[id]` (Setup → Karten → Ergebnis, „Nur Fehler nochmal“), ⭐ auf Lern- und Einheitsseite, Fortschrittsbalken auf Start- und Einheitsseite. Die Fächer zeigt die Wortliste vorerst als ●●○○○.
 - 2026-10-18: Batch 3 – Service Worker (offline), Manifest + Platzhalter-Icons (installierbar), Wake Lock beim Lernen, `navigator.storage.persist()`, Backup speichern/laden unter ⚙️ Einstellungen. Im Headless-Chromium geprüft: offline Start/Einheit/Lernen, Backup → frisches Profil, keine Manifest-Fehler.
 - 2026-10-18: Batch 4 – PDF-Parser (`pdf-items.js`, `pdf-lexikon.js`) mit Fixture-Tests, Tabs auf `/neu`, PDF-Import, „Speichern & loslegen“. Im Chromium geprüft: Beispiel-PDF → 148 Wörter / 4 Abschnitte → Lernrunde.
+- 2026-10-18: Apache-Setup umgebaut: `deploy/apache-vhost.conf` (minimal) + `static/.htaccess` (App-Regeln, wird mitdeployt).
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
@@ -278,5 +289,6 @@ Jeder Batch endet mit `pnpm check && pnpm test && pnpm build`, einem Commit und 
   `pnpm preview` → DevTools → Application: Service Worker aktiv, im Offline-Modus weiter nutzbar.
 - Handy: per `chrome://inspect` Port-Forwarding auf `localhost:5173` oder nach dem Deploy auf der Subdomain:
   installieren, Flugmodus, eine Runde lernen.
+- Lokal gegen echten Apache: Testinstanz im Scratchpad (`apache2 -f … -DFOREGROUND`) mit `build/` als DocumentRoot.
 - Server (durch dich): `apachectl configtest`, danach `curl -I https://<domain>/proxy/ccbuchner/clip_code/40702-229/` → 200,
   ein nicht erlaubter Pfad → 404.
