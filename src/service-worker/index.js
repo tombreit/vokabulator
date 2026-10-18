@@ -30,6 +30,9 @@ const APP_FILES = new Set(
 	[...immutable, ...assets]
 		// dotfiles like .htaccess are server configuration – Apache refuses to serve them
 		.filter((file) => !file.path.split('/').at(-1)?.startsWith('.'))
+		// the QR reader for browsers without their own (1 MB) is only needed online: scanning
+		// leads to an import, which needs the internet anyway – so it is not stored for everyone
+		.filter((file) => !file.path.endsWith('.wasm'))
 		.map((file) => url(file.path))
 );
 

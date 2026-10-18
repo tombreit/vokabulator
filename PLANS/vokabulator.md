@@ -18,7 +18,8 @@
 | 7 | Spielmechanik: Tippen, Multiple Choice, Punkte, Joker, Schachuhr, Feedback | ✅ (live geprüft) |
 | 8 | Teilen | ✅ (live geprüft) |
 | 9 | Design & Polish („Wachstafel“) | ✅ live, ersetzt durch Batch 10 |
-| 10 | „Blockwelt“: Minecraft-Stil mit Erzen, XP/Level, Fortschritten | ✅ (lokal; nach Deploy live prüfen) |
+| 10 | „Blockwelt“: Minecraft-Stil mit Erzen, XP/Level, Fortschritten | ✅ live geprüft |
+| 11 | QR-Scanner auf allen Geräten (ZXing-Fallback) | ✅ (lokal; nach Deploy live prüfen) |
 
 ## Kontext
 
@@ -418,6 +419,15 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
   - **Joker:** Es bleibt bei einem gemeinsamen Vorrat von 3. Die Hotbar zeigt „Noch N Joker“ statt einer Stapelzahl
     pro Gegenstand, die nach 6 Jokern aussähe.
   - **Sicherung:** Sie enthält jetzt die Statistik, damit Level und Fortschritte auf ein neues Handy mitkommen.
+- 2026-10-18 (Batch 11): **Entscheidung „keine Polyfills“ für den Scanner revidiert.** Der eingebaute
+  `BarcodeDetector` fehlt in Firefox, auf iPhone/iPad und in Chrome unter Windows/Linux. Dort war der Scanner bisher
+  unsichtbar, was beim Test in Firefox/Linux auffiel. Der Scanner soll auf allen Geräten der Schüler laufen. Deshalb:
+  - eingebauter Leser, wo vorhanden
+  - sonst `barcode-detector/ponyfill`, also ZXing als WebAssembly über dieselbe Schnittstelle, erst bei Bedarf
+    geladen (1,1 MB, komprimiert 460 KB)
+  - Die `.wasm` kommt von unserem Server statt vom CDN (`prepareZXingModule`).
+  - Sie liegt nicht im Offline-Cache, weil Scannen ohnehin Internet für den Import braucht.
+  - Scan-Button und Tab sind jetzt immer da.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -456,6 +466,10 @@ Alle Pixel-Grafiken sind selbst gezeichnet (`src/lib/pixel/sprites.js`).
   Hotbar, Chat, Optionsknöpfe, Töne, Monocraft (10b/c), Fortschritte (10d). Alle Browser-Abläufe erneut geprüft
   (Import Code/PDF/Text, Scanner, drei Lernmodi, Joker, Uhr, Teilen/Challenge, offline). Neu geprüft: Level-Up,
   Erz bis Diamant, Fortschritte, Erz-Bilanz, Sound-Schalter.
+- 2026-10-18: Live: Batch 10 („Blockwelt“) deployt und geprüft (Proxy, Offline-Dateien, Spiel, Fortschritte).
+- 2026-10-18: Batch 11 – Scanner überall: ZXing-Fallback (`barcode-detector`, `zxing-wasm` 3.1.3), Fehlertext bei
+  fehlender Kamera, `AddType application/wasm`. Echter Scan geprüft: Chromium ohne eigenen Leser, Fake-Kamera mit dem
+  QR-Code aus dem Buch → Einheit in 1,3 s geladen, keine fremden Server.
 
 ## Verifikation
 - Automatisch: `pnpm check` (svelte-check / JSDoc-Typen), `pnpm test` (Vitest: Parser, Leitner, später Antwortprüfung,
