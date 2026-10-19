@@ -1,6 +1,7 @@
 <!--
   One learning unit (a "Lektion"): how many words are on which stage (1 = new … 5 = learned
-  for sure, see STAGES in #lib/learn/leitner.js), then all words by section, and the way into learning.
+  for sure, see STAGES in #lib/learn/leitner.js) and the way into learning, then share / reload /
+  delete, then all words by section.
 -->
 <script>
 	import { untrack } from 'svelte';
@@ -81,6 +82,19 @@
 	</a>
 </div>
 
+<div class="actions">
+	<ShareButton
+		label="Teilen"
+		title={unit.title}
+		text={`Lern mit mir „${unit.title}“ im Vokabulator ⛏️`}
+		url={() => sharePath(unit)}
+	/>
+	{#if reloadHref}
+		<a class="button" href={reloadHref}>Neu laden</a>
+	{/if}
+	<button class="button danger" onclick={remove}>Lektion löschen</button>
+</div>
+
 {#each unit.sections as section, i (i)}
 	<section class="card">
 		<h2>{section.title}</h2>
@@ -107,19 +121,6 @@
 		</ul>
 	</section>
 {/each}
-
-<div class="actions">
-	<ShareButton
-		label="Teilen"
-		title={unit.title}
-		text={`Lern mit mir „${unit.title}“ im Vokabulator ⛏️`}
-		url={() => sharePath(unit)}
-	/>
-	{#if reloadHref}
-		<a class="button" href={reloadHref}>Neu laden</a>
-	{/if}
-	<button class="button danger" onclick={remove}>Lektion löschen</button>
-</div>
 
 <style>
 	.summary {
@@ -222,5 +223,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.6rem;
+		margin-bottom: var(--gap);
 	}
 </style>
