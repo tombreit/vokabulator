@@ -25,6 +25,7 @@
 | 14 | Rückmeldung nach einer Antwort lesbar (Chatzeile bleibt 6 s) | ✅ lokal geprüft – Deploy durch dich |
 | 15 | Link-Vorschau beim Teilen (Open Graph) | ✅ lokal geprüft – Deploy durch dich |
 | 16 | npm statt pnpm | ✅ lokal geprüft – Deploy durch dich |
+| 17 | Fehler vom ersten Tag: Links auf fehlende Lektionen, Toast-Schleife, Zurück, Buttons | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -447,6 +448,23 @@ Wunsch: eine schöne Karte, wenn ein Vokabulator-Link geteilt wird.
   LinkedIn), Suchmaschinen bleiben ausgesperrt.
 - Der Service Worker speichert das Bild nicht offline.
 
+### Batch 17 – Fehler vom ersten Tag
+Rückmeldung nach dem ersten Tag live:
+- **Link `/lernen/ccb-40702-229` auf einem neuen Gerät:** „Diese Lerneinheit gibt es (auf diesem Gerät) nicht.“
+  Solche Links entstehen, wenn jemand die Adresse aus der Adresszeile oder über das Teilen-Menü des Browsers schickt;
+  der Teilen-Button baut `/neu?code=…`. Jetzt laden `/lernen/ccb-…` und `/einheit/ccb-…` eine fehlende Lektion über
+  den Mediencode aus der Id (`importPath` in `share.js`, Umleitung auf `/neu?code=…`), eine Challenge im Link kommt mit.
+  Lektionen aus Text haben ihre Wörter nur im Teilen-Link. Für sie sagt die Meldung jetzt, dass man sie sich über
+  „Teilen“ schicken lässt.
+- **„Kenn ich schon!“ ohne Ende und `effect_update_depth_exceeded`:** eine Ursache. `MediencodeLoader` rief
+  `showToast()` innerhalb eines `$effect` auf. `push()` liest die Länge der Liste, der Effekt hing also von der Liste
+  ab, die er gerade änderte, und lief sofort wieder – rund 1000-mal, bis Svelte abbrach. Das passierte nur bei schon
+  bekannten Codes, deshalb „nicht immer“. `showToast` schreibt jetzt mit `untrack`, das schützt jeden Aufrufer.
+- **Zurück nach einem geteilten Link** landete wieder auf `/neu?code=…` bzw. `/neu#d=…`, das sofort wieder in die
+  Lektion sprang. Dieser Zwischenschritt wird jetzt in der History ersetzt. Gescannte oder getippte Codes behalten
+  `/neu`, dort springt nichts.
+- **Lektionsseite:** Teilen, Neu laden und Lektion löschen stehen über der Wortliste.
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -556,6 +574,9 @@ Wunsch: eine schöne Karte, wenn ein Vokabulator-Link geteilt wird.
 - 2026-10-19 (Batch 16): **npm statt pnpm** – dein Wunsch, ein Werkzeug weniger: npm kommt mit Node. pnpm hatte ich
   beim Aufsetzen nur gewählt, weil es installiert war; nichts in der App hängt davon ab. Lockfile ist jetzt
   `package-lock.json`, `pnpm-workspace.yaml` entfällt (npm führt Install-Skripte wie das von esbuild ohnehin aus).
+- 2026-10-19 (Batch 17): **Adress-Links reparieren statt verbieten.** Geteilt wird, was in der Adresszeile steht,
+  deshalb funktioniert `/lernen/ccb-…` jetzt wie ein Teilen-Link. Der Teilen-Button bleibt bei `/neu?code=…` bzw.
+  `#d=…`, denn nur so kommen die Wörter von Text-Lektionen mit.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -624,6 +645,15 @@ Wunsch: eine schöne Karte, wenn ein Vokabulator-Link geteilt wird.
 - 2026-10-19: Batch 16 – npm statt pnpm: `package-lock.json` statt `pnpm-lock.yaml`, Befehle in `deploy.sh`, README
   und Kommentaren umgestellt. npm löst genau dieselben Versionen auf wie zuvor pnpm. Geprüft: sauberer `npm ci`,
   check, Tests, Lint, Build, `deploy.sh` gegen einen lokalen Ordner, Link-Vorschau-Skript und alle Browser-Abläufe.
+- 2026-10-19: Batch 17 – Fehler vom ersten Tag behoben. Vorher im Chromium nachgestellt: bekannter Code →
+  `effect_update_depth_exceeded` mit `Proxy.push` in `showToast` aus dem `$effect` von `MediencodeLoader`, Toast nach
+  8 s noch da. Danach geprüft:
+  - bekannter Code: ein „Kenn ich schon!“, nach 3,5 s weg, keine Fehler in der Konsole
+  - frisches Gerät: `/lernen/ccb-40702-229`, `/einheit/ccb-40702-229` und mit Challenge → Import (148 Vokabeln),
+    Lernseite, Challenge-Karte da; `/lernen/txt-…` zeigt den neuen Hinweis
+  - Zurück nach Link, bekanntem Code und `#d=`-Link → die Seite davor; nach getipptem Code → `/neu`
+  - Lektionsseite bei 390 und 320 px: Buttons zwischen Übersicht und Wortliste, kein seitliches Scrollen
+  - Tests (105), check, Lint
 
 ## Verifikation
 - Automatisch: `npm run check` (svelte-check / JSDoc-Typen), `npm test` (Vitest: Parser, Leitner, später Antwortprüfung,
