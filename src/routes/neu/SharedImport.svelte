@@ -2,6 +2,7 @@
   A unit a friend shared: its words are inside the link (after "#d="), see #lib/share.js.
   Unpacked, saved and straight on to the round setup – with the friend's challenge, if any.
   Sharing a unit you already have updates its words, your progress stays.
+  Like MediencodeLoader, this step is replaced in the history ("Back" does not unpack again).
 -->
 <script>
 	import { untrack } from 'svelte';
@@ -36,7 +37,8 @@
 					withChallenge(
 						resolve('/lernen/[id]', { id: unit.id }),
 						untrack(() => page.url)
-					)
+					),
+					{ replaceState: true }
 				);
 			})
 			.catch(() => {

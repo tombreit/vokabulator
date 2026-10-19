@@ -3,6 +3,8 @@
   load, save, say so ("Vokabeln importiert!") and go straight to the round setup.
   A code that was imported before simply continues that unit (progress included).
   Used by the "Scannen" and "Code" tabs and for links like /neu?code=40702-229.
+  Such a link is only a step on the way: it is replaced in the history, so "Back" does not
+  land on it again (and import and jump forward at once).
 -->
 <script>
 	import { untrack } from 'svelte';
@@ -30,6 +32,9 @@
 			untrack(() => page.url)
 		);
 
+	/** opened by a link (/neu?code=…) – not a code scanned or typed on /neu */
+	const replaceState = untrack(() => page.url.searchParams.has('code'));
+
 	$effect(() => {
 		const existing = reload ? undefined : getUnit(`ccb-${code}`);
 		if (existing) {
@@ -38,7 +43,7 @@
 				title: 'Kenn ich schon!',
 				text: `Weiter in „${existing.title}“.`
 			});
-			goto(learn(existing.id));
+			goto(learn(existing.id), { replaceState });
 			return;
 		}
 
@@ -54,7 +59,7 @@
 					title: reload ? 'Neu geladen!' : 'Vokabeln importiert!',
 					text: `${unit.entries.length} Vokabeln: „${unit.title}“`
 				});
-				goto(reload ? resolve('/einheit/[id]', { id: unit.id }) : learn(unit.id));
+				goto(reload ? resolve('/einheit/[id]', { id: unit.id }) : learn(unit.id), { replaceState });
 			})
 			.catch((/** @type {Error} */ e) => {
 				if (!cancelled) error = e.message;
