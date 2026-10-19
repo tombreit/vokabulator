@@ -1,6 +1,7 @@
 <!--
   The question on a stone panel – the word big in the middle, nothing else competing with it.
-  The type tells the language: the foreign word in the pixel face, German in the reading face.
+  Both sides in the reading face (the pixel face is too loud for the word itself to learn);
+  the foreign word is the bigger, bolder one.
   The word's stage sits small in the corner (its item, see STAGES in #lib/learn/leitner.js);
   once answered it shows what happened:
     known     → it pops up as the next item: "↑ Stufe 3"
@@ -82,14 +83,14 @@
 	}
 
 	.word {
+		font-family: var(--font-read);
 		font-size: clamp(1.6rem, 8vw, 2.3rem);
 		font-weight: 700;
 		line-height: 1.15;
 	}
 
-	/* German in the reading face: the type tells which language you are looking at */
+	/* German a bit smaller and lighter than the foreign word */
 	.german {
-		font-family: var(--font-read);
 		font-size: clamp(1.35rem, 6.5vw, 1.8rem);
 		font-weight: 600;
 	}

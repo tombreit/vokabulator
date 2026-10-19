@@ -23,8 +23,10 @@
 		gap: 0.6rem;
 	}
 
+	/* the choices are words to learn: reading face, like on the question card */
 	button {
 		min-height: 3.5rem;
+		font-family: var(--font-read);
 		font-weight: 500;
 		text-align: left;
 		justify-content: flex-start;

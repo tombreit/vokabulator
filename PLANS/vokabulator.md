@@ -26,6 +26,7 @@
 | 15 | Link-Vorschau beim Teilen (Open Graph) | ✅ lokal geprüft – Deploy durch dich |
 | 16 | npm statt pnpm | ✅ lokal geprüft – Deploy durch dich |
 | 17 | Fehler vom ersten Tag: Links auf fehlende Lektionen, Toast-Schleife, Zurück, Buttons | ✅ lokal geprüft – Deploy durch dich |
+| 18 | Vokabeln in der Runde in Lexend statt Monocraft | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -465,6 +466,13 @@ Rückmeldung nach dem ersten Tag live:
   `/neu`, dort springt nichts.
 - **Lektionsseite:** Teilen, Neu laden und Lektion löschen stehen über der Wortliste.
 
+### Batch 18 – Vokabeln lesbar
+Rückmeldung: Für die Vokabeln selbst ist die Minecraft-Schrift zu krass.
+- Alle Wörter einer Runde stehen jetzt in Lexend (`--font-read`): die Vokabel auf der Karte und die Lösung nach dem
+  Aufdecken, die vier Antworten bei „Auswahl“ und das Eingabefeld bei „Tippen“.
+- Das Fremdwort bleibt größer und fetter als die deutsche Bedeutung.
+- Monocraft bleibt für alles Spielerische: Buttons, Rundenleiste, XP, Joker, Chatzeile, Überschriften.
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -577,6 +585,9 @@ Rückmeldung nach dem ersten Tag live:
 - 2026-10-19 (Batch 17): **Adress-Links reparieren statt verbieten.** Geteilt wird, was in der Adresszeile steht,
   deshalb funktioniert `/lernen/ccb-…` jetzt wie ein Teilen-Link. Der Teilen-Button bleibt bei `/neu?code=…` bzw.
   `#d=…`, denn nur so kommen die Wörter von Text-Lektionen mit.
+- 2026-10-19 (Batch 18): **Lesbarkeit vor Spiel-Look bei den Vokabeln.** Das ersetzt die Regel aus 12c („die Schrift
+  zeigt die Sprache“). Auf der Karte unterscheidet jetzt die Größe Fremdwort und Deutsch. Welche Sprache als Antwort
+  gefragt ist, sagen weiterhin das Eingabefeld („Auf Deutsch …“) und die Antworten bei „Auswahl“.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -654,6 +665,9 @@ Rückmeldung nach dem ersten Tag live:
   - Zurück nach Link, bekanntem Code und `#d=`-Link → die Seite davor; nach getipptem Code → `/neu`
   - Lektionsseite bei 390 und 320 px: Buttons zwischen Übersicht und Wortliste, kein seitliches Scrollen
   - Tests (105), check, Lint
+- 2026-10-19: Batch 18 – Vokabeln in der Runde in Lexend: Karte (Frage und aufgedeckt), Antworten bei „Auswahl“,
+  Eingabefeld bei „Tippen“. Im Chromium bei 390 px geprüft: berechnete Schrift überall „Lexend Variable“, Makronen
+  (ā ē ī ō ū) sauber, Fremdwort größer als Deutsch. Tests, check, Lint grün.
 
 ## Verifikation
 - Automatisch: `npm run check` (svelte-check / JSDoc-Typen), `npm test` (Vitest: Parser, Leitner, später Antwortprüfung,

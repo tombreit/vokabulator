@@ -12,7 +12,8 @@
  * stone. .card switches the tokens, so components just use var(--text) / var(--muted).
  *
  * Type: Monocraft (a free font after the game's lettering, OFL – src/lib/fonts/) for
- * everything "game" and the foreign words; Lexend (.read) for German and longer texts.
+ * everything "game"; Lexend (.read) for the words in a round (question card, choices,
+ * typing), German and longer texts.
  * Monocraft keeps C/O, Z/2, B/8 and 5/S apart (Pixelify Sans did not), both fonts have
  * all macrons (ā ē ī ō ū) and umlauts. All colour pairs meet WCAG AA.
  */

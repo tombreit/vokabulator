@@ -55,8 +55,10 @@
 		text-align: center;
 	}
 
+	/* the answer is a word to learn: reading face, like on the question card */
 	input {
 		min-width: 0;
+		font-family: var(--font-read);
 		font-size: 1.2rem;
 		min-height: 3.5rem;
 	}
