@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { buildUnit } from './model.js';
-import { packUnit, readChallenge, sharePath, unpackUnit } from './share.js';
+import {
+	challengeParams,
+	importPath,
+	packUnit,
+	readChallenge,
+	sharePath,
+	unpackUnit
+} from './share.js';
 
 const parsed = {
 	title: 'Lektion 12',
@@ -40,6 +47,25 @@ describe('sharePath', () => {
 		const url = new URL(path, 'https://example.org');
 		expect(readChallenge(url.searchParams)).toEqual(challenge);
 		expect(url.hash).toMatch(/^#d=/);
+	});
+});
+
+describe('importPath', () => {
+	it('loads a C.C.Buchner unit again from the Mediencode in its id', () => {
+		expect(importPath('ccb-40702-229', new URLSearchParams())).toBe('/neu?code=40702-229');
+	});
+
+	it('keeps a challenge from the link', () => {
+		const path = importPath('ccb-40702-229', new URLSearchParams(challengeParams(challenge)));
+		const url = new URL(/** @type {string} */ (path), 'https://example.org');
+		expect(url.pathname).toBe('/neu');
+		expect(url.searchParams.get('code')).toBe('40702-229');
+		expect(readChallenge(url.searchParams)).toEqual(challenge);
+	});
+
+	it('has no way back for units with their words only in the share link', () => {
+		expect(importPath('txt-1', new URLSearchParams())).toBeUndefined();
+		expect(importPath('ccb-../../x', new URLSearchParams())).toBeUndefined();
 	});
 });
 

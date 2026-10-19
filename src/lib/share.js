@@ -33,12 +33,32 @@ import { CLOCK_SECONDS } from './storage.js';
  * @returns {Promise<string>}  e.g. "/neu?code=40702-229" – prefix it with the origin
  */
 export async function sharePath(unit, challenge) {
+	if (unit.source.type === 'ccbuchner') return codePath(unit.source.code, challenge);
 	const query = new URLSearchParams(challenge ? challengeParams(challenge) : {});
-	if (unit.source.type === 'ccbuchner') {
-		query.set('code', unit.source.code);
-		return `/neu?${query}`;
-	}
 	return `/neu${query.size ? `?${query}` : ''}#d=${await packUnit(unit)}`;
+}
+
+/**
+ * A link to a unit that is not on this device (e.g. /lernen/ccb-40702-229 copied from the
+ * address bar): C.C.Buchner units can be loaded again, the Mediencode is in their id.
+ * Other units cannot – their words travel only in the link from "Teilen".
+ * @param {string} unitId
+ * @param {Pick<URLSearchParams, 'get'>} query  of the current link, a challenge in it goes along
+ * @returns {string | undefined}  e.g. "/neu?code=40702-229"
+ */
+export function importPath(unitId, query) {
+	const code = /^ccb-(\d+-\d+)$/.exec(unitId)?.[1];
+	return code ? codePath(code, readChallenge(query)) : undefined;
+}
+
+/**
+ * @param {string} code  Mediencode, e.g. "40702-229"
+ * @param {Challenge} [challenge]
+ */
+function codePath(code, challenge) {
+	const query = new URLSearchParams(challenge ? challengeParams(challenge) : {});
+	query.set('code', code);
+	return `/neu?${query}`;
 }
 
 /**
