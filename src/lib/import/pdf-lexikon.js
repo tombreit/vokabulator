@@ -2,14 +2,15 @@
 /**
  * Turn the text of a C.C.Buchner vocabulary PDF ("Lexika") into a unit.
  *
- * What these PDFs look like (example: fixtures/ccbuchner-26273.pdf):
+ * What these PDFs look like (the test PDF fixtures/lexikon-beispiel.pdf copies the layout with
+ * made-up words, see scripts/make-lexikon-fixture.mjs):
  *
- *   Die nd-Formen | Cäsar gegen Cato         ← biggest text: first heading = title
- *   Seite 2                                  ← further headings = sections
+ *   Beispiel-Lexikon | Ein Tag in Rom        ← biggest text: first heading = title
+ *   Wortschatz 1                             ← further headings = sections
  *
  *   **capere, capiō, cēpī, captum** nehmen,  ← an entry starts with bold text (the lemma),
- *   ergreifen, fangen; erobern ⁶·¹⁰·Ü¹        ← may wrap; small superscripts = chapter refs
- *   **cōnsilium, cōnsiliī** *n* der Plan, …  ← italic text before the meaning = grammar info
+ *   fassen, ergreifen; erobern ³·⁷·Ü²         ← may wrap; small superscripts = chapter refs
+ *   **cōnsilium, cōnsiliī** *n* der Rat, …   ← italic text before the meaning = grammar info
  *
  * Two columns per page (left first), a "© C. C. Buchner Verlag" footer on every page.
  * A page without heading continues the previous section – unless its words start over

@@ -27,6 +27,7 @@
 | 16 | npm statt pnpm | ✅ lokal geprüft – Deploy durch dich |
 | 17 | Fehler vom ersten Tag: Links auf fehlende Lektionen, Toast-Schleife, Zurück, Buttons | ✅ lokal geprüft – Deploy durch dich |
 | 18 | Vokabeln in der Runde in Lexend statt Monocraft | ✅ lokal geprüft – Deploy durch dich |
+| 19 | Anki-Decks importieren (Tab „Datei“), schlanke Import-Schnittstelle, Französisch | ✅ lokal geprüft – Deploy und Handy-Test durch dich |
 
 ## Kontext
 
@@ -67,6 +68,8 @@ Das ist kein offener Proxy, und PDFs werden nicht auf unserem Server gespeichert
 - **JavaScript + JSDoc** mit `// @ts-check`, geprüft durch `svelte-check` 4.7.
 - **Kein CSS-Framework:** scoped `<style>` in Komponenten plus Design-Tokens (CSS Custom Properties) in `src/app.css`.
 - **Bibliotheken bewusst minimal:** `pdfjs-dist` 6.4 (wird nur auf der Import-Seite per lazy import geladen), `vitest` 5.
+  Für Anki-Decks seit Batch 19: `sql.js` 1.15 (SQLite als WebAssembly, 0,7 MB, nur beim Datei-Import geladen) und
+  `fzstd` (8 KB, entpackt das neueste Anki-Format). ZIP liest ein eigenes kleines Modul mit `DecompressionStream`.
   Alles andere läuft über Plattform-APIs.
 - **Moderne Plattform-APIs:** `BarcodeDetector` + `getUserMedia` (QR), Web Share API, `CompressionStream`
   (Teilen-Links), Screen Wake Lock (Display bleibt beim Lernen an), Vibration, View Transitions, `<dialog>`/Popover,
@@ -83,7 +86,10 @@ QR-Scan / Code-Eingabe ──► /proxy/ccbuchner/clip_code/<code>/   (Apache �
                              └─ pdf.js: Textitems inkl. Font/Größe/Position
                              └─ parseLexikon(items) → { title, sections, entries }   (reine Funktion, getestet)
                          ──► Vorschau → speichern in localStorage → offline lernen
-Text einfügen / PDF-Datei wählen ─────────────┘ (gleiche Pipeline ab Parser, ohne Netz)
+Text einfügen ────────────────────────────────┘ (gleiche Pipeline ab Parser, ohne Netz)
+Datei wählen (Anki .apkg) ──► files.js (Format am Inhalt) ──► anki.js: zip.js → (fzstd) → sql.js
+                             └─ eine Tabelle je Notiztyp ──► table.js: Spalten, Teil des Decks, Abschnitte
+                         ──► Vorschau → speichern in localStorage → offline lernen   (ohne Server)
 ```
 
 ## Projektstruktur (Ziel)
@@ -104,6 +110,12 @@ src/lib/import/text-parser.js   eingefügter Text → Einträge          (+ text
 src/lib/import/pdf-lexikon.js   pdf.js-Items → Einheit (reine Funktion) (+ Test mit Fixture)
 src/lib/import/pdf-items.js     PDF-Bytes → Items (pdf.js-Anbindung, Font-Auflösung)
 src/lib/import/ccbuchner.js     Mediencode/URL → PDF-URL → Einheit
+src/lib/import/import-error.js  ImportError: Meldung für den Schüler, gemeinsam für alle Importer
+src/lib/import/files.js         Dateiformate (FILE_FORMATS, am Inhalt erkannt) – ein neues Format = eine Zeile
+src/lib/import/table.js         gemeinsamer Schritt für Tabellen: Spalten raten, Teile, Abschnitte → UnitDraft
+src/lib/import/anki.js          Anki-Deck (.apkg) → eine Tabelle je Notiztyp (sql.js, fzstd)
+src/lib/import/zip.js           einzelne Dateien aus einem ZIP lesen (Blob.slice, DecompressionStream)
+src/lib/import/fixtures/        Testdaten; make-zip.js/make-apkg.js bauen Anki-Decks, local/ (nicht im Repo) echte
 src/lib/learn/leitner.js        Fächer, Auswahl der nächsten Wörter   (+ Test)
 src/lib/learn/check-answer.js   Normalisieren & Vergleichen           (+ Test)
 src/lib/learn/scoring.js        Punkte, Combo, Joker-Kosten           (+ Test)
@@ -114,9 +126,9 @@ src/lib/components/             ProgressBar, WordTimer, HardButton (Amboss), QrS
 src/routes/+layout.js           ssr = false
 src/routes/+layout.svelte       Graskante, NavBar, Toasts
 src/routes/+page.svelte         „Meine Welten“
-src/routes/neu/+page.svelte     Import: Scannen | Code | Text   (?code=… und #d=… für Teilen-Links)
+src/routes/neu/+page.svelte     Import: Scannen | Code | Text | Datei   (?code=… und #d=… für Teilen-Links)
 src/routes/neu/*Import.svelte   je Import-Weg eine Komponente; Scan, Code und Link speichern sofort (MediencodeLoader,
-                                SharedImport), nur Text zeigt erst die Vorschau (DraftPreview)
+                                SharedImport), Text und Datei zeigen erst die Vorschau (DraftPreview)
 src/routes/einheit/[id]/+page.svelte   Wortliste, Abschnitte, ⭐ schwer, Erz-Inventar
 src/routes/lernen/[id]/+page.svelte    Setup → Abfrage → Ergebnis (ein Zustandsautomat in einer Datei)
 src/routes/erfolge/+page.svelte        alle Erfolge (Advancements)
@@ -131,8 +143,8 @@ passiert explizit über `storage.js`, ohne versteckte Effekte. Pro Batch gibt es
 
 ```js
 // vokabulator.units → Unit[]
-Unit = { id: 'ccb-40702-229' | 'txt-<uuid>', title, lang: 'la'|'en'|'es',
-         source: { type: 'ccbuchner', code, pdfUrl } | { type: 'text' } | { type: 'pdf-file', name },
+Unit = { id: 'ccb-40702-229' | 'txt-<uuid>' | 'anki-<Deck-Id>-<Notiztyp-Id>[-<Teil>]', title, lang: 'la'|'en'|'es'|'fr',
+         source: { type: 'ccbuchner', code, pdfUrl } | { type: 'text' } | { type: 'file', name } | { type: 'pdf-file', name },
          createdAt, sections: [{ title, entryIds: [] }], entries: [Entry] }
 Entry = { id: 'capere-capio-cepi-captum',   // Slug des Lemmas: stabil bei Re-Import, dedupliziert
           front: 'capere, capiō, cēpī, captum', frontInfo: '',      // fett + kursiv vor der Bedeutung
@@ -197,7 +209,8 @@ Jeder Batch endet mit `npm run check && npm test && npm run build`, einem Commit
      Klammern bleiben zusammen.
   5. Die erste Überschrift ist der Titel, alle weiteren sind Abschnitte. Eine Seite ohne Überschrift, deren Alphabet
      neu beginnt, wird zu „… (Teil 2)“: Ihre Überschrift ist im PDF nur ein Bild.
-- Fixture `src/lib/import/fixtures/ccbuchner-26273.pdf` (nur privates Repo) mit Test daneben.
+- Fixture `src/lib/import/fixtures/lexikon-beispiel.pdf` (gleiches Layout, erfundene Wörter; erzeugt von
+  `scripts/make-lexikon-fixture.mjs`) mit Test daneben.
 - `/neu` mit Tabs „📄 PDF-Datei“ und „✍️ Text eintippen“. `DraftPreview.svelte`: „Speichern & loslegen 🚀“ → `/lernen/[id]`,
   „Nur speichern“ → `/einheit/[id]`. Hinweis, wenn die Einheit schon existiert; der Lernstand bleibt erhalten.
 - **Fertig wenn:** Das Beispiel-PDF wird vollständig und korrekt importiert: 148 Wörter in 4 Abschnitten.
@@ -473,6 +486,59 @@ Rückmeldung: Für die Vokabeln selbst ist die Minecraft-Schrift zu krass.
 - Das Fremdwort bleibt größer und fetter als die deutsche Bedeutung.
 - Monocraft bleibt für alles Spielerische: Buttons, Rundenleiste, XP, Joker, Chatzeile, Überschriften.
 
+### Batch 19 – Anki-Decks importieren
+Wunsch: Neben dem Buchner-QR-Code auch die frei verfügbaren **Anki-Decks** (.apkg, z. B. von ankiweb.net) als
+Lektion nutzen. Dabei soll der Import so gebaut sein, dass weitere Quellen und Formate leicht dazukommen.
+AnkiDroid dient als Vorbild, nicht als Vorlage zum Nachbauen.
+
+**Weg in die App:** neuer Tab **„Datei“** auf `/neu`. Deck herunterladen, „Anki-Deck wählen 📂“, aus den Downloads
+nehmen. Die Datei wird auf dem Gerät gelesen, nichts geht an einen Server.
+
+**Was in einem .apkg steckt** (geprüft an Ankis Quellcode und drei echten Decks):
+
+| Version | Datenbank im ZIP | Beispiel |
+|---|---|---|
+| Legacy 1 | `collection.anki2`, Schema 11, deflate | Latein Campus alle Vokabeln (2088 Notizen, ein Deck), 5000 French words (77 MB, 15 Notiztypen) |
+| Legacy 2 | `collection.anki21`, Schema 11, deflate, daneben ein leeres `collection.anki2` | Latein Campus A (1684 Notizen, 87 Unterdecks in 4 Ebenen) |
+| Latest | `collection.anki21b`, zstd, Schema 18, daneben ein leeres `collection.anki2` | eigene Exporte; AnkiWeb liefert Legacy |
+
+- Schema 11: Notiztypen und Decks als JSON in `col` (Decknamen mit `::`). Schema 18: eigene Tabellen `notetypes`,
+  `fields`, `decks` (Decknamen mit `\x1f`). Den Weg wählt `SELECT ver FROM col`.
+- Eine Notiz = ein Wort mit Feldern; ihr Deck ist das ihrer ersten Karte (bei gefilterten Decks das Heimatdeck `odid`).
+- **Falle „unicase“:** Ab Schema 15 tragen die Namensspalten Ankis eigene Sortierregel `COLLATE unicase`. SQLite
+  (auch sql.js) kennt sie nicht und verweigert jede Abfrage darauf. `anki.js` streicht die Regel per
+  `writable_schema` aus der Kopie im Speicher. Ein Test stellt die Falle nach.
+
+**Die Import-Schnittstelle (schlank):**
+- Jeder Weg endet wie bisher in einem `UnitDraft` → `buildUnit` → `saveUnit`. `ImportError` (Meldung für den
+  Schüler) liegt jetzt in `import-error.js` und gilt für alle Importer.
+- `files.js`: Liste `FILE_FORMATS`, das Format wird an den ersten Bytes erkannt, nicht am Namen. Ein neues Format
+  ist ein Modul (+ Test) und eine Zeile.
+- `table.js`: der gemeinsame Schritt für alle Formate, die Zeilen mit Spalten liefern (Anki, später CSV/TSV).
+  - `guessColumns`: Vokabel = erste Spalte, die meist Buchstaben enthält; Bedeutung = die nächste, die meist etwas
+    anderes sagt. Spalten nur mit Zahlen, Ton oder Bild fallen so heraus.
+  - `scopesOf` / „Teil des Decks“: ganzes Deck oder ein Unterdeck. Jeder Teil wird eine eigene Lektion
+    („Latein Campus A – Lektion 12“, Id mit dem Pfad des Teils), so wie ein QR-Code ein Kapitel ist.
+  - Abschnitte = Unterdecks unterhalb des Teils, benannt nach dem kürzesten eindeutigen Pfadende („Lektion 12 W1“).
+    Abschnitte über 50 Wörter werden gleichmäßig geteilt („Teil 1“ …): 2088 Wörter → 42 Teile.
+  - `guessLang`: Sprache aus dem Titel (latein/engl/span/franz/french …), sonst Latein.
+- `anki.js`: .apkg → eine Tabelle je Notiztyp mit verwertbaren Notizen (Deck mit 15 Notiztypen → Auswahl „Karten“).
+  Lückentext- und Bildverdeckungs-Notizen (`{{c1::…}}`) werden übersprungen und gezählt. HTML wird zu Text
+  (`<div>`/`<br>` → „; “, Ton und Bilder weg, Entities dekodiert).
+
+**Seite „Datei“** (`FileImport.svelte`): Auswahl „Karten“ (nur bei mehreren Notiztypen), „Teil des Decks“ (nur bei
+Unterdecks), „Vokabel“ und „Bedeutung“ (Feldname mit erstem Beispiel, z. B. „Vorderseite – avus“; tauschen geht
+auch), darunter die bekannte Vorschau mit Sprache, Abschnitten und „Speichern & loslegen“. Ist der Speicher voll,
+sagt die Vorschau das, statt abzustürzen.
+
+**Französisch** steht jetzt in `LANGS`. **Tabs auf `/neu`:** vier passen bis 280 px nur, wenn jeder so breit ist wie
+sein Text und die Schrift unter ~370 px etwas kleiner wird (Monocraft ist breit). „Scannen“ ragte schon mit drei
+Tabs bei 280 px ein paar Pixel über den Rand.
+
+Teilen und „Neu laden“ brauchen nichts Neues: Anki-Lektionen reisen wie Text-Lektionen im Link (`#d=`), eine Lektion
+aus Campus A ergibt einen Link mit 1288 Zeichen. Neu laden gibt es nur für Buchner-Codes; ein Deck wählt man einfach
+noch einmal (♻️, der Lernstand bleibt).
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -588,6 +654,29 @@ Rückmeldung: Für die Vokabeln selbst ist die Minecraft-Schrift zu krass.
 - 2026-10-19 (Batch 18): **Lesbarkeit vor Spiel-Look bei den Vokabeln.** Das ersetzt die Regel aus 12c („die Schrift
   zeigt die Sprache“). Auf der Karte unterscheidet jetzt die Größe Fremdwort und Deutsch. Welche Sprache als Antwort
   gefragt ist, sagen weiterhin das Eingabefeld („Auf Deutsch …“) und die Antworten bei „Auswahl“.
+- 2026-10-24 (Batch 19):
+  - **Anki-Decks nur über „Datei wählen“.** Ein Link zu ankiweb.net bräuchte einen zweiten Proxy, der AnkiWebs
+    interne Download-Schnittstelle mit kurzlebigem Token nachbaut – fragil. Das Teilen-Ziel (Downloads → Teilen →
+    Vokabulator) braucht die installierte App und Service-Worker-Logik. Beides steht im Backlog.
+  - **sql.js statt eigenem SQLite-Leser.** Echtes SQLite ist robuster als ~250 Zeilen eigener Code für das
+    Dateiformat. Es lädt nur beim Datei-Import, die `.wasm` kommt von unserem Server. Wir holen sie selbst per
+    `fetch`: sql.js merkt sich sonst einen gescheiterten Start (z. B. offline) bis zum Neuladen der Seite.
+  - **Die `.wasm` von sql.js liegt nicht im Offline-Cache** (wie ZXing): Ein Deck wird gerade erst heruntergeladen,
+    Internet ist also da. Offline sagt die App „Zum Lesen von Anki-Decks brauchst du kurz Internet. 📡“.
+  - **unicase per `writable_schema` entfernen** statt die Bytes zu patchen: sql.js läuft nicht im „defensive“-Modus
+    (anders als das sqlite3-CLI), die Änderung trifft nur die Kopie im Speicher.
+  - **Eine Tabelle je Notiztyp** statt „häufigster Typ, die anderen nach Feldposition“: Im French-Deck (15 Typen)
+    ergäbe die Position Unsinn.
+  - **Notiztyp und Kartenvorlagen werden nicht dekodiert** (Protobuf in Schema 18). Lückentext erkennt man am Inhalt,
+    die Spalten rät `guessColumns`, und die Auswahlfelder korrigieren. Vorlagen hätten beim French-Deck auch falsch
+    geraten.
+  - **„Teil des Decks“ statt ganzem Deck oder vielen Lektionen:** Ein ganzes Schulbuch-Deck wären 87 Abschnitte
+    im Runden-Setup, jedes Unterdeck als eigene Lektion würde die Startseite fluten.
+  - **Dateiauswahl ohne `accept`:** iOS graut unbekannte Endungen wie `.apkg` aus, Android filtert sie ohnehin nicht,
+    und eine Liste nur bekannter Typen würde die Decks ausgrauen. Das Format erkennt `files.js` am Inhalt.
+  - **Echte Decks nicht ins Repo:** Das Repo ist öffentlich, die Decks sind Arbeit anderer. Committet sind
+    synthetische Decks (`fixtures/make-apkg.js` baut alle drei Versionen), die echten liegen lokal in
+    `fixtures/local/` (in `.gitignore`), ihre Tests laufen nur, wenn sie da sind.
 
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
@@ -598,6 +687,12 @@ Rückmeldung: Für die Vokabeln selbst ist die Minecraft-Schrift zu krass.
 ## Backlog / Ideen
 - Web Share Target: aus dem Chrome-PDF-Viewer „Teilen → Vokabulator“.
 - CSV-Export für Anki. Weitere Verlage (Klett/Cornelsen) als eigene Import-Adapter.
+- Weitere Dateiformate über `FILE_FORMATS` + `table.js`: CSV/TSV (auch Ankis „Notizen als Text“).
+- AnkiWeb-Link oder Deck-Nummer einfügen (Proxy wie bei ccbuchner, Teilen per Nummer, „Neu laden“).
+- Teilen-Ziel: Downloads → Teilen → Vokabulator (Web Share Target, nur installierte App).
+- Runden-Setup bei vielen Abschnitten (ganzes Deck: bis 87 Knöpfe) – z. B. zuklappen oder „von … bis“.
+- Ein echtes Deck im neuesten Anki-Format (`collection.anki21b`) als lokale Testdatei: Anki-Desktop → Exportieren
+  ohne „ältere Anki-Versionen unterstützen“. Bisher ist dieses Format nur mit synthetischen Decks geprüft.
 - Tonausgabe per `speechSynthesis` (Englisch/Spanisch).
 - Browser-Smoke-Tests (Playwright, wie bisher lokal genutzt) ins Repo übernehmen.
 
@@ -668,6 +763,15 @@ Rückmeldung: Für die Vokabeln selbst ist die Minecraft-Schrift zu krass.
 - 2026-10-19: Batch 18 – Vokabeln in der Runde in Lexend: Karte (Frage und aufgedeckt), Antworten bei „Auswahl“,
   Eingabefeld bei „Tippen“. Im Chromium bei 390 px geprüft: berechnete Schrift überall „Lexend Variable“, Makronen
   (ā ē ī ō ū) sauber, Fremdwort größer als Deutsch. Tests, check, Lint grün.
+- 2026-10-24: Batch 19 – Anki-Decks über den neuen Tab „Datei“: `zip.js`, `anki.js` (sql.js, fzstd), `table.js`,
+  `files.js`, `import-error.js`, `FileImport.svelte`, Französisch, Speicher-voll-Meldung, Tabs bis 280 px.
+  Tests (151): alle drei Anki-Versionen synthetisch (inkl. unicase-Falle, Lückentext, gefiltertes Deck), dazu die
+  echten Decks Campus A und Campus alle lokal. Im Chromium (`npm run preview`, 390 px) geprüft:
+  - Campus A in 0,15 s gelesen → „Teil des Decks: Lektion 12“ → Vorschau mit W1–W3 → Runde; erneut gewählt → ♻️;
+    ganzes Deck gespeichert (1566 Vokabeln); Teilen-Link (1288 Zeichen) → zweites Profil → dieselbe Lektion
+  - Campus alle → 42 Teile; French 5000 (77 MB) in 0,5 s, 15 Notiztypen zur Auswahl, Sprache Französisch
+  - PDF statt Deck → „Diese Datei kenne ich nicht“; offline → „brauchst du kurz Internet“, danach online ohne Neuladen
+  - Tabs und Auswahl bei 280, 320, 360 und 390 px ohne Überlauf, keine Fehler in der Konsole
 
 ## Verifikation
 - Automatisch: `npm run check` (svelte-check / JSDoc-Typen), `npm test` (Vitest: Parser, Leitner, später Antwortprüfung,

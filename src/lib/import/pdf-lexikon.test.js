@@ -6,13 +6,14 @@ import { readPdf } from './pdf-items.js';
 
 /** @typedef {import('../model.js').ParsedUnit} ParsedUnit */
 
-describe('parseLexikon with a real C.C.Buchner PDF (Mediencode 40702-229)', () => {
+// made-up words in the layout of the textbook PDFs, see scripts/make-lexikon-fixture.mjs
+describe('parseLexikon with a vocabulary PDF', () => {
 	/** @type {ParsedUnit} */
 	let unit;
 
 	beforeAll(async () => {
 		const data = new Uint8Array(
-			await readFile(new URL('./fixtures/ccbuchner-26273.pdf', import.meta.url))
+			await readFile(new URL('./fixtures/lexikon-beispiel.pdf', import.meta.url))
 		);
 		unit = parseLexikon(await readPdf(data, /** @type {any} */ (pdfjs)));
 	});
@@ -21,12 +22,12 @@ describe('parseLexikon with a real C.C.Buchner PDF (Mediencode 40702-229)', () =
 	const find = (front) => unit.sections.flatMap((s) => s.entries).find((e) => e.front === front);
 
 	it('reads the title and the sections', () => {
-		expect(unit.title).toBe('Die nd-Formen | Cäsar gegen Cato');
+		expect(unit.title).toBe('Beispiel-Lexikon | Ein Tag in Rom');
 		expect(unit.sections.map((s) => [s.title, s.entries.length])).toEqual([
-			['Seite 2', 39],
-			['Seite 2 (Teil 2)', 13], // page 2: the alphabet starts over, its heading is only an image
-			['A Zwei Positionen im Senat', 83],
-			['B Zwei Politiker im Vergleich', 59]
+			['Wortschatz 1', 19],
+			['Wortschatz 1 (Teil 2)', 6], // page 2: no heading, the alphabet starts over
+			['A Auf dem Forum', 8], // page 4 goes on without a heading, the alphabet goes on
+			['B Im Senat', 4]
 		]);
 	});
 
@@ -34,15 +35,15 @@ describe('parseLexikon with a real C.C.Buchner PDF (Mediencode 40702-229)', () =
 		expect(find('capere, capiō, cēpī, captum')).toEqual({
 			front: 'capere, capiō, cēpī, captum',
 			frontInfo: '',
-			back: 'nehmen, ergreifen, fangen; erobern',
-			refs: '6. 10. Ü1'
+			back: 'nehmen, fassen, ergreifen; erobern',
+			refs: '3. 7. Ü2'
 		});
 	});
 
 	it('separates grammar info (italic) from the meaning', () => {
 		expect(find('cōnsilium, cōnsiliī')).toMatchObject({
 			frontInfo: 'n',
-			back: 'der Plan, der Rat, die Beratung, der Beschluss'
+			back: 'der Rat, der Plan, der Beschluss'
 		});
 		expect(find('mihi')).toMatchObject({ frontInfo: 'Dat. von egō', back: 'mir' });
 		expect(find('is, ea, id')).toMatchObject({
@@ -62,7 +63,7 @@ describe('parseLexikon with a real C.C.Buchner PDF (Mediencode 40702-229)', () =
 
 	it('reads the right column too', () => {
 		expect(find('virtūs, virtūtis')?.back).toBe(
-			'die Tapferkeit, die Tüchtigkeit, die gute Eigenschaft, das vorbildliche Verhalten, die Leistung'
+			'die Tapferkeit, die Tüchtigkeit, die gute Eigenschaft, die Leistung'
 		);
 	});
 });

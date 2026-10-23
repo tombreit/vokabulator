@@ -12,6 +12,7 @@
  *        → pdf-items.js → pdf-lexikon.js → UnitDraft
  */
 
+import { ImportError } from './import-error.js';
 import { loadPdfjs, readPdf } from './pdf-items.js';
 import { parseLexikon } from './pdf-lexikon.js';
 
@@ -19,9 +20,6 @@ import { parseLexikon } from './pdf-lexikon.js';
 
 const SITE = 'https://www.ccbuchner.de';
 const PROXY = '/proxy/ccbuchner';
-
-/** A problem while importing, with a message meant for the learner. */
-export class ImportError extends Error {}
 
 /**
  * Find the Mediencode in what the learner typed or scanned:

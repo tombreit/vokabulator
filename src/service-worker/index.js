@@ -30,8 +30,9 @@ const APP_FILES = new Set(
 	[...immutable, ...assets]
 		// dotfiles like .htaccess are server configuration – Apache refuses to serve them
 		.filter((file) => !file.path.split('/').at(-1)?.startsWith('.'))
-		// the QR reader for browsers without their own (1 MB) is only needed online: scanning
-		// leads to an import, which needs the internet anyway – so it is not stored for everyone
+		// WebAssembly is only needed online, so it is not stored for everyone: the QR reader for
+		// browsers without their own (1 MB) – scanning leads to an import, which needs the internet
+		// anyway – and SQLite for Anki decks (0.7 MB) – a deck is downloaded just before
 		.filter((file) => !file.path.endsWith('.wasm'))
 		// the link preview card is only for messengers, not for learning
 		.filter((file) => file.path.split('/').at(-1) !== 'og-image.png')

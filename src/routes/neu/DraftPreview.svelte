@@ -20,10 +20,18 @@
 	const unit = $derived(buildUnit({ ...draft, lang }));
 	const byId = $derived(new Map(unit.entries.map((e) => [e.id, e])));
 	const replaces = $derived(getUnit(unit.id) !== undefined);
+	/** the device's storage (about 5 MB per site) is full – a whole big deck may not fit */
+	let full = $state(false);
 
 	/** @param {'/lernen/[id]' | '/einheit/[id]'} next  where to go after saving */
 	function save(next) {
-		saveUnit(unit);
+		try {
+			saveUnit(unit);
+		} catch (e) {
+			if (!(e instanceof DOMException && e.name === 'QuotaExceededError')) throw e;
+			full = true;
+			return;
+		}
 		// a challenge from a shared link goes along to the learning page
 		goto(
 			next === '/lernen/[id]'
@@ -73,6 +81,13 @@
 		</p>
 	{/if}
 
+	{#if full}
+		<p class="full" role="alert">
+			😕 Der Speicher auf diesem Gerät ist voll. Nimm einen kleineren Teil oder lösche Lektionen,
+			die du nicht mehr brauchst.
+		</p>
+	{/if}
+
 	<div class="buttons">
 		<button
 			class="button primary go"
@@ -112,6 +127,10 @@
 	ul {
 		padding-left: 1.2rem;
 		margin: 0 0 0.5rem;
+	}
+
+	.full {
+		color: var(--bad);
 	}
 
 	.buttons {

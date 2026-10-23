@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { describe, expect, it } from 'vitest';
-import { findPdfPath, ImportError, importMediencode, parseMediencode } from './ccbuchner.js';
+import { findPdfPath, importMediencode, parseMediencode } from './ccbuchner.js';
+import { ImportError } from './import-error.js';
 
 describe('parseMediencode', () => {
 	it('understands typed codes and scanned URLs', () => {
@@ -53,7 +54,7 @@ describe('importMediencode', () => {
 	const loadPdfjs = async () => /** @type {any} */ (pdfjs);
 
 	it('loads page and PDF through the proxy and parses the vocabulary', async () => {
-		const pdf = await readFile(new URL('./fixtures/ccbuchner-26273.pdf', import.meta.url));
+		const pdf = await readFile(new URL('./fixtures/lexikon-beispiel.pdf', import.meta.url));
 		const fetch = fakeFetch({
 			'/proxy/ccbuchner/clip_code/40702-229/': page,
 			'/proxy/ccbuchner/_files_media/mediathek/downloads/26273.pdf': new Uint8Array(pdf)
@@ -67,7 +68,7 @@ describe('importMediencode', () => {
 			code: '40702-229',
 			pdfUrl: 'https://www.ccbuchner.de/_files_media/mediathek/downloads/26273.pdf'
 		});
-		expect(draft.parsed.title).toBe('Die nd-Formen | Cäsar gegen Cato');
+		expect(draft.parsed.title).toBe('Beispiel-Lexikon | Ein Tag in Rom');
 		expect(draft.parsed.sections).toHaveLength(4);
 	});
 

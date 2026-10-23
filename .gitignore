@@ -21,3 +21,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Real Anki decks for local tests – other people's work, not for this public repository
+/src/lib/import/fixtures/local/

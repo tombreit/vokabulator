@@ -1,7 +1,7 @@
 # Vokabulator 🧠
 
-Vokabeltrainer fürs Smartphone: QR-Code im Schulbuch scannen, Vokabeln landen offline auf dem Handy,
-dann wird gelernt – mit Karteikarten, Punkten und Emojis.
+Vokabeltrainer fürs Smartphone: QR-Code im Schulbuch scannen oder ein Anki-Deck laden, Vokabeln landen
+offline auf dem Handy, dann wird gelernt – mit Karteikarten, Punkten und Emojis.
 
 Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (living document).
 
@@ -25,6 +25,10 @@ Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vo
   eine Runde in Chromium und zeichnet die Bilder nach `docs/screenshots/`. Nach Änderungen an der Oberfläche
   einfach neu erzeugen.
 - **Fachlogik** steckt in kleinen Modulen unter `src/lib/`, jeweils mit Test daneben (`*.test.js`).
+- **Import** (`src/lib/import/`): Jeder Weg endet in einem `UnitDraft` (`src/lib/model.js`). Dateien erkennt
+  `files.js` am Inhalt; ein neues Format ist ein Modul plus eine Zeile in `FILE_FORMATS`. Die Tests mit echten
+  Anki-Decks laufen nur, wenn die Decks in `src/lib/import/fixtures/local/` liegen – sie gehören anderen und
+  sind deshalb nicht im Repo.
   **Seiten** liegen unter `src/routes/` (`+page.svelte` = eine Seite).
 - **Einziger serverseitiger Baustein:** ein eng begrenzter Proxy zu ccbuchner.de, nötig wegen CORS.
   Die Regeln stehen mit allen anderen App-Regeln in [`static/.htaccess`](static/.htaccess) und werden mit jedem

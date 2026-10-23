@@ -2,19 +2,21 @@
 /**
  * The data model of Vokabulator: what a learning unit ("Lerneinheit") looks like.
  *
- * Every importer (pasted text, PDF, C.C.Buchner code) produces a `ParsedUnit`,
- * and `buildUnit()` turns that into a `Unit`, which is what gets stored.
+ * Every importer (pasted text, C.C.Buchner code, a file like an Anki deck) ends with a
+ * `UnitDraft`, and `buildUnit()` turns that into a `Unit`, which is what gets stored.
+ * Importers that read tables (Anki decks) get there through the shared step in import/table.js.
  * Learning progress is kept separately per unit (see storage.js / learn/leitner.js),
  * so re-importing a unit does not lose progress.
  */
 
-/** @typedef {'la' | 'en' | 'es'} Lang */
+/** @typedef {'la' | 'en' | 'es' | 'fr'} Lang */
 
 /** Languages the app knows about; the "back" side is always German. */
 export const LANGS = /** @type {const} */ ({
 	la: { name: 'Latein', flag: '🏛️' },
 	en: { name: 'Englisch', flag: '🇬🇧' },
-	es: { name: 'Spanisch', flag: '🇪🇸' }
+	es: { name: 'Spanisch', flag: '🇪🇸' },
+	fr: { name: 'Französisch', flag: '🇫🇷' }
 });
 
 /**
@@ -42,13 +44,14 @@ export const LANGS = /** @type {const} */ ({
 /** @typedef {{ title: string, entryIds: string[] }} Section */
 
 /**
- * Where a unit came from (used for re-import and sharing).
- * @typedef {{ type: 'text' } | { type: 'pdf-file', name: string } | { type: 'ccbuchner', code: string, pdfUrl: string }} Source
+ * Where a unit came from (used for re-import and sharing). "pdf-file" is no longer made
+ * (PDF upload was removed in batch 12), but older units may still have it.
+ * @typedef {{ type: 'text' } | { type: 'file', name: string } | { type: 'pdf-file', name: string } | { type: 'ccbuchner', code: string, pdfUrl: string }} Source
  */
 
 /**
  * @typedef {object} Unit
- * @property {string} id         e.g. "ccb-40702-229" or "txt-<uuid>"
+ * @property {string} id         e.g. "ccb-40702-229", "txt-<uuid>" or "anki-<deck>-<note type>[-<part>]"
  * @property {string} title
  * @property {Lang} lang
  * @property {Source} source
