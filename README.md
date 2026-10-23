@@ -5,6 +5,12 @@ dann wird gelernt – mit Karteikarten, Punkten und Emojis.
 
 Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (living document).
 
+<p align="center">
+  <img src="docs/screenshots/1-lektionen.png" width="32%" alt="Startseite: großer Knopf „QR-Code scannen“, darunter die eigenen Lektionen in Latein, Spanisch und Englisch mit Fortschritt und Rekord">
+  <img src="docs/screenshots/2-runde.png" width="32%" alt="Eine Runde im Modus Auswahl: das lateinische Wort līberālitās mit vier deutschen Antworten, Combo ×2 und Jokern">
+  <img src="docs/screenshots/3-ergebnis.png" width="32%" alt="Ergebnis einer fehlerfreien Runde: Perfekt – GOAT!, +230 XP, Level-Up, neuer Rekord und Konfetti">
+</p>
+
 ## Wie die App aufgebaut ist
 
 - **SvelteKit 3 als Single-Page-App.** Alles läuft im Browser, und `npm run build` erzeugt rein statische Dateien in `build/`.
@@ -15,6 +21,9 @@ Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vo
 - **Link-Vorschau** beim Teilen (WhatsApp, Signal, Telegram …): Die Open-Graph-Angaben stehen in `src/app.html`,
   das Bild `static/og-image.png` (1200 × 630) zeichnet `node scripts/make-og-image.mjs` mit Chromium aus den
   Sprites und Schriften der App. Ändert sich die Domain, muss sie in `src/app.html` angepasst werden.
+- **Screenshots** oben: `node scripts/make-screenshots.mjs` baut die App, spielt mit drei erfundenen Lektionen
+  eine Runde in Chromium und zeichnet die Bilder nach `docs/screenshots/`. Nach Änderungen an der Oberfläche
+  einfach neu erzeugen.
 - **Fachlogik** steckt in kleinen Modulen unter `src/lib/`, jeweils mit Test daneben (`*.test.js`).
   **Seiten** liegen unter `src/routes/` (`+page.svelte` = eine Seite).
 - **Einziger serverseitiger Baustein:** ein eng begrenzter Proxy zu ccbuchner.de, nötig wegen CORS.
