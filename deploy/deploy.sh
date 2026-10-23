@@ -16,6 +16,7 @@ npm run check
 npm test
 npm run build
 
+# testdrive: --dry-run -i 
 # --delete removes files of old builds on the server; build/ is the complete app,
 # including .htaccess with the app's Apache rules (from static/.htaccess).
-rsync -avz --delete "$@" build/ "${VOKABULATOR_TARGET%/}/"
+rsync -avz  --delete "$@" build/ "${VOKABULATOR_TARGET%/}/"

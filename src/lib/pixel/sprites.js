@@ -391,27 +391,6 @@ export const SPRITES = {
 	},
 
 	// --- navigation (NavBar.svelte) ---------------------------------------------------
-	qr: {
-		palette: { w: '#ececec', k: '#1d1d1d' },
-		rows: [
-			'wwwwwwwwwwwwwwww',
-			'wkkkkkwwkwkkkkkw',
-			'wkwwwkwkwwkwwwkw',
-			'wkwkwkwwkwkwkwkw',
-			'wkwwwkwkkwkwwwkw',
-			'wkkkkkwkwwkkkkkw',
-			'wwwwwwwwkwwwwwww',
-			'wkwkkwkwwkkwkwkw',
-			'wwkwwkwkkwwkwkww',
-			'wwwwwwwkwkwwkkkw',
-			'wkkkkkwwkkwkwwkw',
-			'wkwwwkwkwwkwkwww',
-			'wkwkwkwwkwkkwkkw',
-			'wkwwwkwkkwwwkwkw',
-			'wkkkkkwwwkwkwwkw',
-			'wwwwwwwwwwwwwwww'
-		]
-	},
 	trophy: {
 		palette: { o: '#b07400', y: '#fcee4b', w: '#fffbd0', b: '#6b4423', B: '#4a2e17' },
 		rows: [

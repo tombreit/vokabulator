@@ -1,6 +1,8 @@
 <!--
   The areas of the app, always at the bottom of the screen – drawn like the hotbar
-  in the game: four slots, the area you are in has the white selection frame.
+  in the game: three slots, the area you are in has the white selection frame.
+  A new lesson is added under "Lektionen" (button on the start page → /neu), whichever way
+  it comes in: scanned, typed, a file.
   Rendered once, in +layout.svelte. During a round the learning page hides it
   (nav.hidden), so that nothing but the word is on screen.
 -->
@@ -12,7 +14,6 @@
 <script>
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { canScanQr } from './QrScanner.svelte';
 	import Sprite from './Sprite.svelte';
 
 	/** each area with the pages that belong to it */
@@ -21,9 +22,8 @@
 			href: resolve('/'),
 			sprite: 'book',
 			label: 'Lektionen',
-			pages: ['/', '/einheit/', '/lernen/']
+			pages: ['/', '/neu', '/einheit/', '/lernen/']
 		},
-		{ href: resolve('/neu'), sprite: 'qr', label: canScanQr ? 'Scannen' : 'Neu', pages: ['/neu'] },
 		{ href: resolve('/erfolge'), sprite: 'trophy', label: 'Erfolge', pages: ['/erfolge'] },
 		{ href: resolve('/optionen'), sprite: 'gear', label: 'Optionen', pages: ['/optionen'] }
 	];
@@ -63,7 +63,7 @@
 
 	ul {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 2px;
 		max-width: 40rem;
 		margin: 0 auto;

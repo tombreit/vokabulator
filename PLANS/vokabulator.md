@@ -28,6 +28,7 @@
 | 17 | Fehler vom ersten Tag: Links auf fehlende Lektionen, Toast-Schleife, Zurück, Buttons | ✅ lokal geprüft – Deploy durch dich |
 | 18 | Vokabeln in der Runde in Lexend statt Monocraft | ✅ lokal geprüft – Deploy durch dich |
 | 19 | Anki-Decks importieren (Tab „Datei“), schlanke Import-Schnittstelle, Französisch | ✅ lokal geprüft – Deploy und Handy-Test durch dich |
+| 20 | „Neue Lektion“ unter „Meine Lektionen“ statt „Scannen“ in der Navigation | ✅ lokal geprüft – Deploy durch dich |
 
 ## Kontext
 
@@ -125,7 +126,7 @@ src/lib/toasts.svelte.js        Einblendungen oben rechts (showToast), überlebe
 src/lib/components/             ProgressBar, WordTimer, HardButton (Amboss), QrScanner, NavBar (Hotbar unten), Toasts, …
 src/routes/+layout.js           ssr = false
 src/routes/+layout.svelte       Graskante, NavBar, Toasts
-src/routes/+page.svelte         „Meine Welten“
+src/routes/+page.svelte         „Meine Lektionen“: Knopf „Neue Lektion“ (→ /neu), Liste der Lektionen
 src/routes/neu/+page.svelte     Import: Scannen | Code | Text | Datei   (?code=… und #d=… für Teilen-Links)
 src/routes/neu/*Import.svelte   je Import-Weg eine Komponente; Scan, Code und Link speichern sofort (MediencodeLoader,
                                 SharedImport), Text und Datei zeigen erst die Vorschau (DraftPreview)
@@ -539,6 +540,18 @@ Teilen und „Neu laden“ brauchen nichts Neues: Anki-Lektionen reisen wie Text
 aus Campus A ergibt einen Link mit 1288 Zeichen. Neu laden gibt es nur für Buchner-Codes; ein Deck wählt man einfach
 noch einmal (♻️, der Lernstand bleibt).
 
+### Batch 20 – „Neue Lektion“ unter „Lektionen“
+Rückmeldung: „Scannen“ in der Navigation passt nicht mehr – das ist jetzt ein Import, und Scannen nur einer von
+mehreren Wegen. Gehört eher zu „Lektionen > Hinzufügen“.
+- **Navigation mit drei Slots:** Lektionen · Erfolge · Optionen. `/neu` gehört zum Bereich „Lektionen“ (weißer
+  Rahmen dort) und hat oben „‹ Meine Lektionen“ wie die Lektionsseite. Das Sprite `qr` entfällt.
+- **Startseite:** Der große Knopf steht jetzt unter „Meine Lektionen“ und heißt **„Neue Lektion“**, mit der Truhe
+  (wie die Meldung „Vokabeln importiert!“). Er führt wie bisher zu `/neu`, dort ist „Scannen“ der erste Tab:
+  Fürs Scannen bleibt es bei einem Tipp von der Startseite.
+- Ohne Lektionen erklärt die Startseite die Wege: QR-Code scannen, Wörter eintippen oder ein Anki-Deck laden.
+- „Anki-Deck wählen 📂“ bleibt bis 280 px einzeilig (Schrift wie bei den Tabs etwas kleiner).
+- README-Screenshots neu erzeugt.
+
 ## Entscheidungs-Log
 - 2026-10-18: SvelteKit 3 im SPA-Modus, JS + JSDoc, Apache, localStorage, Leitner ohne Datums-Intervalle,
   nur moderne Browser-APIs (Chrome Android), keine Polyfills, Batches 0–3 am Stück, danach batchweise mit Review.
@@ -678,6 +691,12 @@ noch einmal (♻️, der Lernstand bleibt).
     synthetische Decks (`fixtures/make-apkg.js` baut alle drei Versionen), die echten liegen lokal in
     `fixtures/local/` (in `.gitignore`), ihre Tests laufen nur, wenn sie da sind.
 
+- 2026-10-24 (Batch 20): **„Neue Lektion“ statt eines eigenen Navigations-Slots.** Hinzufügen ist eine Handlung
+  im Bereich Lektionen, kein eigener Bereich; die Navigation zeigt nur noch, wo man ist. Ein Slot „Neu“ hätte das
+  Hinzufügen von jeder Seite aus einen Tipp näher gehalten – das zählt wenig, weil man fast immer von der
+  Startseite aus hinzufügt. Der Knopf heißt wie die Seite („Neue Lektion“); „Lektion hinzufügen“ wäre bei 280 px
+  zu breit für eine Zeile.
+
 ## Risiken / offene Punkte
 - Andere Buchner-PDFs (andere Bücher, Englisch/Spanisch) können ein anderes Layout haben → Parser-Varianten pro Layout.
   Für alles andere gibt es den universellen Text-Import.
@@ -772,6 +791,10 @@ noch einmal (♻️, der Lernstand bleibt).
   - Campus alle → 42 Teile; French 5000 (77 MB) in 0,5 s, 15 Notiztypen zur Auswahl, Sprache Französisch
   - PDF statt Deck → „Diese Datei kenne ich nicht“; offline → „brauchst du kurz Internet“, danach online ohne Neuladen
   - Tabs und Auswahl bei 280, 320, 360 und 390 px ohne Überlauf, keine Fehler in der Konsole
+- 2026-10-24: Batch 20 – Navigation ohne „Scannen“ (drei Slots), „Neue Lektion“ unter „Meine Lektionen“, `/neu` mit
+  „‹ Meine Lektionen“ und im Bereich Lektionen, Anki-Knopf einzeilig, Screenshots neu. Im Chromium geprüft
+  (280 und 390 px): Knopf einzeilig, Startseite → „Neue Lektion“ → `/neu` (Slot „Lektionen“ aktiv) → zurück,
+  der Batch-19-Ablauf komplett grün, keine Fehler in der Konsole. Tests (150), check, Lint grün.
 
 ## Verifikation
 - Automatisch: `npm run check` (svelte-check / JSDoc-Typen), `npm test` (Vitest: Parser, Leitner, später Antwortprüfung,

@@ -612,7 +612,7 @@ try {
 	await waitFor(`document.querySelector('.unit')`);
 	await sleep(500);
 	writeFileSync(join(dir, 'start.png'), await screenshot());
-	const startRects = await rects({ scan: '.scan', lesson: '.unit' });
+	const startRects = await rects({ add: '.add', lesson: '.unit' });
 
 	// 2 – a round: three right answers in a row make a combo, then the fourth question
 	await go(`${origin}/lernen/${LATIN_ID}`);
@@ -672,7 +672,7 @@ try {
 					x: 488,
 					y: 300,
 					turn: 4,
-					to: 'scan',
+					to: 'add',
 					side: 'right'
 				},
 				{

@@ -176,9 +176,11 @@
 		gap: var(--gap);
 	}
 
+	/* one line down to 280 px */
 	.pick {
 		min-height: 3.5rem;
-		font-size: 1.1rem;
+		font-size: clamp(0.75rem, 4.4vw, 1.1rem);
+		white-space: nowrap;
 
 		input {
 			display: none;

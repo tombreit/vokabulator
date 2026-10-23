@@ -1,6 +1,7 @@
 <!--
-  Start page: days in a row and level, the big scan button, and "Meine Lektionen" –
-  every unit with how much of it is learned (the name and splash text sit in +layout.svelte).
+  Start page: days in a row and level, then "Meine Lektionen": the big button for a new lesson
+  (/neu: scan, code, text or file) and every unit with how much of it is learned
+  (the name and splash text sit in +layout.svelte).
 -->
 <script>
 	import { resolve } from '$app/paths';
@@ -36,18 +37,18 @@
 	<div class="level"><XpBar xp={stats.xp} /></div>
 </div>
 
-<a class="button primary scan" href={resolve('/neu')}>
-	<Sprite name="pickaxe" size={32} />
-	{canScanQr ? 'QR-Code scannen' : 'Neue Lektion anlegen'}
-</a>
-
 <h1>Meine Lektionen</h1>
+
+<a class="button primary add" href={resolve('/neu')}>
+	<Sprite name="chest" size={32} />
+	Neue Lektion
+</a>
 
 {#if units.length === 0}
 	<p class="card read">
-		Noch keine Lektion. {canScanQr
-			? 'Scanne den QR-Code neben den Vokabeln in deinem Buch'
-			: 'Gib den Mediencode aus deinem Buch ein'} – dann kannst du sofort loslegen.
+		Noch keine Lektion. Tipp auf „Neue Lektion“ und {canScanQr
+			? 'scanne den QR-Code neben den Vokabeln in deinem Buch'
+			: 'gib den Mediencode aus deinem Buch ein'} – oder tippe Wörter ein oder lade ein Anki-Deck.
 	</p>
 {:else}
 	<ul class="units">
@@ -99,7 +100,7 @@
 		font-weight: 600;
 	}
 
-	.scan {
+	.add {
 		width: 100%;
 		min-height: 4rem;
 		margin-bottom: 1.5rem;

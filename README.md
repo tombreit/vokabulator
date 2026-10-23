@@ -6,7 +6,7 @@ offline auf dem Handy, dann wird gelernt – mit Karteikarten, Punkten und Emoji
 Live: https://vokabulator.thms.de/ · Plan, Stand und Entscheidungen: [`PLANS/vokabulator.md`](PLANS/vokabulator.md) (living document).
 
 <p align="center">
-  <img src="docs/screenshots/1-lektionen.png" width="32%" alt="Startseite: großer Knopf „QR-Code scannen“, darunter die eigenen Lektionen in Latein, Spanisch und Englisch mit Fortschritt und Rekord">
+  <img src="docs/screenshots/1-lektionen.png" width="32%" alt="Startseite: unter „Meine Lektionen“ der große Knopf „Neue Lektion“, darunter die eigenen Lektionen in Latein, Spanisch und Englisch mit Fortschritt und Rekord">
   <img src="docs/screenshots/2-runde.png" width="32%" alt="Eine Runde im Modus Auswahl: das lateinische Wort līberālitās mit vier deutschen Antworten, Combo ×2 und Jokern">
   <img src="docs/screenshots/3-ergebnis.png" width="32%" alt="Ergebnis einer fehlerfreien Runde: Perfekt – GOAT!, +230 XP, Level-Up, neuer Rekord und Konfetti">
 </p>

@@ -13,6 +13,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import { canScanQr } from '#lib/components/QrScanner.svelte';
 	import { loadPdfjs } from '#lib/import/pdf-items.js';
 	import { readChallenge } from '#lib/share.js';
@@ -41,6 +42,7 @@
 	});
 </script>
 
+<a class="back" href={resolve('/')}>‹ Meine Lektionen</a>
 <h1>{reload ? 'Neu laden' : packed || initialCode ? '📩 Von einem Freund' : 'Neue Lektion'}</h1>
 
 {#if challenge}
